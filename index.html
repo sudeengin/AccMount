@@ -18,10 +18,66 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased">
 
-    <div class="container mx-auto p-4 md:p-8">
-        
+    <div class="container mx-auto p-4 md:p-8 space-y-6">
+        <nav class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gray-900 text-gray-100 rounded-2xl p-4 shadow-lg">
+            <div>
+                <h1 class="text-2xl font-semibold">Accmount</h1>
+                <p class="text-sm text-gray-400">Finansal özetinizi ve carilerinizi yönetin</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="navDashboardBtn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium shadow">Dashboard</button>
+                <button id="navCarilerBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Cariler</button>
+            </div>
+        </nav>
+
+        <!-- Dashboard Görünümü -->
+        <div id="dashboardView" class="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-gray-100 rounded-3xl p-8 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+                <div>
+                    <p class="text-sm uppercase tracking-widest text-indigo-400">Bankalar</p>
+                    <h2 class="text-3xl font-bold mt-2">Banka Hesabı Özeti</h2>
+                    <p class="text-sm text-gray-400 mt-1">Banka carilerinizden birini seçerek güncel bakiyesini görüntüleyin.</p>
+                </div>
+                <div class="bg-gray-900/70 rounded-2xl p-4 shadow-inner border border-gray-800 min-w-[260px]">
+                    <label for="dashboardBankSelect" class="block text-xs uppercase tracking-wide text-gray-500">Banka Hesabı</label>
+                    <select id="dashboardBankSelect" class="mt-2 w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Banka seçiniz...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-gray-900/80 border border-gray-800 rounded-3xl p-6 flex flex-col justify-between shadow-lg">
+                    <div>
+                        <p class="text-sm text-gray-500">Güncel Bakiye</p>
+                        <p id="dashboardBalance" class="text-5xl font-semibold mt-4">₺0,00</p>
+                    </div>
+                    <div class="mt-6 text-sm text-gray-500" id="dashboardUpdatedAt">Seçilen hesabın bakiyesi</div>
+                </div>
+                <div class="bg-gray-900/80 border border-gray-800 rounded-3xl p-6 flex flex-col gap-4 shadow-lg">
+                    <div>
+                        <p class="text-sm text-gray-500">Hesap Adı</p>
+                        <p id="dashboardBankName" class="text-xl font-medium text-gray-100 mt-2">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Hesap Tipi</p>
+                        <p id="dashboardBankType" class="text-lg font-medium text-gray-100 mt-2">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Son İşlem Tarihi</p>
+                        <p id="dashboardLastTransaction" class="text-sm text-gray-300 mt-2">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboardEmptyState" class="mt-10 bg-gray-900/70 border border-gray-800 rounded-3xl p-6 text-center hidden">
+                <p class="text-lg font-medium text-gray-200">Kayıtlı banka carisi bulunmuyor.</p>
+                <p class="text-sm text-gray-500 mt-2">Sol panelden yeni bir "Banka" tipi cari oluşturarak dashboard'u kullanabilirsiniz.</p>
+            </div>
+        </div>
+
         <!-- Ana Görünüm -->
-        <div id="mainView">
+        <div id="mainView" class="hidden">
             <header class="text-center mb-8">
                 <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Accmount Panel</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-2">Cari hesaplarınızı ve işlemlerinizi kolayca yönetin.</p>
@@ -64,7 +120,7 @@
                 </div>
             </main>
         </div>
-
+        
         <!-- Cari Detay Görünümü (Başlangıçta Gizli) -->
         <div id="detailView" class="hidden">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
@@ -119,6 +175,50 @@
 
                 <div id="islemList" class="space-y-3">
                     <!-- İşlem geçmişi buraya gelecek -->
+                </div>
+            </div>
+        </div>
+
+        <!-- İşlem Detay Görünümü (Başlangıçta Gizli) -->
+        <div id="islemDetailView" class="hidden">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <div class="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+                    <div>
+                        <p id="islemDetailType" class="text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400"></p>
+                        <h2 id="islemDetailTitle" class="text-3xl font-bold text-gray-900 dark:text-white"></h2>
+                        <p id="islemDetailDate" class="text-sm text-gray-500 dark:text-gray-400 mt-1"></p>
+                    </div>
+                    <div class="text-right">
+                        <p id="islemDetailAmount" class="text-3xl font-bold"></p>
+                        <p class="text-gray-500 dark:text-gray-400">Tutar</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+                        <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300">Kaynak</h3>
+                        <p id="islemDetailSource" class="text-lg font-medium text-gray-900 dark:text-white mt-1"></p>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+                        <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300">Hedef</h3>
+                        <p id="islemDetailTarget" class="text-lg font-medium text-gray-900 dark:text-white mt-1"></p>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 md:col-span-2">
+                        <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300">Açıklama</h3>
+                        <p id="islemDetailDescription" class="text-sm text-gray-900 dark:text-gray-200 mt-1"></p>
+                    </div>
+                    <div id="islemDetailInvoiceWrapper" class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 md:col-span-2 hidden">
+                        <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300">Fatura Numarası</h3>
+                        <p id="islemDetailInvoice" class="text-sm text-gray-900 dark:text-gray-200 mt-1"></p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 justify-between">
+                    <button id="islemDetailBackBtn" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">&larr; Cari Detaya Dön</button>
+                    <div class="flex gap-2">
+                        <button id="islemDetailEditBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">Düzenle</button>
+                        <button id="islemDetailDeleteBtn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg">Sil</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -239,8 +339,10 @@
         let onConfirmCallback = () => {};
         let modalPrefillCariId = null;
         let editingIslem = null;
+        let currentIslemDetail = null;
         let detailFilters = { tip: '', start: null, end: null };
         let cariSearchQuery = '';
+        let dashboardSelectedBankId = null;
 
         // --- UI ELEMENTLERİ ---
         const mainView = document.getElementById('mainView');
@@ -266,6 +368,29 @@
         const detailIslemStart = document.getElementById('detailIslemStart');
         const detailIslemEnd = document.getElementById('detailIslemEnd');
         const detailResetFilters = document.getElementById('detailResetFilters');
+        const islemDetailView = document.getElementById('islemDetailView');
+        const islemDetailTitle = document.getElementById('islemDetailTitle');
+        const islemDetailAmount = document.getElementById('islemDetailAmount');
+        const islemDetailType = document.getElementById('islemDetailType');
+        const islemDetailDate = document.getElementById('islemDetailDate');
+        const islemDetailSource = document.getElementById('islemDetailSource');
+        const islemDetailTarget = document.getElementById('islemDetailTarget');
+        const islemDetailDescription = document.getElementById('islemDetailDescription');
+        const islemDetailInvoiceWrapper = document.getElementById('islemDetailInvoiceWrapper');
+        const islemDetailInvoice = document.getElementById('islemDetailInvoice');
+        const islemDetailBackBtn = document.getElementById('islemDetailBackBtn');
+        const islemDetailEditBtn = document.getElementById('islemDetailEditBtn');
+        const islemDetailDeleteBtn = document.getElementById('islemDetailDeleteBtn');
+        const dashboardView = document.getElementById('dashboardView');
+        const dashboardBankSelect = document.getElementById('dashboardBankSelect');
+        const dashboardBalance = document.getElementById('dashboardBalance');
+        const dashboardBankName = document.getElementById('dashboardBankName');
+        const dashboardBankType = document.getElementById('dashboardBankType');
+        const dashboardLastTransaction = document.getElementById('dashboardLastTransaction');
+        const dashboardUpdatedAt = document.getElementById('dashboardUpdatedAt');
+        const dashboardEmptyState = document.getElementById('dashboardEmptyState');
+        const navDashboardBtn = document.getElementById('navDashboardBtn');
+        const navCarilerBtn = document.getElementById('navCarilerBtn');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
         const confirmationModal = document.getElementById('confirmationModal');
@@ -453,6 +578,125 @@
             }
         }
 
+        function getIslemTipiLabel(islemTipi) {
+            const option = islemTipiSelect.querySelector(`option[value="${islemTipi}"]`);
+            if (option) return option.textContent;
+            switch (islemTipi) {
+                case 'gelir': return 'Gelir';
+                case 'gider': return 'Gider';
+                case 'tahsilat': return 'Tahsilat';
+                case 'odeme': return 'Ödeme';
+                case 'transfer': return 'Transfer';
+                default: return 'İşlem';
+            }
+        }
+
+        function getBankCariler() {
+            return allCariler.filter(c => (c.tipi || '').toLowerCase() === 'banka');
+        }
+
+        function setActiveNav(activeBtn) {
+            [navDashboardBtn, navCarilerBtn].forEach(btn => {
+                if (!btn) return;
+                const isActive = btn === activeBtn;
+                btn.classList.toggle('bg-indigo-600', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('bg-gray-800', !isActive);
+                btn.classList.toggle('text-gray-200', !isActive);
+            });
+        }
+
+        function showDashboard() {
+            setActiveNav(navDashboardBtn);
+            if (dashboardView) dashboardView.classList.remove('hidden');
+            mainView.classList.add('hidden');
+            detailView.classList.add('hidden');
+            islemDetailView.classList.add('hidden');
+            populateDashboardOptions();
+        }
+
+        function showCarilerView() {
+            setActiveNav(navCarilerBtn);
+            if (dashboardView) dashboardView.classList.add('hidden');
+            islemDetailView.classList.add('hidden');
+            detailView.classList.add('hidden');
+            mainView.classList.remove('hidden');
+        }
+
+        function populateDashboardOptions() {
+            if (!dashboardBankSelect) return;
+            const bankCariler = getBankCariler();
+            const previousSelection = dashboardSelectedBankId || dashboardBankSelect.value;
+            dashboardBankSelect.innerHTML = '<option value="">Banka seçiniz...</option>';
+            bankCariler.forEach(cari => {
+                const option = document.createElement('option');
+                option.value = cari.id;
+                option.textContent = cari.unvan;
+                dashboardBankSelect.appendChild(option);
+            });
+
+            if (previousSelection && bankCariler.some(c => c.id === previousSelection)) {
+                dashboardBankSelect.value = previousSelection;
+            } else if (bankCariler.length > 0) {
+                dashboardBankSelect.value = bankCariler[0].id;
+            } else {
+                dashboardBankSelect.value = '';
+            }
+
+            dashboardSelectedBankId = dashboardBankSelect.value || null;
+            updateDashboardSummary();
+        }
+
+        function updateDashboardSummary() {
+            if (!dashboardView) return;
+            const bankCariler = getBankCariler();
+
+            if (!bankCariler.length) {
+                if (dashboardEmptyState) dashboardEmptyState.classList.remove('hidden');
+                dashboardBalance.textContent = '₺0,00';
+                dashboardBalance.className = 'text-5xl font-semibold mt-4 text-gray-500';
+                dashboardBankName.textContent = '-';
+                dashboardBankType.textContent = '-';
+                dashboardLastTransaction.textContent = 'Henüz işlem bulunmuyor.';
+                dashboardUpdatedAt.textContent = 'Banka carisi eklenmedi.';
+                return;
+            }
+
+            if (dashboardEmptyState) dashboardEmptyState.classList.add('hidden');
+
+            if (!dashboardSelectedBankId || !bankCariler.some(c => c.id === dashboardSelectedBankId)) {
+                dashboardSelectedBankId = bankCariler[0].id;
+                dashboardBankSelect.value = dashboardSelectedBankId;
+            }
+
+            const selectedBank = bankCariler.find(c => c.id === dashboardSelectedBankId) || bankCariler[0];
+            const balance = Number(selectedBank.bakiye) || 0;
+            const balanceClass = balance > 0 ? 'text-emerald-400' : (balance < 0 ? 'text-rose-400' : 'text-gray-300');
+            dashboardBalance.className = `text-5xl font-semibold mt-4 ${balanceClass}`;
+            dashboardBalance.textContent = balance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+
+            dashboardBankName.textContent = selectedBank.unvan;
+            dashboardBankType.textContent = selectedBank.tipi || 'Banka';
+            dashboardUpdatedAt.textContent = `Güncelleme: ${new Date().toLocaleString('tr-TR')}`;
+
+            const relatedIslemler = allIslemler
+                .filter(islem => islem.isDeleted !== true && (islem.islemCari === selectedBank.id || islem.kaynakCari === selectedBank.id || islem.hedefCari === selectedBank.id))
+                .sort((a, b) => {
+                    const dateA = getIslemDate(a)?.getTime() || 0;
+                    const dateB = getIslemDate(b)?.getTime() || 0;
+                    return dateB - dateA;
+                });
+
+            if (relatedIslemler.length > 0) {
+                const lastDate = getIslemDate(relatedIslemler[0]);
+                dashboardLastTransaction.textContent = lastDate
+                    ? lastDate.toLocaleString('tr-TR', { dateStyle: 'long', timeStyle: 'short' })
+                    : 'Tarih bilgisi yok';
+            } else {
+                dashboardLastTransaction.textContent = 'Henüz işlem bulunmuyor.';
+            }
+        }
+
         function cariMatchesSearch(cari, query) {
             const normalized = query.trim().toLowerCase();
             if (!normalized) return true;
@@ -493,6 +737,69 @@
             const currentCariId = detailView.dataset.cariId;
             if (currentCariId) {
                 renderIslemler(currentCariId);
+            }
+        }
+
+        function showIslemDetay(islemId, { skipNavigation = false } = {}) {
+            const islem = allIslemler.find(i => i.id === islemId && i.isDeleted !== true);
+            if (!islem) {
+                showToast('İşlem bulunamadı veya silinmiş.', true);
+                return;
+            }
+
+            setActiveNav(navCarilerBtn);
+            currentIslemDetail = islem;
+            islemDetailView.dataset.islemId = islemId;
+
+            const cariId = detailView.dataset.cariId || null;
+            const title = cariId ? getIslemTitleForCari(islem, cariId) : getIslemTipiLabel(islem.islemTipi);
+            islemDetailTitle.textContent = title;
+            islemDetailType.textContent = getIslemTipiLabel(islem.islemTipi);
+
+            const tarihDate = getIslemDate(islem);
+            islemDetailDate.textContent = tarihDate
+                ? tarihDate.toLocaleString('tr-TR', { dateStyle: 'long', timeStyle: 'short' })
+                : 'Tarih bilgisi yok';
+
+            const rawAmount = Number(islem.toplamTutar ?? islem.tutar) || 0;
+            const netChange = cariId ? getCariNetChange(islem, cariId) : rawAmount;
+            const amountClass = netChange > 0 ? 'text-green-500' : (netChange < 0 ? 'text-red-500' : 'text-gray-500');
+            const amountValue = Math.abs(netChange) > 0 ? Math.abs(netChange) : Math.abs(rawAmount);
+            const amountSign = netChange > 0 ? '+' : (netChange < 0 ? '-' : '');
+            islemDetailAmount.className = `text-3xl font-bold ${amountClass}`;
+            islemDetailAmount.textContent = `${amountSign}${amountValue.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}`;
+
+            const kaynakAdi = getCariName(islem.kaynakCari || null);
+            const hedefAdi = getCariName(islem.hedefCari || null);
+            const islemCariAdi = getCariName(islem.islemCari || null);
+
+            if (islem.islemTipi === 'gelir') {
+                islemDetailSource.textContent = islemCariAdi || '-';
+                islemDetailTarget.textContent = 'Şirket';
+            } else if (islem.islemTipi === 'gider') {
+                islemDetailSource.textContent = 'Şirket';
+                islemDetailTarget.textContent = islemCariAdi || '-';
+            } else {
+                islemDetailSource.textContent = kaynakAdi || '-';
+                islemDetailTarget.textContent = hedefAdi || '-';
+            }
+
+            const aciklama = (islem.aciklama || '').trim();
+            islemDetailDescription.textContent = aciklama ? aciklama : 'Açıklama girilmemiş.';
+
+            const faturaNo = (islem.faturaNumarasi || '').trim();
+            if (faturaNo) {
+                islemDetailInvoiceWrapper.classList.remove('hidden');
+                islemDetailInvoice.textContent = faturaNo;
+            } else {
+                islemDetailInvoiceWrapper.classList.add('hidden');
+                islemDetailInvoice.textContent = '';
+            }
+
+            if (!skipNavigation) {
+                detailView.classList.add('hidden');
+                mainView.classList.add('hidden');
+                islemDetailView.classList.remove('hidden');
             }
         }
 
@@ -626,6 +933,7 @@
             allCariler.sort((a, b) => a.unvan.localeCompare(b.unvan));
             renderCariler(allCariler);
             updateCariSelects(allCariler);
+            populateDashboardOptions();
         });
 
         onSnapshot(query(islemlerCollectionRef), (snapshot) => {
@@ -641,6 +949,11 @@
                 const currentCariId = detailView.dataset.cariId;
                 if(currentCariId) showCariDetay(currentCariId);
             }
+            if (!islemDetailView.classList.contains('hidden')) {
+                const currentIslemId = islemDetailView.dataset.islemId;
+                if (currentIslemId) showIslemDetay(currentIslemId, { skipNavigation: true });
+            }
+            updateDashboardSummary();
         });
 
         // --- ARAYÜZ RENDER FONKSİYONLARI ---
@@ -759,7 +1072,8 @@
                 }
 
                 const islemElement = document.createElement('div');
-                islemElement.className = 'bg-gray-100 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center';
+                islemElement.className = 'islem-item cursor-pointer bg-gray-100 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center';
+                islemElement.dataset.id = islem.id;
                 islemElement.innerHTML = `
                     <div class="flex-grow">
                         <p class="font-semibold">${title}</p>
@@ -1016,6 +1330,67 @@
             });
         }
 
+        if (navDashboardBtn) {
+            navDashboardBtn.addEventListener('click', () => showDashboard());
+        }
+
+        if (navCarilerBtn) {
+            navCarilerBtn.addEventListener('click', () => showCarilerView());
+        }
+
+        if (dashboardBankSelect) {
+            dashboardBankSelect.addEventListener('change', () => {
+                dashboardSelectedBankId = dashboardBankSelect.value || null;
+                updateDashboardSummary();
+            });
+        }
+
+        if (islemDetailBackBtn) {
+            islemDetailBackBtn.addEventListener('click', () => {
+                islemDetailView.classList.add('hidden');
+                detailView.classList.remove('hidden');
+                mainView.classList.add('hidden');
+                delete islemDetailView.dataset.islemId;
+                currentIslemDetail = null;
+            });
+        }
+
+        if (islemDetailEditBtn) {
+            islemDetailEditBtn.addEventListener('click', () => {
+                if (!currentIslemDetail) return;
+                openIslemModal({ islemToEdit: currentIslemDetail });
+            });
+        }
+
+        if (islemDetailDeleteBtn) {
+            islemDetailDeleteBtn.addEventListener('click', () => {
+                if (!currentIslemDetail) return;
+                const islemId = currentIslemDetail.id;
+                showConfirmation({
+                    title: 'İşlemi Sil',
+                    message: 'Bu işlemi silmek istediğinize emin misiniz? Bu işlem, ilgili cari bakiyesini de güncelleyecektir.',
+                    onConfirm: async () => {
+                        try {
+                            const islemRef = doc(db, 'islemler', islemId);
+                            await updateDoc(islemRef, {
+                                isDeleted: true,
+                                deletedAt: serverTimestamp()
+                            });
+                            showToast('İşlem başarıyla silindi.');
+                            islemDetailView.classList.add('hidden');
+                            detailView.classList.remove('hidden');
+                            mainView.classList.add('hidden');
+                            currentIslemDetail = null;
+                            refreshDetailIslemler();
+                        } catch (error) {
+                            console.error('İşlem silme hatası:', error);
+                            showToast('İşlem silinirken bir hata oluştu.', true);
+                        }
+                    }
+                });
+            });
+        }
+
         closeModalBtn.addEventListener('click', () => {
             closeModal(islemModal);
             cleanupIslemModal();
@@ -1185,10 +1560,30 @@
                         };
                     }
 
+                    const editedIslemId = editingIslem.id;
+                    const wasIslemDetailVisible = !islemDetailView.classList.contains('hidden');
+
                     await updateExistingIslem(editingIslem, updatedIslem);
+
+                    const mergedIslem = { ...editingIslem, ...updatedIslem, id: editedIslemId };
+                    const islemIndex = allIslemler.findIndex(i => i.id === editedIslemId);
+                    if (islemIndex >= 0) {
+                        allIslemler[islemIndex] = mergedIslem;
+                    }
+                    if (currentIslemDetail && currentIslemDetail.id === editedIslemId) {
+                        currentIslemDetail = mergedIslem;
+                    }
+
                     showToast('İşlem başarıyla güncellendi.');
                     closeModal(islemModal);
                     cleanupIslemModal();
+                    refreshDetailIslemler();
+                    if (wasIslemDetailVisible) {
+                        showIslemDetay(editedIslemId, { skipNavigation: true });
+                        islemDetailView.classList.remove('hidden');
+                        detailView.classList.add('hidden');
+                        mainView.classList.add('hidden');
+                    }
                 } catch (error) {
                     console.error('İşlem güncelleme hatası:', error);
                     showToast(error.message || 'İşlem güncellenirken bir hata oluştu.', true);
@@ -1391,11 +1786,20 @@
                         }
                     }
                 });
+                return;
+            }
+
+            const item = e.target.closest('.islem-item');
+            if (item && !e.target.closest('button')) {
+                showIslemDetay(item.dataset.id);
             }
         });
         
         backToListBtn.addEventListener('click', () => {
             resetDetailFilters();
+            delete islemDetailView.dataset.islemId;
+            currentIslemDetail = null;
+            islemDetailView.classList.add('hidden');
             delete detailView.dataset.cariId;
             detailView.classList.add('hidden');
             mainView.classList.remove('hidden');
@@ -1405,6 +1809,7 @@
             const cari = allCariler.find(c => c.id === cariId);
             if (!cari) return;
 
+            setActiveNav(navCarilerBtn);
             const previousCariId = detailView.dataset.cariId;
             const isSameCari = previousCariId === cariId;
             if (!isSameCari) {
@@ -1419,11 +1824,16 @@
             bakiyeEl.textContent = bakiye.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
             bakiyeEl.className = 'text-3xl font-bold ' + (bakiye > 0 ? 'text-green-500' : (bakiye < 0 ? 'text-red-500' : 'text-gray-500'));
             
+            islemDetailView.classList.add('hidden');
+            currentIslemDetail = null;
+
             renderIslemler(cariId);
 
             mainView.classList.add('hidden');
             detailView.classList.remove('hidden');
         }
+
+        showDashboard();
 
     </script>
 </body>
