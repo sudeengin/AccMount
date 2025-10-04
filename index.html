@@ -54,6 +54,10 @@
                 <!-- Sağ Panel: Cari Listesi -->
                 <div class="md:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
                     <h2 class="text-2xl font-semibold mb-4">Cari Hesaplar</h2>
+                    <div class="mb-4">
+                        <label for="cariSearchInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Cari veya işlem ara</label>
+                        <input type="text" id="cariSearchInput" placeholder="Cari adı, işlem açıklaması veya başlık arayın..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-sm">
+                    </div>
                     <div id="cariList" class="space-y-3">
                         <p class="text-gray-500 dark:text-gray-400">Yükleniyor...</p>
                     </div>
@@ -76,10 +80,41 @@
                 </div>
                 
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">İşlem Geçmişi</h3>
-                    <button id="backToListBtn" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">
-                        &larr; Geri Dön
-                    </button>
+                    <div>
+                        <h3 class="text-xl font-semibold">İşlem Geçmişi</h3>
+                        <p id="detailIslemCount" class="text-sm text-gray-500 dark:text-gray-400">0 işlem</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="detailIslemBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">İşlem Yap</button>
+                        <button id="backToListBtn" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">
+                            &larr; Geri Dön
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                    <div>
+                        <label for="detailIslemTipFilter" class="block text-sm font-medium text-gray-600 dark:text-gray-300">İşlem Tipi</label>
+                        <select id="detailIslemTipFilter" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-sm">
+                            <option value="">Tümü</option>
+                            <option value="gelir">Gelir</option>
+                            <option value="gider">Gider</option>
+                            <option value="tahsilat">Tahsilat</option>
+                            <option value="odeme">Ödeme</option>
+                            <option value="transfer">Transfer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="detailIslemStart" class="block text-sm font-medium text-gray-600 dark:text-gray-300">Başlangıç Tarihi</label>
+                        <input type="date" id="detailIslemStart" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-sm">
+                    </div>
+                    <div>
+                        <label for="detailIslemEnd" class="block text-sm font-medium text-gray-600 dark:text-gray-300">Bitiş Tarihi</label>
+                        <input type="date" id="detailIslemEnd" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-sm">
+                    </div>
+                    <div class="flex items-end">
+                        <button id="detailResetFilters" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-sm font-semibold">Filtreleri Sıfırla</button>
+                    </div>
                 </div>
 
                 <div id="islemList" class="space-y-3">
@@ -202,12 +237,17 @@
         let allCariler = [];
         let allIslemler = [];
         let onConfirmCallback = () => {};
+        let modalPrefillCariId = null;
+        let editingIslem = null;
+        let detailFilters = { tip: '', start: null, end: null };
+        let cariSearchQuery = '';
 
         // --- UI ELEMENTLERİ ---
         const mainView = document.getElementById('mainView');
         const detailView = document.getElementById('detailView');
         const addCariForm = document.getElementById('addCariForm');
         const cariList = document.getElementById('cariList');
+        const cariSearchInput = document.getElementById('cariSearchInput');
         const openModalBtn = document.getElementById('openModalBtn');
         const closeModalBtn = document.getElementById('closeModalBtn');
         const islemModal = document.getElementById('islemModal');
@@ -216,8 +256,16 @@
         const islemTipiSelect = document.getElementById('islemTipi');
         const singleEntryContainer = document.getElementById('singleEntryContainer');
         const multiEntryContainer = document.getElementById('multiEntryContainer');
+        const kaynakCariSingleSelect = document.getElementById('kaynakCariSingle');
+        const hedefCariSingleSelect = document.getElementById('hedefCariSingle');
         const backToListBtn = document.getElementById('backToListBtn');
+        const detailIslemBtn = document.getElementById('detailIslemBtn');
         const islemList = document.getElementById('islemList');
+        const detailIslemCount = document.getElementById('detailIslemCount');
+        const detailIslemTipFilter = document.getElementById('detailIslemTipFilter');
+        const detailIslemStart = document.getElementById('detailIslemStart');
+        const detailIslemEnd = document.getElementById('detailIslemEnd');
+        const detailResetFilters = document.getElementById('detailResetFilters');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
         const confirmationModal = document.getElementById('confirmationModal');
@@ -248,6 +296,278 @@
                 selectElement.appendChild(option);
             });
             selectElement.value = currentValue;
+        }
+        
+        function setSelectValueIfOption(selectElement, value) {
+            if (!selectElement || !value) return;
+            const hasOption = Array.from(selectElement.options || []).some(option => option.value === value);
+            if (hasOption) {
+                selectElement.value = value;
+            }
+        }
+
+        function parseDateInputValue(inputValue, isEnd = false) {
+            if (!inputValue) return null;
+            const date = new Date(inputValue);
+            if (Number.isNaN(date.getTime())) return null;
+            if (isEnd) {
+                date.setHours(23, 59, 59, 999);
+            } else {
+                date.setHours(0, 0, 0, 0);
+            }
+            return date;
+        }
+
+        function getIslemDate(islem) {
+            const value = islem?.tarih;
+            if (!value) return null;
+            if (typeof value.toDate === 'function') return value.toDate();
+            if (value.seconds) return new Date(value.seconds * 1000);
+            if (value instanceof Date) return value;
+            if (typeof value === 'string') {
+                const parsed = new Date(value);
+                return Number.isNaN(parsed.getTime()) ? null : parsed;
+            }
+            return null;
+        }
+
+        function formatDateForInput(date) {
+            if (!date) return '';
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getCariNetChange(islem, cariId) {
+            const amountRaw = Number(islem.toplamTutar ?? islem.tutar ?? 0);
+            const amount = Number.isFinite(amountRaw) ? Math.abs(amountRaw) : 0;
+            if (amount === 0) return 0;
+
+            let change = 0;
+
+            if (islem.islemCari === cariId) {
+                if (islem.islemTipi === 'gelir') change += amount;
+                if (islem.islemTipi === 'gider') change -= amount;
+            }
+            if (islem.kaynakCari === cariId) change -= amount;
+            if (islem.hedefCari === cariId) change += amount;
+
+            return change;
+        }
+
+        function formatNumberForInput(value) {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return '';
+            return numeric.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function calculateCariDeltas(islem, factor = 1) {
+            const deltas = new Map();
+            const amountRaw = Number(islem?.toplamTutar ?? islem?.tutar ?? 0);
+            const amount = Number.isFinite(amountRaw) ? Math.abs(amountRaw) : 0;
+            if (!amount) return deltas;
+
+            const addDelta = (cariId, delta) => {
+                if (!cariId || !Number.isFinite(delta) || delta === 0) return;
+                deltas.set(cariId, (deltas.get(cariId) || 0) + delta);
+            };
+
+            switch (islem.islemTipi) {
+                case 'gelir':
+                    addDelta(islem.islemCari, factor * amount);
+                    break;
+                case 'gider':
+                    addDelta(islem.islemCari, factor * -amount);
+                    break;
+                default:
+                    addDelta(islem.kaynakCari, factor * -amount);
+                    addDelta(islem.hedefCari, factor * amount);
+                    break;
+            }
+
+            return deltas;
+        }
+
+        function mergeDeltaMaps(target, source) {
+            source.forEach((value, key) => {
+                if (!Number.isFinite(value) || value === 0) return;
+                target.set(key, (target.get(key) || 0) + value);
+            });
+        }
+
+        async function updateExistingIslem(existingIslem, updatedFields) {
+            const islemRef = doc(db, 'islemler', existingIslem.id);
+
+            await runTransaction(db, async (transaction) => {
+                const deltaMap = new Map();
+                mergeDeltaMaps(deltaMap, calculateCariDeltas(existingIslem, -1));
+                mergeDeltaMaps(deltaMap, calculateCariDeltas(updatedFields, 1));
+
+                const payload = {
+                    ...updatedFields,
+                    kayitTarihi: existingIslem.kayitTarihi ?? updatedFields.kayitTarihi ?? serverTimestamp(),
+                    guncellemeTarihi: serverTimestamp(),
+                    isDeleted: false
+                };
+
+                transaction.update(islemRef, payload);
+
+                deltaMap.forEach((delta, cariId) => {
+                    if (!cariId || !Number.isFinite(delta) || delta === 0) return;
+                    const cariRef = doc(db, 'cariler', cariId);
+                    transaction.update(cariRef, { bakiye: increment(delta) });
+                });
+            });
+        }
+
+        function getCariName(cariId) {
+            if (!cariId) return 'Bilinmeyen';
+            const cari = allCariler.find(c => c.id === cariId);
+            return cari ? cari.unvan : 'Bilinmeyen';
+        }
+
+        function getIslemTitleForCari(islem, cariId) {
+            const kaynakCariAdi = getCariName(islem.kaynakCari);
+            const hedefCariAdi = getCariName(islem.hedefCari);
+
+            switch (islem.islemTipi) {
+                case 'transfer':
+                    return islem.kaynakCari === cariId
+                        ? `${hedefCariAdi}'a Ödeme Yapıldı`
+                        : `${kaynakCariAdi}'dan Borç Alındı`;
+                case 'tahsilat':
+                    return islem.kaynakCari === cariId
+                        ? `${hedefCariAdi}'a Tahsilat Yapıldı`
+                        : `${kaynakCariAdi}'dan Para Girişi`;
+                case 'odeme':
+                    return islem.kaynakCari === cariId
+                        ? `${hedefCariAdi}'a Ödeme Çıkışı`
+                        : `${kaynakCariAdi} Hesabından Ödeme`;
+                case 'gelir':
+                    return 'Gelir İşlemi';
+                case 'gider':
+                    return 'Gider İşlemi';
+                default:
+                    return islemTipiSelect.querySelector(`option[value=${islem.islemTipi}]`)?.textContent || 'İşlem';
+            }
+        }
+
+        function cariMatchesSearch(cari, query) {
+            const normalized = query.trim().toLowerCase();
+            if (!normalized) return true;
+
+            const basicFields = [cari.unvan, cari.tipi, cari.vergiNo, cari.email, cari.telefon];
+            if (basicFields.some(field => typeof field === 'string' && field.toLowerCase().includes(normalized))) {
+                return true;
+            }
+
+            const ilgiliIslemler = allIslemler.filter(islem => 
+                islem.islemCari === cari.id ||
+                islem.kaynakCari === cari.id ||
+                islem.hedefCari === cari.id
+            );
+
+            return ilgiliIslemler.some(islem => {
+                const title = getIslemTitleForCari(islem, cari.id);
+                const otherFields = [
+                    title,
+                    islem.aciklama,
+                    islem.faturaNumarasi,
+                    getCariName(islem.kaynakCari),
+                    getCariName(islem.hedefCari),
+                    islem.islemTipi
+                ];
+                return otherFields.some(field => typeof field === 'string' && field.toLowerCase().includes(normalized));
+            });
+        }
+
+        function resetDetailFilters() {
+            detailFilters = { tip: '', start: null, end: null };
+            if (detailIslemTipFilter) detailIslemTipFilter.value = '';
+            if (detailIslemStart) detailIslemStart.value = '';
+            if (detailIslemEnd) detailIslemEnd.value = '';
+        }
+
+        function refreshDetailIslemler() {
+            const currentCariId = detailView.dataset.cariId;
+            if (currentCariId) {
+                renderIslemler(currentCariId);
+            }
+        }
+
+        function populateIslemFormForEdit() {
+            if (!editingIslem) return;
+
+            const isMultiEntry = ['gelir', 'gider'].includes(editingIslem.islemTipi);
+            addRowBtn.classList.toggle('hidden', isMultiEntry);
+            addRowBtn.disabled = isMultiEntry;
+
+            const tarihDate = getIslemDate(editingIslem) || new Date();
+
+            if (isMultiEntry) {
+                const row = multiEntryRowsContainer.querySelector('.multi-entry-row');
+                if (!row) return;
+
+                const cariSelect = row.querySelector('[name="islemCari"]');
+                setSelectValueIfOption(cariSelect, editingIslem.islemCari);
+
+                const tarihInput = row.querySelector('[name="tarih"]');
+                if (tarihInput) tarihInput.valueAsDate = tarihDate;
+
+                const faturaInput = row.querySelector('[name="faturaNumarasi"]');
+                if (faturaInput) faturaInput.value = editingIslem.faturaNumarasi || '';
+
+                const aciklamaInput = row.querySelector('[name="aciklama"]');
+                if (aciklamaInput) aciklamaInput.value = editingIslem.aciklama || '';
+
+                const vergiSelect = row.querySelector('[name="vergiOrani"]');
+                if (vergiSelect) vergiSelect.value = (editingIslem.vergiOrani ?? 0).toString();
+
+                const vergisizInput = row.querySelector('[name="tutar"]');
+                if (vergisizInput) vergisizInput.value = formatNumberForInput(editingIslem.tutar);
+
+                const toplamInput = row.querySelector('[name="toplamTutar"]');
+                if (toplamInput) toplamInput.value = formatNumberForInput(editingIslem.toplamTutar ?? editingIslem.tutar);
+
+                const triggerInput = row.querySelector('.vergisiz-tutar');
+                if (triggerInput) triggerInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+                const removeBtn = row.querySelector('.remove-row-btn');
+                if (removeBtn) {
+                    removeBtn.classList.add('hidden');
+                    removeBtn.disabled = true;
+                }
+            } else {
+                const tarihSingle = document.getElementById('tarihSingle');
+                if (tarihSingle) tarihSingle.valueAsDate = tarihDate;
+
+                setSelectValueIfOption(kaynakCariSingleSelect, editingIslem.kaynakCari || null);
+                setSelectValueIfOption(hedefCariSingleSelect, editingIslem.hedefCari || null);
+
+                const tutarSingle = document.getElementById('tutarSingle');
+                if (tutarSingle) tutarSingle.value = formatNumberForInput(editingIslem.tutar);
+
+                const aciklamaSingle = document.getElementById('aciklamaSingle');
+                if (aciklamaSingle) aciklamaSingle.value = editingIslem.aciklama || '';
+            }
+
+            formSubmitBtn.textContent = 'İşlemi Güncelle';
+            islemModalTitle.textContent = 'İşlemi Düzenle';
+        }
+
+        function cleanupIslemModal() {
+            editingIslem = null;
+            modalPrefillCariId = null;
+            addRowBtn.classList.remove('hidden');
+            addRowBtn.disabled = false;
+            addIslemForm.reset();
+            multiEntryRowsContainer.innerHTML = '';
+            singleEntryContainer.classList.add('hidden');
+            multiEntryContainer.classList.add('hidden');
+            formSubmitBtn.textContent = 'İşlemi Kaydet';
+            islemModalTitle.textContent = 'Yeni Finansal İşlem';
+            islemTipiSelect.value = 'gelir';
         }
         
         // --- MODAL FONKSİYONLARI ---
@@ -330,7 +650,17 @@
                 cariList.innerHTML = `<p class="text-gray-500 dark:text-gray-400">Henüz cari eklenmemiş.</p>`;
                 return;
             }
-            cariler.forEach(cari => {
+
+            const displayCariler = cariSearchQuery
+                ? cariler.filter(cari => cariMatchesSearch(cari, cariSearchQuery))
+                : cariler;
+
+            if (displayCariler.length === 0) {
+                cariList.innerHTML = `<p class="text-gray-500 dark:text-gray-400">Arama kriterlerine uygun cari bulunamadı.</p>`;
+                return;
+            }
+
+            displayCariler.forEach(cari => {
                 const bakiye = cari.bakiye || 0;
                 const bakiyeRenk = bakiye > 0 ? 'text-green-500' : (bakiye < 0 ? 'text-red-500' : 'text-gray-500');
                 const cariElement = document.createElement('div');
@@ -374,37 +704,49 @@
                 islem.hedefCari === cariId
             );
 
-            if (ilgiliIslemler.length === 0) {
-                islemList.innerHTML = `<p class="text-gray-500 dark:text-gray-400 p-4 text-center">Bu cari için işlem geçmişi bulunmuyor.</p>`;
+            const filteredIslemler = ilgiliIslemler.filter(islem => {
+                if (detailFilters.tip && islem.islemTipi !== detailFilters.tip) return false;
+                const islemDate = getIslemDate(islem);
+                if (detailFilters.start && (!islemDate || islemDate < detailFilters.start)) return false;
+                if (detailFilters.end && (!islemDate || islemDate > detailFilters.end)) return false;
+                return true;
+            }).sort((a, b) => {
+                const dateA = getIslemDate(a);
+                const dateB = getIslemDate(b);
+                const timeA = dateA ? dateA.getTime() : 0;
+                const timeB = dateB ? dateB.getTime() : 0;
+                if (timeA === timeB) {
+                    const kayitA = a.kayitTarihi?.seconds || 0;
+                    const kayitB = b.kayitTarihi?.seconds || 0;
+                    return kayitB - kayitA;
+                }
+                return timeB - timeA;
+            });
+
+            if (detailIslemCount) {
+                detailIslemCount.textContent = `${filteredIslemler.length} işlem`;
+            }
+
+            if (filteredIslemler.length === 0) {
+                const message = ilgiliIslemler.length === 0
+                    ? 'Bu cari için işlem geçmişi bulunmuyor.'
+                    : 'Seçilen filtrelere uygun işlem bulunmuyor.';
+                islemList.innerHTML = `<p class="text-gray-500 dark:text-gray-400 p-4 text-center">${message}</p>`;
                 return;
             }
 
-            ilgiliIslemler.forEach(islem => {
+            filteredIslemler.forEach(islem => {
                 let tutar = islem.toplamTutar || islem.tutar || 0;
-                const tarih = islem.tarih ? new Date(islem.tarih.seconds * 1000).toLocaleDateString('tr-TR') : 'Bilinmiyor';
+                const tarihDate = getIslemDate(islem);
+                const tarih = tarihDate ? tarihDate.toLocaleDateString('tr-TR') : 'Bilinmiyor';
                 let description = islem.aciklama || '';
-                let title = '';
+                const title = getIslemTitleForCari(islem, cariId);
+                const netChange = getCariNetChange(islem, cariId);
+                const amountSign = netChange > 0 ? '+' : (netChange < 0 ? '-' : '');
+                const amountClass = netChange > 0 ? 'text-green-500' : (netChange < 0 ? 'text-red-500' : 'text-gray-500');
+                const amountValue = Math.abs(netChange) > 0 ? Math.abs(netChange) : Math.abs(Number(tutar) || 0);
+                const formattedAmount = amountValue.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
 
-                const kaynakCari = allCariler.find(c => c.id === islem.kaynakCari);
-                const hedefCari = allCariler.find(c => c.id === islem.hedefCari);
-
-                switch (islem.islemTipi) {
-                    case 'transfer':
-                        if (islem.kaynakCari === cariId) title = `${hedefCari ? hedefCari.unvan : 'Bilinmeyen'}'a Ödeme Yapıldı`;
-                        else title = `${kaynakCari ? kaynakCari.unvan : 'Bilinmeyen'}'dan Borç Alındı`;
-                        break;
-                    case 'tahsilat':
-                         if (islem.kaynakCari === cariId) title = `${hedefCari ? hedefCari.unvan : 'Bilinmeyen'}'a Tahsilat Yapıldı`;
-                        else title = `${kaynakCari ? kaynakCari.unvan : 'Bilinmeyen'}'dan Para Girişi`;
-                        break;
-                    case 'odeme':
-                        if (islem.kaynakCari === cariId) title = `${hedefCari ? hedefCari.unvan : 'Bilinmeyen'}'a Ödeme Çıkışı`;
-                        else title = `${kaynakCari ? kaynakCari.unvan : 'Bilinmeyen'} Hesabından Ödeme`;
-                        break;
-                    default:
-                         title = islemTipiSelect.querySelector(`option[value=${islem.islemTipi}]`).textContent;
-                }
-                
                 if ((islem.islemTipi === 'gelir' || islem.islemTipi === 'gider') && typeof islem.vergiOrani !== 'undefined') {
                     const vergisizTutarFormatted = (islem.tutar || 0).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
                     description = `
@@ -425,9 +767,12 @@
                     </div>
                     <div class="text-right ml-4 flex-shrink-0 flex items-center">
                         <div>
-                            <p class="font-bold text-lg">${tutar.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
+                            <p class="font-bold text-lg ${amountClass}">${amountSign}${formattedAmount}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">${tarih}</p>
                         </div>
+                        <button data-id="${islem.id}" class="edit-islem-btn ml-2 p-2 rounded-full text-gray-400 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793z"/><path d="M11.379 5.793L4 13.172V16h2.828l7.379-7.379-2.828-2.828z"/></svg>
+                        </button>
                         <button data-id="${islem.id}" class="delete-islem-btn ml-2 p-2 rounded-full text-gray-400 transition-colors">
                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
                         </button>
@@ -506,6 +851,11 @@
                 }
             }
 
+            if (modalPrefillCariId) {
+                const cariSelect = row.querySelector('[name="islemCari"]');
+                setSelectValueIfOption(cariSelect, modalPrefillCariId);
+            }
+
             if (type === 'gelir' || type === 'gider') {
                 const tutarIn = row.querySelector('.vergisiz-tutar');
                 const vergiIn = row.querySelector('.vergi-orani');
@@ -561,6 +911,33 @@
             }
         });
 
+        function openIslemModal({ prefillCariId = null, islemToEdit = null } = {}) {
+            cleanupIslemModal();
+
+            editingIslem = islemToEdit;
+            modalPrefillCariId = islemToEdit ? null : prefillCariId;
+
+            addIslemForm.reset();
+            multiEntryRowsContainer.innerHTML = '';
+            singleEntryContainer.classList.add('hidden');
+            multiEntryContainer.classList.add('hidden');
+
+            const targetType = editingIslem ? editingIslem.islemTipi : 'gelir';
+            islemTipiSelect.value = targetType;
+            islemTipiSelect.dispatchEvent(new Event('change'));
+
+            if (editingIslem) {
+                populateIslemFormForEdit();
+            } else {
+                if (!['gelir', 'gider'].includes(targetType)) {
+                    const tarihSingle = document.getElementById('tarihSingle');
+                    if (tarihSingle) tarihSingle.valueAsDate = new Date();
+                }
+            }
+
+            openModal(islemModal);
+        }
+
         // --- EVENT LISTENERS ---
         addCariForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -581,13 +958,68 @@
             }
         });
 
-        openModalBtn.addEventListener('click', () => {
-            islemTipiSelect.value = 'gelir';
-            islemTipiSelect.dispatchEvent(new Event('change'));
-            openModal(islemModal);
-        });
+        openModalBtn.addEventListener('click', () => openIslemModal());
 
-        closeModalBtn.addEventListener('click', () => closeModal(islemModal));
+        if (detailIslemBtn) {
+            detailIslemBtn.addEventListener('click', () => {
+                const cariId = detailView.dataset.cariId;
+                if (!cariId) return;
+                openIslemModal({ prefillCariId: cariId });
+            });
+        }
+
+        if (detailIslemTipFilter) {
+            detailIslemTipFilter.addEventListener('change', () => {
+                detailFilters.tip = detailIslemTipFilter.value || '';
+                refreshDetailIslemler();
+            });
+        }
+
+        if (detailIslemStart) {
+            detailIslemStart.addEventListener('change', () => {
+                const newStart = parseDateInputValue(detailIslemStart.value, false);
+                if (detailFilters.end && newStart && newStart > detailFilters.end) {
+                    showToast('Başlangıç tarihi, bitiş tarihinden büyük olamaz.', true);
+                    detailIslemStart.value = formatDateForInput(detailFilters.start);
+                    return;
+                }
+                detailFilters.start = newStart;
+                refreshDetailIslemler();
+            });
+        }
+
+        if (detailIslemEnd) {
+            detailIslemEnd.addEventListener('change', () => {
+                const newEnd = parseDateInputValue(detailIslemEnd.value, true);
+                if (detailFilters.start && newEnd && newEnd < detailFilters.start) {
+                    showToast('Bitiş tarihi, başlangıç tarihinden küçük olamaz.', true);
+                    detailIslemEnd.value = formatDateForInput(detailFilters.end);
+                    return;
+                }
+                detailFilters.end = newEnd;
+                refreshDetailIslemler();
+            });
+        }
+
+        if (detailResetFilters) {
+            detailResetFilters.addEventListener('click', (event) => {
+                event.preventDefault();
+                resetDetailFilters();
+                refreshDetailIslemler();
+            });
+        }
+
+        if (cariSearchInput) {
+            cariSearchInput.addEventListener('input', (event) => {
+                cariSearchQuery = (event.target.value || '').toString();
+                renderCariler(allCariler);
+            });
+        }
+
+        closeModalBtn.addEventListener('click', () => {
+            closeModal(islemModal);
+            cleanupIslemModal();
+        });
         cancelConfirmationBtn.addEventListener('click', () => closeModal(confirmationModal));
         
         confirmActionBtn.addEventListener('click', () => {
@@ -598,47 +1030,82 @@
         islemTipiSelect.addEventListener('change', (e) => {
             const selectedType = e.target.value;
             const isMultiEntry = ['gelir', 'gider'].includes(selectedType);
+            const isEditMode = Boolean(editingIslem);
 
             singleEntryContainer.classList.toggle('hidden', isMultiEntry);
             multiEntryContainer.classList.toggle('hidden', !isMultiEntry);
             
             const selectedOptionText = e.target.options[e.target.selectedIndex].text;
 
-            if(isMultiEntry){
-                islemModalTitle.textContent = `Çoklu ${selectedOptionText} Girişi`;
-                formSubmitBtn.textContent = "Tümünü Kaydet";
+            if (isMultiEntry) {
                 multiEntryRowsContainer.innerHTML = '';
                 addMultiEntryRow(selectedType);
-            } else { 
-                 islemModalTitle.textContent = "Yeni Finansal İşlem";
-                 formSubmitBtn.textContent = "İşlemi Kaydet";
-                 multiEntryRowsContainer.innerHTML = '';
-                 document.getElementById('tarihSingle').valueAsDate = new Date();
+                if (!isEditMode) {
+                    islemModalTitle.textContent = `Çoklu ${selectedOptionText} Girişi`;
+                    formSubmitBtn.textContent = 'Tümünü Kaydet';
+                }
+                addRowBtn.classList.toggle('hidden', isEditMode);
+                addRowBtn.disabled = isEditMode;
+                if (isEditMode) {
+                    const removeBtn = multiEntryRowsContainer.querySelector('.remove-row-btn');
+                    if (removeBtn) {
+                        removeBtn.classList.add('hidden');
+                        removeBtn.disabled = true;
+                    }
+                }
+            } else {
+                multiEntryRowsContainer.innerHTML = '';
+                if (!isEditMode) {
+                    islemModalTitle.textContent = 'Yeni Finansal İşlem';
+                    formSubmitBtn.textContent = 'İşlemi Kaydet';
+                }
+                const tarihSingleInput = document.getElementById('tarihSingle');
+                if (tarihSingleInput && !isEditMode) {
+                    tarihSingleInput.valueAsDate = new Date();
+                }
 
-                 const kaynakLabel = document.getElementById('kaynakCariSingleLabel');
-                 const hedefLabel = document.getElementById('hedefCariSingleLabel');
-                 const bankCariler = allCariler.filter(c => c.tipi === 'Banka');
+                const kaynakLabel = document.getElementById('kaynakCariSingleLabel');
+                const hedefLabel = document.getElementById('hedefCariSingleLabel');
+                const bankCariler = allCariler.filter(c => c.tipi === 'Banka');
 
-                 switch(selectedType) {
+                switch (selectedType) {
                     case 'tahsilat':
-                        kaynakLabel.textContent = "Tahsilat Yapılan Cari (Kaynak)";
-                        hedefLabel.textContent = "Paranın Girdiği Hesap (Hedef)";
-                        populateSelect(document.getElementById('kaynakCariSingle'), allCariler);
-                        populateSelect(document.getElementById('hedefCariSingle'), bankCariler);
+                        kaynakLabel.textContent = 'Tahsilat Yapılan Cari (Kaynak)';
+                        hedefLabel.textContent = 'Paranın Girdiği Hesap (Hedef)';
+                        populateSelect(kaynakCariSingleSelect, allCariler);
+                        populateSelect(hedefCariSingleSelect, bankCariler);
                         break;
                     case 'odeme':
-                        kaynakLabel.textContent = "Ödeme Yapılan Hesap (Kaynak)";
-                        hedefLabel.textContent = "Ödenen Cari (Hedef)";
-                        populateSelect(document.getElementById('kaynakCariSingle'), bankCariler);
-                        populateSelect(document.getElementById('hedefCariSingle'), allCariler);
+                        kaynakLabel.textContent = 'Ödeme Yapılan Hesap (Kaynak)';
+                        hedefLabel.textContent = 'Ödenen Cari (Hedef)';
+                        populateSelect(kaynakCariSingleSelect, bankCariler);
+                        populateSelect(hedefCariSingleSelect, allCariler);
                         break;
                     case 'transfer':
-                        kaynakLabel.textContent = "Kaynak Cari (Borçlanılan)";
-                        hedefLabel.textContent = "Hedef Cari (Ödeme Yapılan)";
-                        populateSelect(document.getElementById('kaynakCariSingle'), allCariler);
-                        populateSelect(document.getElementById('hedefCariSingle'), allCariler);
+                        kaynakLabel.textContent = 'Kaynak Cari (Borçlanılan)';
+                        hedefLabel.textContent = 'Hedef Cari (Ödeme Yapılan)';
+                        populateSelect(kaynakCariSingleSelect, allCariler);
+                        populateSelect(hedefCariSingleSelect, allCariler);
                         break;
                 }
+
+                addRowBtn.classList.remove('hidden');
+                addRowBtn.disabled = false;
+
+                if (!isEditMode && modalPrefillCariId) {
+                    setSelectValueIfOption(kaynakCariSingleSelect, modalPrefillCariId);
+                    setSelectValueIfOption(hedefCariSingleSelect, modalPrefillCariId);
+                }
+            }
+
+            if (!isEditMode && isMultiEntry && modalPrefillCariId) {
+                const firstRowCari = multiEntryRowsContainer.querySelector('[name="islemCari"]');
+                setSelectValueIfOption(firstRowCari, modalPrefillCariId);
+            }
+
+            if (isEditMode) {
+                islemModalTitle.textContent = 'İşlemi Düzenle';
+                formSubmitBtn.textContent = 'İşlemi Güncelle';
             }
         });
         
@@ -648,7 +1115,87 @@
             e.preventDefault();
             const islemTipi = islemTipiSelect.value;
             const isMultiEntry = ['gelir', 'gider'].includes(islemTipi);
-            
+
+            if (editingIslem) {
+                try {
+                    let updatedIslem;
+
+                    if (isMultiEntry) {
+                        const row = multiEntryRowsContainer.querySelector('.multi-entry-row');
+                        if (!row) return showToast('Düzenlenecek satır bulunamadı.', true);
+
+                        const islemCari = row.querySelector('[name="islemCari"]').value;
+                        const tarihValue = row.querySelector('[name="tarih"]').value;
+                        const vergiOrani = parseFloat(row.querySelector('[name="vergiOrani"]').value) || 0;
+                        const tersHesaplaCb = row.querySelector('.ters-hesapla-cb');
+                        let toplamTutar = 0;
+                        let tutar = 0;
+
+                        if (tersHesaplaCb.checked) {
+                            toplamTutar = parseTurkishNumber(row.querySelector('[name="toplamTutar"]').value);
+                            tutar = toplamTutar / (1 + vergiOrani / 100);
+                        } else {
+                            tutar = parseTurkishNumber(row.querySelector('[name="tutar"]').value);
+                            toplamTutar = tutar * (1 + vergiOrani / 100);
+                        }
+
+                        tutar = Number(tutar.toFixed(2));
+                        toplamTutar = Number(toplamTutar.toFixed(2));
+
+                        const tarih = new Date(tarihValue);
+
+                        if (!islemCari || Number.isNaN(tutar) || tutar <= 0 || Number.isNaN(tarih.getTime())) {
+                            return showToast('Lütfen geçerli cari, tutar ve tarih bilgilerini girin.', true);
+                        }
+
+                        updatedIslem = {
+                            islemTipi,
+                            islemCari,
+                            tarih,
+                            aciklama: row.querySelector('[name="aciklama"]').value || '',
+                            vergiOrani,
+                            tutar,
+                            toplamTutar,
+                            faturaNumarasi: row.querySelector('[name="faturaNumarasi"]').value || '',
+                            kaynakCari: null,
+                            hedefCari: null
+                        };
+                    } else {
+                        const tarihValue = document.getElementById('tarihSingle').value;
+                        const tarih = new Date(tarihValue);
+                        const kaynakCari = kaynakCariSingleSelect.value;
+                        const hedefCari = hedefCariSingleSelect.value;
+                        const tutar = parseTurkishNumber(document.getElementById('tutarSingle').value);
+
+                        if (Number.isNaN(tutar) || tutar <= 0) return showToast('Lütfen geçerli bir tutar girin.', true);
+                        if (!tarihValue || Number.isNaN(tarih.getTime())) return showToast('Geçerli bir tarih girin.', true);
+                        if (!kaynakCari || !hedefCari || kaynakCari === hedefCari) return showToast('Geçerli ve farklı cariler seçin.', true);
+
+                        updatedIslem = {
+                            islemTipi,
+                            kaynakCari,
+                            hedefCari,
+                            tarih,
+                            tutar: Number(tutar.toFixed(2)),
+                            aciklama: document.getElementById('aciklamaSingle').value || '',
+                            toplamTutar: null,
+                            vergiOrani: null,
+                            islemCari: null,
+                            faturaNumarasi: editingIslem.faturaNumarasi || ''
+                        };
+                    }
+
+                    await updateExistingIslem(editingIslem, updatedIslem);
+                    showToast('İşlem başarıyla güncellendi.');
+                    closeModal(islemModal);
+                    cleanupIslemModal();
+                } catch (error) {
+                    console.error('İşlem güncelleme hatası:', error);
+                    showToast(error.message || 'İşlem güncellenirken bir hata oluştu.', true);
+                }
+                return;
+            }
+
             if (isMultiEntry) {
                 const rows = multiEntryRowsContainer.querySelectorAll('.multi-entry-row');
                 if (rows.length === 0) return showToast("Kaydedilecek işlem bulunmuyor.", true);
@@ -698,6 +1245,7 @@
                     await batch.commit();
                     showToast(`${rows.length} adet işlem başarıyla kaydedildi.`);
                     closeModal(islemModal);
+                    cleanupIslemModal();
                 } catch(error) {
                     console.error("Çoklu kayıt hatası:", error);
                     showToast("İşlemler kaydedilirken bir hata oluştu.", true);
@@ -730,6 +1278,7 @@
                     });
                     showToast("İşlem başarıyla kaydedildi.");
                     closeModal(islemModal);
+                    cleanupIslemModal();
                 } catch (error) {
                     console.error("Tekli işlem hatası:", error);
                     showToast(error.message || "İşlem sırasında bir hata oluştu.", true);
@@ -783,6 +1332,15 @@
         });
         
         islemList.addEventListener('click', async (e) => {
+            const editBtn = e.target.closest('.edit-islem-btn');
+            if (editBtn) {
+                const islemId = editBtn.dataset.id;
+                const islem = allIslemler.find(i => i.id === islemId);
+                if (!islem) return;
+                openIslemModal({ islemToEdit: islem });
+                return;
+            }
+
             const deleteBtn = e.target.closest('.delete-islem-btn');
             if (deleteBtn) {
                 const islemId = deleteBtn.dataset.id;
@@ -821,22 +1379,7 @@
                                 });
                                 const cariIslemler = Array.from(cariIslemlerMap.values());
 
-                                const newBakiye = cariIslemler.reduce((acc, currentIslem) => {
-                                    let tutar = currentIslem.toplamTutar ?? currentIslem.tutar;
-                                    
-                                    if (tutar == null || isNaN(tutar)) {
-                                        console.warn("Hatalı veya eksik tutarlı işlem atlandı:", currentIslem);
-                                        return acc;
-                                    }
-
-                                    if(currentIslem.islemCari === cariId) {
-                                        if(currentIslem.islemTipi === 'gelir') acc += tutar;
-                                        if(currentIslem.islemTipi === 'gider') acc -= tutar;
-                                    }
-                                    if(currentIslem.kaynakCari === cariId) acc -= tutar;
-                                    if(currentIslem.hedefCari === cariId) acc += tutar;
-                                    return acc;
-                                }, 0);
+                                const newBakiye = cariIslemler.reduce((acc, currentIslem) => acc + getCariNetChange(currentIslem, cariId), 0);
                                 
                                 await updateDoc(cariRef, { bakiye: newBakiye });
                             }
@@ -852,6 +1395,8 @@
         });
         
         backToListBtn.addEventListener('click', () => {
+            resetDetailFilters();
+            delete detailView.dataset.cariId;
             detailView.classList.add('hidden');
             mainView.classList.remove('hidden');
         });
@@ -859,6 +1404,12 @@
         function showCariDetay(cariId) {
             const cari = allCariler.find(c => c.id === cariId);
             if (!cari) return;
+
+            const previousCariId = detailView.dataset.cariId;
+            const isSameCari = previousCariId === cariId;
+            if (!isSameCari) {
+                resetDetailFilters();
+            }
 
             detailView.dataset.cariId = cariId;
             document.getElementById('detailCariUnvan').textContent = cari.unvan;
@@ -877,4 +1428,3 @@
     </script>
 </body>
 </html>
-
