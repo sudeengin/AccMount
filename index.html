@@ -27,7 +27,7 @@
             <div class="flex gap-2">
                 <button id="navDashboardBtn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium shadow">Dashboard</button>
                 <button id="navCarilerBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Cariler</button>
-                <button id="navNotesBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Muhasebe Not Defteri</button>
+                <button id="navNotebookBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Muhasebe Not Defteri</button>
             </div>
         </nav>
 
@@ -67,6 +67,9 @@
                     <div>
                         <p class="text-sm text-gray-500">Son İşlem Tarihi</p>
                         <p id="dashboardLastTransaction" class="text-sm text-gray-300 mt-2">-</p>
+                    </div>
+                    <div>
+                        <button id="dashboardViewDetailsBtn" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-lg text-sm transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Hesap Detayına Git</button>
                     </div>
                 </div>
             </div>
@@ -189,34 +192,28 @@
         </div>
 
         <!-- Muhasebe Not Defteri -->
-        <div id="notesView" class="hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div class="lg:col-span-2 space-y-4">
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Cari Seçimi</h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Not tutmak istediğiniz cariyi seçin. Her carinin ayrı bir not alanı bulunur.</p>
-                        <label for="notesCariSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cari</label>
-                        <select id="notesCariSelect" class="mt-2 block w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Cari seçiniz...</option>
-                        </select>
-                    </div>
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Son Düzenleme</h3>
-                        <p id="notesLastUpdated" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Henüz bir not bulunmuyor.</p>
+        <div id="companyNotebookView" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div class="lg:col-span-1">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md h-full">
+                        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Yeni Not</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Finansal kararlarınızı ve genel muhasebe notlarınızı buraya ekleyin.</p>
+                        <textarea id="notebookTextarea" class="w-full h-48 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="Örn: 2024 bütçe revizyonu yapıldı, gider limitleri güncellendi."></textarea>
+                        <button id="saveNotebookBtn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition">Kaydet</button>
+                        <p id="notebookStatus" class="mt-3 text-xs text-gray-500 dark:text-gray-400"></p>
                     </div>
                 </div>
                 <div class="lg:col-span-3">
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md h-full flex flex-col">
-                        <div class="flex items-start justify-between mb-4">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                        <div class="flex items-center justify-between mb-4">
                             <div>
-                                <h2 id="notesCariTitle" class="text-2xl font-semibold text-gray-900 dark:text-white">Cari seçiniz</h2>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Seçilen cari için notlarınızı buraya kaydedebilirsiniz.</p>
+                                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Muhasebe Notları</h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">En yeni notlar üstte listelenir.</p>
                             </div>
+                            <span id="notebookCount" class="text-xs font-semibold bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-200 px-3 py-1 rounded-full">0 Not</span>
                         </div>
-                        <textarea id="notesTextarea" class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-4 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none min-h-[280px]" placeholder="Cari hakkındaki notlarınızı buraya yazın..." disabled></textarea>
-                        <div class="mt-4 flex items-center justify-between">
-                            <span id="notesHelperText" class="text-xs text-gray-500 dark:text-gray-400">Not alanı cariyi seçene kadar kilitlidir.</span>
-                            <button id="saveNotesBtn" class="bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>Notu Kaydet</button>
+                        <div id="notebookList" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Henüz not eklenmemiş.</p>
                         </div>
                     </div>
                 </div>
@@ -424,7 +421,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, runTransaction, serverTimestamp, increment, query, where, getDocs, writeBatch, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, runTransaction, serverTimestamp, increment, query, where, getDocs, writeBatch, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- FIREBASE KURULUMU ---
         // BURAYA FIREBASE CONFIG BİLGİLERİNİZİ YAPIŞTIRIN
@@ -444,7 +441,7 @@
 
         const carilerCollectionRef = collection(db, 'cariler');
         const islemlerCollectionRef = collection(db, 'islemler');
-        const cariNotlariCollectionRef = collection(db, 'cariNotlari');
+        const notebookCollectionRef = collection(db, 'notes');
 
         let allCariler = [];
         let allIslemler = [];
@@ -455,8 +452,7 @@
         let detailFilters = { tip: '', start: null, end: null };
         let cariSearchQuery = '';
         let dashboardSelectedBankId = null;
-        let cariNotesMap = new Map();
-        let selectedNotesCariId = '';
+        let notebookEntries = [];
 
         const CARI_TIP_OPTIONS = ['Müşteri', 'Tedarikçi', 'Banka', 'Finansman', 'Personel'];
         const IMPORT_FIELD_OPTIONS = [
@@ -533,7 +529,7 @@
         const dashboardEmptyState = document.getElementById('dashboardEmptyState');
         const navDashboardBtn = document.getElementById('navDashboardBtn');
         const navCarilerBtn = document.getElementById('navCarilerBtn');
-        const navNotesBtn = document.getElementById('navNotesBtn');
+        const navNotebookBtn = document.getElementById('navNotebookBtn');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
         const confirmationModal = document.getElementById('confirmationModal');
@@ -560,13 +556,13 @@
         const importPreviewCount = document.getElementById('importPreviewCount');
         const importStatusMessage = document.getElementById('importStatusMessage');
         const confirmImportBtn = document.getElementById('confirmImportBtn');
-        const notesView = document.getElementById('notesView');
-        const notesCariSelect = document.getElementById('notesCariSelect');
-        const notesTextarea = document.getElementById('notesTextarea');
-        const saveNotesBtn = document.getElementById('saveNotesBtn');
-        const notesCariTitle = document.getElementById('notesCariTitle');
-        const notesLastUpdated = document.getElementById('notesLastUpdated');
-        const notesHelperText = document.getElementById('notesHelperText');
+        const dashboardViewDetailsBtn = document.getElementById('dashboardViewDetailsBtn');
+        const companyNotebookView = document.getElementById('companyNotebookView');
+        const notebookTextarea = document.getElementById('notebookTextarea');
+        const saveNotebookBtn = document.getElementById('saveNotebookBtn');
+        const notebookList = document.getElementById('notebookList');
+        const notebookStatus = document.getElementById('notebookStatus');
+        const notebookCount = document.getElementById('notebookCount');
 
         // --- YARDIMCI FONKSİYONLAR ---
         function parseTurkishNumber(str) {
@@ -606,8 +602,7 @@
             return date;
         }
 
-        function getIslemDate(islem) {
-            const value = islem?.tarih;
+        function resolveTimestamp(value) {
             if (!value) return null;
             if (typeof value.toDate === 'function') return value.toDate();
             if (value.seconds) return new Date(value.seconds * 1000);
@@ -615,6 +610,16 @@
             if (typeof value === 'string') {
                 const parsed = new Date(value);
                 return Number.isNaN(parsed.getTime()) ? null : parsed;
+            }
+            return null;
+        }
+
+        function getIslemDate(islem) {
+            if (!islem) return null;
+            const candidates = [islem.tarih, islem.kayitTarihi, islem.guncellemeTarihi, islem.createdAt, islem.updatedAt];
+            for (const candidate of candidates) {
+                const resolved = resolveTimestamp(candidate);
+                if (resolved) return resolved;
             }
             return null;
         }
@@ -1537,7 +1542,7 @@
         }
 
         function setActiveNav(activeBtn) {
-            [navDashboardBtn, navCarilerBtn, navNotesBtn].forEach(btn => {
+            [navDashboardBtn, navCarilerBtn, navNotebookBtn].forEach(btn => {
                 if (!btn) return;
                 const isActive = btn === activeBtn;
                 btn.classList.toggle('bg-indigo-600', isActive);
@@ -1553,7 +1558,7 @@
             mainView.classList.add('hidden');
             detailView.classList.add('hidden');
             islemDetailView.classList.add('hidden');
-            if (notesView) notesView.classList.add('hidden');
+            if (companyNotebookView) companyNotebookView.classList.add('hidden');
             populateDashboardOptions();
         }
 
@@ -1562,21 +1567,18 @@
             if (dashboardView) dashboardView.classList.add('hidden');
             islemDetailView.classList.add('hidden');
             detailView.classList.add('hidden');
-            notesView.classList.add('hidden');
+            if (companyNotebookView) companyNotebookView.classList.add('hidden');
             mainView.classList.remove('hidden');
         }
 
-        function showNotesView() {
-            setActiveNav(navNotesBtn);
+        function showCompanyNotebook() {
+            setActiveNav(navNotebookBtn);
             if (dashboardView) dashboardView.classList.add('hidden');
             mainView.classList.add('hidden');
             detailView.classList.add('hidden');
             islemDetailView.classList.add('hidden');
-            notesView.classList.remove('hidden');
-            updateNotesCariOptions(allCariler);
-            if (selectedNotesCariId) {
-                populateNotesArea(selectedNotesCariId);
-            }
+            if (companyNotebookView) companyNotebookView.classList.remove('hidden');
+            renderNotebookEntries(notebookEntries);
         }
 
         function populateDashboardOptions() {
@@ -1615,6 +1617,7 @@
                 dashboardBankType.textContent = '-';
                 dashboardLastTransaction.textContent = 'Henüz işlem bulunmuyor.';
                 dashboardUpdatedAt.textContent = 'Banka carisi eklenmedi.';
+                if (dashboardViewDetailsBtn) dashboardViewDetailsBtn.disabled = true;
                 return;
             }
 
@@ -1634,6 +1637,9 @@
             dashboardBankName.textContent = selectedBank.unvan;
             dashboardBankType.textContent = selectedBank.tipi || 'Banka';
             dashboardUpdatedAt.textContent = `Güncelleme: ${new Date().toLocaleString('tr-TR')}`;
+            if (dashboardViewDetailsBtn) {
+                dashboardViewDetailsBtn.disabled = false;
+            }
 
             const relatedIslemler = allIslemler
                 .filter(islem => islem.isDeleted !== true && (islem.islemCari === selectedBank.id || islem.kaynakCari === selectedBank.id || islem.hedefCari === selectedBank.id))
@@ -1889,7 +1895,6 @@
             allCariler.sort((a, b) => a.unvan.localeCompare(b.unvan));
             renderCariler(allCariler);
             updateCariSelects(allCariler);
-            updateNotesCariOptions(allCariler);
             populateDashboardOptions();
         });
 
@@ -1913,19 +1918,9 @@
             updateDashboardSummary();
         });
 
-        onSnapshot(query(cariNotlariCollectionRef), (snapshot) => {
-            const newMap = new Map();
-            snapshot.forEach(docSnap => {
-                const data = docSnap.data() || {};
-                newMap.set(docSnap.id, {
-                    content: data.content || '',
-                    updatedAt: data.updatedAt || null
-                });
-            });
-            cariNotesMap = newMap;
-            if (selectedNotesCariId) {
-                populateNotesArea(selectedNotesCariId);
-            }
+        onSnapshot(query(notebookCollectionRef, orderBy('createdAt', 'desc')), (snapshot) => {
+            notebookEntries = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+            renderNotebookEntries(notebookEntries);
         });
 
         // --- ARAYÜZ RENDER FONKSİYONLARI ---
@@ -1981,72 +1976,55 @@
             });
         }
 
-        function updateNotesCariOptions(cariler) {
-            if (!notesCariSelect) return;
-            const currentValue = notesCariSelect.value;
-            notesCariSelect.innerHTML = '<option value="">Cari seçiniz...</option>';
-            cariler.forEach(cari => {
-                const option = document.createElement('option');
-                option.value = cari.id;
-                option.textContent = cari.unvan;
-                notesCariSelect.appendChild(option);
+        function renderNotebookEntries(entries) {
+            if (!notebookList) return;
+            const sorted = [...(entries || [])].sort((a, b) => {
+                const timeA = resolveTimestamp(a.createdAt)?.getTime() || 0;
+                const timeB = resolveTimestamp(b.createdAt)?.getTime() || 0;
+                return timeB - timeA;
             });
-            if (currentValue && cariler.some(c => c.id === currentValue)) {
-                notesCariSelect.value = currentValue;
+
+            notebookList.innerHTML = '';
+
+            if (!sorted.length) {
+                notebookList.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Henüz not eklenmemiş.</p>';
             } else {
-                notesCariSelect.value = '';
-                selectedNotesCariId = '';
-                if (notesTextarea) {
-                    notesTextarea.value = '';
-                    notesTextarea.disabled = true;
-                }
-                if (saveNotesBtn) {
-                    saveNotesBtn.disabled = true;
-                }
-                if (notesCariTitle) {
-                    notesCariTitle.textContent = 'Cari seçiniz';
-                }
-                if (notesHelperText) {
-                    notesHelperText.textContent = 'Not alanı cariyi seçene kadar kilitlidir.';
-                }
-                if (notesLastUpdated) {
-                    notesLastUpdated.textContent = 'Henüz bir not bulunmuyor.';
-                }
+                sorted.forEach(note => {
+                    const card = document.createElement('div');
+                    card.className = 'border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/60 shadow-sm';
+
+                    const header = document.createElement('div');
+                    header.className = 'flex items-center justify-between mb-2';
+
+                    const title = document.createElement('h3');
+                    title.className = 'text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide';
+                    title.textContent = 'Muhasebe Notu';
+
+                    const timestamp = document.createElement('span');
+                    timestamp.className = 'text-xs text-gray-500 dark:text-gray-400';
+                    const formatted = formatTimestampForDisplay(note.createdAt) || 'Tarih bilgisi yok';
+                    timestamp.textContent = formatted;
+
+                    header.appendChild(title);
+                    header.appendChild(timestamp);
+
+                    const content = document.createElement('p');
+                    content.className = 'text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap';
+                    content.textContent = note.text || '';
+
+                    card.appendChild(header);
+                    card.appendChild(content);
+
+                    notebookList.appendChild(card);
+                });
+            }
+
+            if (notebookCount) {
+                const count = sorted.length;
+                notebookCount.textContent = `${count} Not`;
             }
         }
 
-        function populateNotesArea(cariId) {
-            if (!notesCariSelect || !notesTextarea || !saveNotesBtn || !notesCariTitle || !notesHelperText || !notesLastUpdated) return;
-
-            const cari = allCariler.find(c => c.id === cariId) || null;
-            selectedNotesCariId = cari ? cari.id : '';
-            notesCariSelect.value = selectedNotesCariId || '';
-
-            if (!cari) {
-                notesCariTitle.textContent = 'Cari seçiniz';
-                notesTextarea.value = '';
-                notesTextarea.disabled = true;
-                saveNotesBtn.disabled = true;
-                notesHelperText.textContent = 'Not alanı cariyi seçene kadar kilitlidir.';
-                notesLastUpdated.textContent = 'Henüz bir not bulunmuyor.';
-                return;
-            }
-
-            notesCariTitle.textContent = cari.unvan;
-            notesTextarea.disabled = false;
-            saveNotesBtn.disabled = false;
-
-            const noteRecord = cariNotesMap.get(cari.id) || null;
-            const content = noteRecord?.content || '';
-            const updatedAt = noteRecord?.updatedAt || null;
-
-            notesTextarea.value = content;
-            notesHelperText.textContent = 'Notu güncelledikten sonra "Notu Kaydet" butonuna basın.';
-            notesLastUpdated.textContent = updatedAt
-                ? `Son düzenleme: ${formatTimestampForDisplay(updatedAt)}`
-                : 'Henüz bir not bulunmuyor.';
-        }
-        
         function renderIslemler(cariId) {
             islemList.innerHTML = '';
             const ilgiliIslemler = allIslemler.filter(islem => 
@@ -2376,8 +2354,8 @@
             navCarilerBtn.addEventListener('click', () => showCarilerView());
         }
 
-        if (navNotesBtn) {
-            navNotesBtn.addEventListener('click', () => showNotesView());
+        if (navNotebookBtn) {
+            navNotebookBtn.addEventListener('click', () => showCompanyNotebook());
         }
 
         if (openImportModalBtn && importModal) {
@@ -2465,33 +2443,35 @@
             });
         }
 
-        if (notesCariSelect) {
-            notesCariSelect.addEventListener('change', (event) => {
-                const cariId = event.target.value || '';
-                populateNotesArea(cariId);
-            });
-        }
+        if (saveNotebookBtn) {
+            saveNotebookBtn.addEventListener('click', async () => {
+                if (!notebookTextarea) return;
+                const text = (notebookTextarea.value || '').trim();
+                if (!text) {
+                    if (notebookStatus) notebookStatus.textContent = 'Lütfen kaydetmeden önce bir not yazın.';
+                    return;
+                }
 
-        if (saveNotesBtn) {
-            saveNotesBtn.addEventListener('click', async () => {
-                if (!selectedNotesCariId || !notesTextarea) return;
                 try {
-                    saveNotesBtn.disabled = true;
-                    saveNotesBtn.textContent = 'Kaydediliyor...';
-                    const content = notesTextarea.value || '';
-                    const noteRef = doc(db, 'cariNotlari', selectedNotesCariId);
-                    await setDoc(noteRef, {
-                        cariId: selectedNotesCariId,
-                        content,
-                        updatedAt: serverTimestamp()
-                    }, { merge: true });
+                    saveNotebookBtn.disabled = true;
+                    if (notebookStatus) notebookStatus.textContent = 'Kaydediliyor...';
+                    await addDoc(notebookCollectionRef, {
+                        text,
+                        type: 'general',
+                        createdAt: serverTimestamp()
+                    });
+                    if (notebookTextarea) notebookTextarea.value = '';
+                    if (notebookStatus) notebookStatus.textContent = 'Not kaydedildi.';
                     showToast('Not kaydedildi.');
                 } catch (error) {
-                    console.error('Not kaydetme hatası:', error);
+                    console.error('Notebook kaydetme hatası:', error);
                     showToast('Not kaydedilirken bir hata oluştu.', true);
+                    if (notebookStatus) notebookStatus.textContent = 'Not kaydedilirken bir hata oluştu.';
                 } finally {
-                    saveNotesBtn.disabled = false;
-                    saveNotesBtn.textContent = 'Notu Kaydet';
+                    saveNotebookBtn.disabled = false;
+                    setTimeout(() => {
+                        if (notebookStatus) notebookStatus.textContent = '';
+                    }, 3000);
                 }
             });
         }
@@ -2500,6 +2480,14 @@
             dashboardBankSelect.addEventListener('change', () => {
                 dashboardSelectedBankId = dashboardBankSelect.value || null;
                 updateDashboardSummary();
+            });
+        }
+
+        if (dashboardViewDetailsBtn) {
+            dashboardViewDetailsBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (!dashboardSelectedBankId) return;
+                showCariDetay(dashboardSelectedBankId);
             });
         }
 
@@ -2968,6 +2956,7 @@
             if (!cari) return;
 
             setActiveNav(navCarilerBtn);
+            if (dashboardView) dashboardView.classList.add('hidden');
             const previousCariId = detailView.dataset.cariId;
             const isSameCari = previousCariId === cariId;
             if (!isSameCari) {
@@ -2988,7 +2977,7 @@
             renderIslemler(cariId);
 
             mainView.classList.add('hidden');
-            if (notesView) notesView.classList.add('hidden');
+            if (companyNotebookView) companyNotebookView.classList.add('hidden');
             detailView.classList.remove('hidden');
         }
 
