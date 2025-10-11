@@ -27,6 +27,7 @@
             <div class="flex gap-2">
                 <button id="navDashboardBtn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium shadow">Dashboard</button>
                 <button id="navCarilerBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Cariler</button>
+                <button id="navNotesBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Muhasebe Not Defteri</button>
             </div>
         </nav>
 
@@ -101,6 +102,14 @@
                             </div>
                             <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">Cari Ekle</button>
                         </form>
+                        <div class="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" id="openImportModalBtn" class="w-full border border-dashed border-indigo-400 dark:border-indigo-500 text-indigo-600 dark:text-indigo-300 font-semibold py-2.5 px-4 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950 transition">
+                                CSV'den Toplu İşlem İçe Aktar
+                            </button>
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                Başlık satırı içeren bir CSV dosyası yükleyin, alanlar otomatik eşleştirilsin ve içe almadan önce son düzenlemeleri yapın.
+                            </p>
+                        </div>
                     </div>
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md text-center">
                         <button id="openModalBtn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg">Yeni İşlem Ekle</button>
@@ -179,6 +188,41 @@
             </div>
         </div>
 
+        <!-- Muhasebe Not Defteri -->
+        <div id="notesView" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Cari Seçimi</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Not tutmak istediğiniz cariyi seçin. Her carinin ayrı bir not alanı bulunur.</p>
+                        <label for="notesCariSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cari</label>
+                        <select id="notesCariSelect" class="mt-2 block w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Cari seçiniz...</option>
+                        </select>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Son Düzenleme</h3>
+                        <p id="notesLastUpdated" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Henüz bir not bulunmuyor.</p>
+                    </div>
+                </div>
+                <div class="lg:col-span-3">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md h-full flex flex-col">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h2 id="notesCariTitle" class="text-2xl font-semibold text-gray-900 dark:text-white">Cari seçiniz</h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Seçilen cari için notlarınızı buraya kaydedebilirsiniz.</p>
+                            </div>
+                        </div>
+                        <textarea id="notesTextarea" class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-4 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none min-h-[280px]" placeholder="Cari hakkındaki notlarınızı buraya yazın..." disabled></textarea>
+                        <div class="mt-4 flex items-center justify-between">
+                            <span id="notesHelperText" class="text-xs text-gray-500 dark:text-gray-400">Not alanı cariyi seçene kadar kilitlidir.</span>
+                            <button id="saveNotesBtn" class="bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>Notu Kaydet</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- İşlem Detay Görünümü (Başlangıçta Gizli) -->
         <div id="islemDetailView" class="hidden">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
@@ -241,7 +285,7 @@
                     <div>
                         <label for="islemTipi" class="block text-sm font-medium">İşlem Tipi</label>
                         <select id="islemTipi" name="islemTipi" required class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="gelir">Faturalı Satış (Alacak)</option>
+                            <option value="gelir">Satış</option>
                             <option value="gider">Alış (Borç)</option>
                             <option value="tahsilat">Tahsilat</option>
                             <option value="odeme">Ödeme</option>
@@ -310,10 +354,77 @@
     
     <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-xl toast"><p id="toast-message"></p></div>
 
+    <!-- Cari İçe Aktarım Modalı -->
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden modal-backdrop opacity-0">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-5xl modal-content transform scale-95 flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">CSV'den Toplu İşlem İçe Aktar</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Dosyayı yükleyin, alanları eşleştirin ve içe almadan önce son kontrolleri yapın.</p>
+                </div>
+                <button id="closeImportModalBtn" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                    <span class="sr-only">Kapat</span>
+                    ✕
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+                <section id="importUploadSection" class="space-y-3">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">1. CSV Dosyasını Seçin</h3>
+                    <label for="importFileInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300">Başlık satırı içeren bir CSV dosyası yükleyin.</label>
+                    <input type="file" id="importFileInput" accept=".csv,text/csv" class="block w-full text-sm text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">UTF-8 kodlu dosyalar önerilir. Sistem, varsa şu kolon başlıklarını otomatik tanır: <span class="font-medium text-gray-700 dark:text-gray-200">Unvan</span>, <span class="font-medium text-gray-700 dark:text-gray-200">İşlem Türü</span>, <span class="font-medium text-gray-700 dark:text-gray-200">Vergisiz Tutar</span>, <span class="font-medium text-gray-700 dark:text-gray-200">Vergi</span>, <span class="font-medium text-gray-700 dark:text-gray-200">Toplam Tutar</span>, <span class="font-medium text-gray-700 dark:text-gray-200">Fatura No</span>, <span class="font-medium text-gray-700 dark:text-gray-200">Açıklama</span>.</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Bu alanlar zorunlu değildir; ancak en azından cari unvanı ve vergisiz veya toplam tutar bilgisi girilen satırlar içe aktarılabilir.</p>
+                </section>
+
+                <section id="importMappingSection" class="space-y-3 hidden">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">2. Alan Eşleştirme</h3>
+                        <span id="importDetectedInfo" class="text-sm text-gray-500 dark:text-gray-400"></span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Sistem başlıklara göre alanları otomatik eşleştirmeye çalıştı. Gerekirse değiştirin.</p>
+                    <div class="overflow-x-auto border border-gray-200 dark:border-gray-800 rounded-xl">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+                            <thead class="bg-gray-50 dark:bg-gray-800/60 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-semibold">CSV Kolonu</th>
+                                    <th class="px-4 py-3 text-left font-semibold">İçe Aktarılacak Alan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="importMappingBody" class="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="importPreviewSection" class="space-y-3 hidden">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">3. Önizleme ve Son Düzenlemeler</h3>
+                        <span id="importPreviewCount" class="text-sm text-gray-500 dark:text-gray-400"></span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Her satırı kontrol edin, gerekirse düzenleyin veya hariç bırakın. Cari unvanı bulunmayan veya vergisiz/toplam tutarı hesaplanamayan satırlar içe aktarılmaz.</p>
+                    <div id="importPreviewTableContainer" class="overflow-x-auto border border-gray-200 dark:border-gray-800 rounded-xl"></div>
+                </section>
+            </div>
+            <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-6 py-4">
+                <p id="importStatusMessage" class="text-sm text-gray-500 dark:text-gray-400"></p>
+                <div class="flex items-center gap-3">
+                    <button id="cancelImportBtn" class="bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold px-4 py-2 rounded-lg">İptal</button>
+                    <button id="confirmImportBtn" class="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>Seçili İşlemleri İçe Aktar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <datalist id="cariTipSuggestions">
+        <option value="Müşteri"></option>
+        <option value="Tedarikçi"></option>
+        <option value="Banka"></option>
+        <option value="Finansman"></option>
+        <option value="Personel"></option>
+    </datalist>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, runTransaction, serverTimestamp, increment, query, where, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, runTransaction, serverTimestamp, increment, query, where, getDocs, writeBatch, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- FIREBASE KURULUMU ---
         // BURAYA FIREBASE CONFIG BİLGİLERİNİZİ YAPIŞTIRIN
@@ -333,6 +444,7 @@
 
         const carilerCollectionRef = collection(db, 'cariler');
         const islemlerCollectionRef = collection(db, 'islemler');
+        const cariNotlariCollectionRef = collection(db, 'cariNotlari');
 
         let allCariler = [];
         let allIslemler = [];
@@ -343,7 +455,37 @@
         let detailFilters = { tip: '', start: null, end: null };
         let cariSearchQuery = '';
         let dashboardSelectedBankId = null;
+        let cariNotesMap = new Map();
+        let selectedNotesCariId = '';
 
+        const CARI_TIP_OPTIONS = ['Müşteri', 'Tedarikçi', 'Banka', 'Finansman', 'Personel'];
+        const IMPORT_FIELD_OPTIONS = [
+            { value: 'ignore', label: 'Alanı Yoksay' },
+            { value: 'unvan', label: 'Cari / Unvan' },
+            { value: 'islemTipi', label: 'İşlem Türü' },
+            { value: 'vergisizTutar', label: 'Vergisiz Tutar' },
+            { value: 'vergiOrani', label: 'Vergi Oranı (%)' },
+            { value: 'toplamTutar', label: 'Toplam Tutar' },
+            { value: 'faturaNumarasi', label: 'Fatura No' },
+            { value: 'aciklama', label: 'Açıklama' }
+        ];
+        const IMPORT_FIELD_ALIASES = {
+            unvan: ['unvan', 'ünvan', 'ad', 'ad soyad', 'adı', 'firma', 'firma adı', 'müşteri', 'müşteri adı', 'cari adı', 'name', 'company', 'company name', 'customer', 'customer name', 'contact name'],
+            islemTipi: ['işlem türü', 'islem turu', 'işlem tipi', 'islem tipi', 'transaction type', 'type', 'kategori'],
+            vergisizTutar: ['vergisiz tutar', 'net tutar', 'vergi hariç tutar', 'vergi haric tutar', 'net amount'],
+            vergiOrani: ['vergi', 'vergi oranı', 'vergi orani', 'kdv', 'kdv oranı', 'tax', 'tax rate'],
+            toplamTutar: ['toplam tutar', 'brüt tutar', 'brut tutar', 'fatura toplamı', 'fatura toplami', 'gross amount', 'toplam'],
+            faturaNumarasi: ['fatura no', 'fatura numarası', 'fatura numarasi', 'invoice number', 'invoice no', 'invoice'],
+            aciklama: ['aciklama', 'açıklama', 'description', 'not', 'notlar', 'yorum']
+        };
+        const FIRESTORE_BATCH_LIMIT = 400;
+        const importState = {
+            headers: [],
+            dataRows: [],
+            mappings: new Map(),
+            originalRows: [],
+            hasHeader: true
+        };
         // --- UI ELEMENTLERİ ---
         const mainView = document.getElementById('mainView');
         const detailView = document.getElementById('detailView');
@@ -391,6 +533,7 @@
         const dashboardEmptyState = document.getElementById('dashboardEmptyState');
         const navDashboardBtn = document.getElementById('navDashboardBtn');
         const navCarilerBtn = document.getElementById('navCarilerBtn');
+        const navNotesBtn = document.getElementById('navNotesBtn');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
         const confirmationModal = document.getElementById('confirmationModal');
@@ -404,6 +547,26 @@
         const addRowBtn = document.getElementById('addRowBtn');
         const multiEntryRowsContainer = document.getElementById('multiEntryRowsContainer');
         const formSubmitBtn = document.getElementById('formSubmitBtn');
+        const openImportModalBtn = document.getElementById('openImportModalBtn');
+        const importModal = document.getElementById('importModal');
+        const closeImportModalBtn = document.getElementById('closeImportModalBtn');
+        const cancelImportBtn = document.getElementById('cancelImportBtn');
+        const importFileInput = document.getElementById('importFileInput');
+        const importMappingSection = document.getElementById('importMappingSection');
+        const importMappingBody = document.getElementById('importMappingBody');
+        const importDetectedInfo = document.getElementById('importDetectedInfo');
+        const importPreviewSection = document.getElementById('importPreviewSection');
+        const importPreviewTableContainer = document.getElementById('importPreviewTableContainer');
+        const importPreviewCount = document.getElementById('importPreviewCount');
+        const importStatusMessage = document.getElementById('importStatusMessage');
+        const confirmImportBtn = document.getElementById('confirmImportBtn');
+        const notesView = document.getElementById('notesView');
+        const notesCariSelect = document.getElementById('notesCariSelect');
+        const notesTextarea = document.getElementById('notesTextarea');
+        const saveNotesBtn = document.getElementById('saveNotesBtn');
+        const notesCariTitle = document.getElementById('notesCariTitle');
+        const notesLastUpdated = document.getElementById('notesLastUpdated');
+        const notesHelperText = document.getElementById('notesHelperText');
 
         // --- YARDIMCI FONKSİYONLAR ---
         function parseTurkishNumber(str) {
@@ -521,6 +684,784 @@
             });
         }
 
+        function formatTimestampForDisplay(value) {
+            if (!value) return '';
+            let date;
+            if (typeof value.toDate === 'function') {
+                date = value.toDate();
+            } else if (value.seconds) {
+                date = new Date(value.seconds * 1000);
+            } else if (value instanceof Date) {
+                date = value;
+            } else if (typeof value === 'string') {
+                date = new Date(value);
+            }
+            if (!date || Number.isNaN(date.getTime())) return '';
+            return date.toLocaleString('tr-TR', { dateStyle: 'long', timeStyle: 'short' });
+        }
+
+        // --- CSV İÇE AKTARIM YARDIMCILARI ---
+        function normalizeForMatch(value) {
+            if (value === null || typeof value === 'undefined') return '';
+            return String(value)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+        }
+
+        function detectDelimiterFromSample(text) {
+            const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0).slice(0, 5);
+            if (!lines.length) return ',';
+            const delimiters = [',', ';', '\t', '|'];
+            const scores = delimiters.map(delimiter => {
+                const occurrenceCount = lines
+                    .map(line => line.split(delimiter).length)
+                    .filter(length => length > 1);
+                return { delimiter, score: occurrenceCount.length ? occurrenceCount.reduce((acc, len) => acc + len, 0) : 0 };
+            });
+            scores.sort((a, b) => b.score - a.score);
+            return scores[0]?.score > 0 ? scores[0].delimiter : ',';
+        }
+
+        function parseCsv(text, delimiter = ',') {
+            const rows = [];
+            let current = '';
+            let row = [];
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i += 1) {
+                const char = text[i];
+
+                if (char === '"') {
+                    if (inQuotes && text[i + 1] === '"') {
+                        current += '"';
+                        i += 1;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                    continue;
+                }
+
+                if (!inQuotes && (char === '\n' || char === '\r')) {
+                    if (char === '\r' && text[i + 1] === '\n') i += 1;
+                    row.push(current.trim());
+                    rows.push(row);
+                    row = [];
+                    current = '';
+                    continue;
+                }
+
+                if (!inQuotes && char === delimiter) {
+                    row.push(current.trim());
+                    current = '';
+                    continue;
+                }
+
+                current += char;
+            }
+
+            if (inQuotes) {
+                throw new Error('Eksik kapanan tırnak işareti tespit edildi. Lütfen CSV formatını kontrol edin.');
+            }
+
+            row.push(current.trim());
+            rows.push(row);
+
+            return rows.filter(record => record.some(cell => String(cell || '').trim().length > 0));
+        }
+
+        function looksLikeNumeric(value) {
+            if (value === null || typeof value === 'undefined') return false;
+            const normalized = String(value).trim();
+            if (!normalized) return false;
+            return /^-?\d{1,3}([.,\s]\d{3})*([.,]\d+)?$/.test(normalized) || /^-?\d+([.,]\d+)?$/.test(normalized);
+        }
+
+        function hasHeaderRow(firstRow, secondRow = []) {
+            if (!firstRow || firstRow.length === 0) return false;
+            const aliasMatch = firstRow.some(cell => {
+                const normalized = normalizeForMatch(cell);
+                if (!normalized) return false;
+                return Object.values(IMPORT_FIELD_ALIASES).some(aliasList => aliasList.includes(normalized));
+            });
+            if (aliasMatch) return true;
+
+            const firstRowNumericCount = firstRow.filter(looksLikeNumeric).length;
+            const secondRowNumericCount = secondRow.filter(looksLikeNumeric).length;
+
+            return firstRowNumericCount < firstRow.length / 2 && secondRowNumericCount >= secondRow.length / 2;
+        }
+
+        function extractColumnSamples(columnIndex, limit = 5) {
+            const samples = [];
+            importState.originalRows.forEach(row => {
+                const value = row?.[columnIndex];
+                if (value && String(value).trim().length > 0) {
+                    samples.push(value);
+                }
+            });
+            return samples.slice(0, limit);
+        }
+
+        function parseFlexibleNumber(value) {
+            if (value === null || typeof value === 'undefined') return 0;
+            const raw = String(value).trim();
+            if (!raw) return 0;
+
+            const hasComma = raw.includes(',');
+            const hasDot = raw.includes('.');
+            let normalized = raw.replace(/\s/g, '');
+
+            if (hasComma && hasDot) {
+                if (normalized.indexOf(',') < normalized.indexOf('.')) {
+                    normalized = normalized.replace(/,/g, '');
+                } else {
+                    normalized = normalized.replace(/\./g, '').replace(',', '.');
+                }
+            } else if (hasComma) {
+                normalized = normalized.replace(/\./g, '').replace(',', '.');
+            } else {
+                normalized = normalized.replace(/,/g, '');
+            }
+
+            const parsed = Number(normalized);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function normalizeCariType(value) {
+            const normalized = normalizeForMatch(value);
+            if (!normalized) return '';
+
+            const exactMatch = CARI_TIP_OPTIONS.find(option => normalizeForMatch(option) === normalized);
+            if (exactMatch) return exactMatch;
+
+            if (normalized.includes('bank')) return 'Banka';
+            if (normalized.includes('tedarik')) return 'Tedarikçi';
+            if (normalized.includes('finans')) return 'Finansman';
+            if (normalized.includes('person')) return 'Personel';
+
+            return String(value || '').trim();
+        }
+
+        const ISLEM_TIPI_OPTIONS = [
+            { value: 'gelir', label: 'Gelir / Satış' },
+            { value: 'gider', label: 'Gider / Alış' },
+            { value: 'tahsilat', label: 'Tahsilat' },
+            { value: 'odeme', label: 'Ödeme' },
+            { value: 'transfer', label: 'Transfer' }
+        ];
+
+        function normalizeIslemTipi(value, fallback = 'gelir') {
+            const normalized = normalizeForMatch(value);
+            if (!normalized) return fallback;
+            if (normalized.includes('transfer')) return 'transfer';
+            if (normalized.includes('tahsil')) return 'tahsilat';
+            if (normalized.includes('odeme') || normalized.includes('payment') || normalized.includes('cikis')) return 'odeme';
+            if (normalized.includes('gider') || normalized.includes('alis') || normalized.includes('alış') || normalized.includes('borc') || normalized.includes('borç') || normalized.includes('purchase') || normalized.includes('expense') || normalized.includes('cost')) {
+                return 'gider';
+            }
+            if (normalized.includes('satis') || normalized.includes('satış') || normalized.includes('gelir') || normalized.includes('revenue') || normalized.includes('sale')) {
+                return 'gelir';
+            }
+            return fallback;
+        }
+
+        function prepareInitialFieldValue(fieldKey, rawValue) {
+            const raw = rawValue === null || typeof rawValue === 'undefined' ? '' : String(rawValue);
+            const trimmed = raw.trim();
+
+            if (!trimmed) return '';
+
+            switch (fieldKey) {
+                case 'unvan':
+                case 'aciklama':
+                case 'faturaNumarasi':
+                    return trimmed;
+                case 'islemTipi':
+                    return normalizeIslemTipi(trimmed, trimmed || 'gelir');
+                case 'vergiOrani': {
+                    const numeric = parseFloat(trimmed.replace(',', '.'));
+                    if (!Number.isFinite(numeric)) return trimmed;
+                    return numeric.toString().replace('.', ',');
+                }
+                case 'vergisizTutar':
+                case 'toplamTutar': {
+                    if (!/[0-9]/.test(trimmed)) return '';
+                    const numeric = parseFlexibleNumber(trimmed);
+                    if (!Number.isFinite(numeric)) return '';
+                    return numeric.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                default:
+                    return trimmed;
+            }
+        }
+
+        function guessFieldForColumn(header, columnIndex) {
+            const normalizedHeader = normalizeForMatch(header);
+            if (normalizedHeader) {
+                for (const option of IMPORT_FIELD_OPTIONS) {
+                    if (option.value === 'ignore') continue;
+                    const aliases = IMPORT_FIELD_ALIASES[option.value] || [];
+                    if (aliases.includes(normalizedHeader)) {
+                        return option.value;
+                    }
+                }
+            }
+
+            const samples = extractColumnSamples(columnIndex);
+            if (samples.length === 0) {
+                return columnIndex === 0 ? 'unvan' : (columnIndex === 1 ? 'islemTipi' : (columnIndex === 2 ? 'toplamTutar' : 'ignore'));
+            }
+
+            if (samples.every(looksLikeNumeric)) {
+                return 'toplamTutar';
+            }
+
+            const containsTypeKeyword = samples.some(value => {
+                const normalized = normalizeForMatch(value);
+                return normalized.includes('sat') || normalized.includes('gelir') || normalized.includes('gider') || normalized.includes('alis') || normalized.includes('alış') || normalized.includes('odeme') || normalized.includes('ödeme') || normalized.includes('tahsil');
+            });
+            if (containsTypeKeyword) return 'islemTipi';
+
+            return columnIndex === 0 ? 'unvan' : (columnIndex === 1 ? 'islemTipi' : (columnIndex === 2 ? 'toplamTutar' : 'aciklama'));
+        }
+
+        function autoMapImportFields() {
+            importState.mappings = new Map();
+            importState.headers.forEach((header, index) => {
+                importState.mappings.set(index, guessFieldForColumn(header, index));
+            });
+        }
+
+        function getMappedFieldColumns() {
+            const mappings = [];
+            importState.mappings.forEach((fieldKey, columnIndex) => {
+                if (fieldKey && fieldKey !== 'ignore') {
+                    mappings.push({ columnIndex: Number(columnIndex), fieldKey });
+                }
+            });
+            return mappings;
+        }
+
+        function updateDetectedInfo() {
+            if (!importDetectedInfo) return;
+            if (!importState.headers.length) {
+                importDetectedInfo.textContent = '';
+                return;
+            }
+            const mappedCount = getMappedFieldColumns().length;
+            importDetectedInfo.textContent = `${importState.headers.length} sütun, ${mappedCount} alan eşleştirildi`;
+        }
+
+        function resetImportModal() {
+            if (importFileInput) importFileInput.value = '';
+            if (importMappingBody) importMappingBody.innerHTML = '';
+            if (importPreviewTableContainer) importPreviewTableContainer.innerHTML = '';
+            if (importMappingSection) importMappingSection.classList.add('hidden');
+            if (importPreviewSection) importPreviewSection.classList.add('hidden');
+            if (importPreviewCount) importPreviewCount.textContent = '';
+            if (importDetectedInfo) importDetectedInfo.textContent = '';
+            if (importStatusMessage) importStatusMessage.textContent = '';
+            if (confirmImportBtn) {
+                confirmImportBtn.disabled = true;
+                confirmImportBtn.textContent = 'Seçili İşlemleri İçe Aktar';
+                delete confirmImportBtn.dataset.loading;
+            }
+            importState.headers = [];
+            importState.originalRows = [];
+            importState.dataRows = [];
+            importState.mappings = new Map();
+            importState.hasHeader = true;
+        }
+
+        function renderImportMapping() {
+            if (!importMappingBody) return;
+            importMappingBody.innerHTML = '';
+
+            importState.headers.forEach((header, index) => {
+                const row = document.createElement('tr');
+                row.dataset.columnIndex = String(index);
+
+                const headerCell = document.createElement('td');
+                headerCell.className = 'px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200';
+                headerCell.textContent = header || `Kolon ${index + 1}`;
+
+                const selectCell = document.createElement('td');
+                selectCell.className = 'px-4 py-3';
+
+                const select = document.createElement('select');
+                select.className = 'import-field-select w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500';
+                select.dataset.columnIndex = String(index);
+
+                IMPORT_FIELD_OPTIONS.forEach(option => {
+                    const opt = document.createElement('option');
+                    opt.value = option.value;
+                    opt.textContent = option.label;
+                    select.appendChild(opt);
+                });
+
+                const currentValue = importState.mappings.get(index) || 'ignore';
+                select.value = currentValue;
+
+                selectCell.appendChild(select);
+                row.appendChild(headerCell);
+                row.appendChild(selectCell);
+                importMappingBody.appendChild(row);
+            });
+
+            if (importMappingSection) importMappingSection.classList.toggle('hidden', importState.headers.length === 0);
+            updateDetectedInfo();
+        }
+
+        function renderImportPreview() {
+            if (!importPreviewTableContainer) return;
+
+            importPreviewTableContainer.innerHTML = '';
+
+            const mappedColumns = getMappedFieldColumns();
+
+            if (!mappedColumns.length) {
+                if (importPreviewSection) importPreviewSection.classList.add('hidden');
+                updateConfirmButtonState();
+                return;
+            }
+
+            if (importPreviewSection) importPreviewSection.classList.remove('hidden');
+
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm';
+
+            const thead = document.createElement('thead');
+            thead.className = 'bg-gray-50 dark:bg-gray-800/60 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400';
+            const headerRow = document.createElement('tr');
+
+            const includeHeader = document.createElement('th');
+            includeHeader.className = 'px-4 py-3 text-left font-semibold';
+            includeHeader.textContent = 'Dahil';
+            headerRow.appendChild(includeHeader);
+
+            mappedColumns.forEach(({ fieldKey }) => {
+                const fieldHeader = document.createElement('th');
+                fieldHeader.className = 'px-4 py-3 text-left font-semibold';
+                const option = IMPORT_FIELD_OPTIONS.find(opt => opt.value === fieldKey);
+                fieldHeader.textContent = option?.label || fieldKey;
+                headerRow.appendChild(fieldHeader);
+            });
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            tbody.className = 'bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800';
+
+            importState.dataRows.forEach((row, rowIndex) => {
+                const tr = document.createElement('tr');
+                tr.dataset.rowIndex = String(rowIndex);
+
+                const includeCell = document.createElement('td');
+                includeCell.className = 'px-4 py-2 align-top';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'import-row-include h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500';
+                checkbox.dataset.rowIndex = String(rowIndex);
+                checkbox.checked = true;
+                includeCell.appendChild(checkbox);
+                tr.appendChild(includeCell);
+
+                mappedColumns.forEach(({ columnIndex, fieldKey }) => {
+                    const td = document.createElement('td');
+                    td.className = 'px-4 py-2 align-top';
+                    const rawValue = row?.[columnIndex] ?? '';
+
+                    let inputElement;
+                    if (fieldKey === 'aciklama') {
+                        inputElement = document.createElement('textarea');
+                        inputElement.rows = 2;
+                    } else if (fieldKey === 'islemTipi') {
+                        inputElement = document.createElement('select');
+                    } else {
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'text';
+                    }
+                    inputElement.className = 'import-field-input w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500';
+                    inputElement.dataset.field = fieldKey;
+                    inputElement.dataset.rowIndex = String(rowIndex);
+                    const preparedValue = prepareInitialFieldValue(fieldKey, rawValue);
+                    if (fieldKey === 'islemTipi') {
+                        ISLEM_TIPI_OPTIONS.forEach(option => {
+                            const opt = document.createElement('option');
+                            opt.value = option.value;
+                            opt.textContent = option.label;
+                            inputElement.appendChild(opt);
+                        });
+                        inputElement.value = ISLEM_TIPI_OPTIONS.some(opt => opt.value === preparedValue)
+                            ? preparedValue
+                            : normalizeIslemTipi(preparedValue, 'gelir');
+                    } else {
+                        inputElement.value = preparedValue;
+                    }
+                    if (['vergisizTutar', 'toplamTutar', 'vergiOrani'].includes(fieldKey)) {
+                        inputElement.setAttribute('inputmode', 'decimal');
+                    }
+                    td.appendChild(inputElement);
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(tbody);
+            importPreviewTableContainer.appendChild(table);
+
+            if (importPreviewCount) {
+                importPreviewCount.textContent = `${importState.dataRows.length} satır yüklendi`;
+            }
+
+            updateConfirmButtonState();
+        }
+
+        function updateConfirmButtonState() {
+            if (!confirmImportBtn || confirmImportBtn.dataset.loading === 'true') return;
+            if (!importPreviewTableContainer) {
+                confirmImportBtn.disabled = true;
+                return;
+            }
+
+            const mappedColumns = getMappedFieldColumns();
+            if (!mappedColumns.length) {
+                confirmImportBtn.disabled = true;
+                if (importStatusMessage && importState.headers.length) {
+                    importStatusMessage.textContent = 'İçe aktarılacak alanları seçin.';
+                }
+                return;
+            }
+
+            const { validRows, invalidRows } = collectImportRowsFromPreview({ onlyValid: false });
+            confirmImportBtn.disabled = validRows.length === 0;
+
+            if (!importStatusMessage) return;
+
+            if (validRows.length === 0) {
+                importStatusMessage.textContent = invalidRows.length > 0
+                    ? 'Geçerli satır bulunamadı. Cari unvanı ve vergisiz/toplam tutar bilgilerini doldurun.'
+                    : 'En az bir satır seçin.';
+                return;
+            }
+
+            if (invalidRows.length > 0) {
+                importStatusMessage.textContent = `${validRows.length} satır hazır. ${invalidRows.length} satırda eksik veri var.`;
+            } else {
+                importStatusMessage.textContent = `${validRows.length} satır içe aktarılmak üzere hazır.`;
+            }
+        }
+
+        function collectImportRowsFromPreview({ onlyValid = true } = {}) {
+            if (!importPreviewTableContainer) {
+                return onlyValid ? [] : { validRows: [], invalidRows: [] };
+            }
+
+            const rowElements = Array.from(importPreviewTableContainer.querySelectorAll('tbody tr'));
+            const validRows = [];
+            const invalidRows = [];
+
+            rowElements.forEach((rowEl, rowIndex) => {
+                const includeCheckbox = rowEl.querySelector('.import-row-include');
+                if (!includeCheckbox || !includeCheckbox.checked) return;
+
+                const inputs = Array.from(rowEl.querySelectorAll('.import-field-input'));
+                if (!inputs.length) return;
+
+                const rawValues = {};
+                inputs.forEach(input => {
+                    const fieldKey = input.dataset.field;
+                    if (!fieldKey) return;
+                    rawValues[fieldKey] = (input.value || '').trim();
+                });
+
+                const cariUnvan = rawValues.unvan || '';
+                const aciklama = rawValues.aciklama || '';
+                const faturaNumarasi = rawValues.faturaNumarasi || '';
+                const islemTipiNormalized = normalizeIslemTipi(rawValues.islemTipi || '', 'gelir');
+
+                const vergiOraniValue = rawValues.vergiOrani ? parseFloat(rawValues.vergiOrani.replace(',', '.')) : NaN;
+                let vergiOrani = Number.isFinite(vergiOraniValue) ? vergiOraniValue : null;
+
+                const vergisizCandidates = [];
+                if (rawValues.vergisizTutar) vergisizCandidates.push(parseFlexibleNumber(rawValues.vergisizTutar));
+
+                let vergisizTutar = vergisizCandidates.find(value => Number.isFinite(value) && Math.abs(value) > 0) ?? 0;
+                let toplamTutar = rawValues.toplamTutar ? parseFlexibleNumber(rawValues.toplamTutar) : 0;
+
+                vergisizTutar = Number.isFinite(vergisizTutar) ? Math.abs(vergisizTutar) : 0;
+                toplamTutar = Number.isFinite(toplamTutar) ? Math.abs(toplamTutar) : 0;
+
+                if (vergisizTutar > 0 && toplamTutar <= 0) {
+                    const oran = Number.isFinite(vergiOrani) ? vergiOrani : 0;
+                    toplamTutar = vergisizTutar * (1 + oran / 100);
+                }
+
+                if (vergisizTutar <= 0 && toplamTutar > 0) {
+                    const oran = Number.isFinite(vergiOrani) ? vergiOrani : 0;
+                    vergisizTutar = oran !== 0 ? toplamTutar / (1 + oran / 100) : toplamTutar;
+                }
+
+                if (vergisizTutar > 0 && toplamTutar > 0 && (vergiOrani === null || Number.isNaN(vergiOrani))) {
+                    const computedRate = ((toplamTutar / vergisizTutar) - 1) * 100;
+                    vergiOrani = Number.isFinite(computedRate) ? Number(computedRate.toFixed(2)) : 0;
+                }
+
+                if (vergisizTutar > 0 && toplamTutar <= 0) {
+                    toplamTutar = vergisizTutar;
+                } else if (toplamTutar > 0 && vergisizTutar <= 0) {
+                    vergisizTutar = toplamTutar;
+                }
+
+                const errors = [];
+                if (!cariUnvan) errors.push('Cari/Unvan eksik');
+                if (vergisizTutar <= 0 && toplamTutar <= 0) errors.push('Tutar belirtilmemiş');
+
+                if (!errors.length) {
+                    validRows.push({
+                        rowIndex,
+                        cariUnvan,
+                        islemTipi: islemTipiNormalized,
+                        aciklama,
+                        faturaNumarasi,
+                        vergisizTutar: Number(vergisizTutar.toFixed(2)),
+                        toplamTutar: Number(toplamTutar.toFixed(2)),
+                        vergiOrani: Number.isFinite(vergiOrani) ? Number(vergiOrani.toFixed(2)) : null
+                    });
+                } else if (!onlyValid) {
+                    invalidRows.push({ rowIndex, reasons: errors });
+                }
+            });
+
+            return onlyValid ? validRows : { validRows, invalidRows };
+        }
+
+        function handleImportFileChange(event) {
+            const file = event.target?.files?.[0];
+            if (!file) return;
+
+            if (importStatusMessage) {
+                importStatusMessage.textContent = `${file.name} okunuyor...`;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target?.result;
+                    if (typeof text !== 'string') {
+                        throw new Error('Dosya içeriği okunamadı.');
+                    }
+                    processImportedCsv(text);
+                } catch (error) {
+                    console.error('CSV okuma hatası:', error);
+                    showToast('CSV dosyası okunurken bir hata oluştu.', true);
+                    if (importStatusMessage) {
+                        importStatusMessage.textContent = error?.message || 'CSV dosyası okunamadı.';
+                    }
+                }
+            };
+            reader.onerror = () => {
+                showToast('CSV dosyası okunurken bir hata oluştu.', true);
+                if (importStatusMessage) {
+                    importStatusMessage.textContent = 'CSV dosyası okunamadı.';
+                }
+            };
+            reader.readAsText(file, 'utf-8');
+        }
+
+        function processImportedCsv(text) {
+            resetImportModal();
+            if (importFileInput) importFileInput.value = '';
+
+            const delimiter = detectDelimiterFromSample(text);
+            const rows = parseCsv(text, delimiter);
+
+            if (!rows.length) {
+                if (importStatusMessage) importStatusMessage.textContent = 'Dosyada veri bulunamadı.';
+                showToast('Geçerli satır içeren bir CSV dosyası yükleyin.', true);
+                return;
+            }
+
+            const firstRow = rows[0] || [];
+            const secondRow = rows[1] || [];
+            const headerExists = hasHeaderRow(firstRow, secondRow);
+
+            importState.hasHeader = headerExists;
+            importState.headers = (headerExists ? firstRow : firstRow.map((_, idx) => `Kolon ${idx + 1}`))
+                .map((value, idx) => {
+                    const trimmed = String(value || '').trim();
+                    return trimmed || `Kolon ${idx + 1}`;
+                });
+            importState.dataRows = headerExists ? rows.slice(1) : rows;
+            importState.originalRows = importState.dataRows.map(row => row.map(cell => cell));
+
+            if (!importState.dataRows.length) {
+                if (importStatusMessage) importStatusMessage.textContent = 'Veri satırı bulunamadı.';
+                showToast('En az bir veri satırı içeren dosya yükleyin.', true);
+                return;
+            }
+
+            autoMapImportFields();
+            renderImportMapping();
+            renderImportPreview();
+
+            if (importDetectedInfo) {
+                importDetectedInfo.textContent = headerExists
+                    ? `Başlık satırı algılandı · ${importState.headers.length} sütun`
+                    : `Başlık bulunamadı · ${importState.headers.length} sütun adlandırıldı`;
+            }
+
+            if (importStatusMessage) importStatusMessage.textContent = 'Alan eşleştirmelerini kontrol edin.';
+        }
+
+        function openImportModal() {
+            resetImportModal();
+            openModal(importModal);
+        }
+
+        function closeImportModal() {
+            closeModal(importModal);
+            setTimeout(() => resetImportModal(), 300);
+        }
+
+        async function handleImportConfirm() {
+            const { validRows, invalidRows } = collectImportRowsFromPreview({ onlyValid: false });
+            const rowsToImport = validRows;
+
+            if (!rowsToImport.length) {
+                showToast('İçe aktarılacak geçerli satır bulunamadı.', true);
+                if (importStatusMessage) {
+                    importStatusMessage.textContent = invalidRows.length > 0
+                        ? 'Cari unvanı veya vergisiz/toplam tutar bilgisi eksik satırları düzeltin.'
+                        : 'Seçilmiş satır bulunmuyor.';
+                }
+                return;
+            }
+
+            if (!confirmImportBtn) return;
+
+            confirmImportBtn.disabled = true;
+            confirmImportBtn.dataset.loading = 'true';
+            confirmImportBtn.textContent = 'İçe aktarılıyor...';
+            if (importStatusMessage) {
+                const skippedInfo = invalidRows.length ? ` (${invalidRows.length} satır atlandı)` : '';
+                importStatusMessage.textContent = `${rowsToImport.length} işlem içe aktarılıyor${skippedInfo}...`;
+            }
+
+            try {
+                const cariRecords = new Map();
+                allCariler.forEach(cari => {
+                    const key = normalizeForMatch(cari.unvan);
+                    if (!key) return;
+                    cariRecords.set(key, {
+                        id: cari.id,
+                        unvan: cari.unvan,
+                        ref: doc(db, 'cariler', cari.id),
+                        isNew: false,
+                        delta: 0
+                    });
+                });
+
+                const ensureCariRecord = (unvan) => {
+                    const normalizedName = normalizeForMatch(unvan);
+                    if (!normalizedName) return null;
+                    if (cariRecords.has(normalizedName)) return cariRecords.get(normalizedName);
+                    const ref = doc(carilerCollectionRef);
+                    const record = {
+                        id: ref.id,
+                        unvan: (unvan || '').trim() || `Cari ${cariRecords.size + 1}`,
+                        ref,
+                        isNew: true,
+                        delta: 0
+                    };
+                    cariRecords.set(normalizedName, record);
+                    return record;
+                };
+
+                for (let i = 0; i < rowsToImport.length; i += FIRESTORE_BATCH_LIMIT) {
+                    const chunk = rowsToImport.slice(i, i + FIRESTORE_BATCH_LIMIT);
+                    const batch = writeBatch(db);
+                    const touchedRecords = new Set();
+
+                    chunk.forEach(row => {
+                        const cariRecord = ensureCariRecord(row.cariUnvan);
+                        if (!cariRecord) return;
+
+                        const islemTipiNormalized = normalizeIslemTipi(row.islemTipi);
+                        const vergiOrani = Number.isFinite(row.vergiOrani) ? row.vergiOrani : 0;
+
+                        const netAmountRaw = row.vergisizTutar > 0 ? row.vergisizTutar : row.toplamTutar;
+                        const grossAmountRaw = row.toplamTutar > 0 ? row.toplamTutar : netAmountRaw * (1 + vergiOrani / 100);
+
+                        const netAmount = Number(Math.abs(netAmountRaw).toFixed(2));
+                        const grossAmount = Number(Math.abs(grossAmountRaw).toFixed(2));
+                        const vergiValue = Number(Number.isFinite(vergiOrani) ? vergiOrani.toFixed(2) : '0');
+
+                        const islemRef = doc(collection(db, 'islemler'));
+                        batch.set(islemRef, {
+                            islemTipi: islemTipiNormalized,
+                            islemCari: cariRecord.id,
+                            tarih: new Date(),
+                            aciklama: row.aciklama || '',
+                            faturaNumarasi: row.faturaNumarasi || '',
+                            vergiOrani: vergiValue,
+                            tutar: netAmount,
+                            toplamTutar: grossAmount,
+                            isDeleted: false,
+                            kayitTarihi: serverTimestamp(),
+                            kaynakCari: null,
+                            hedefCari: null
+                        });
+
+                        const delta = islemTipiNormalized === 'gider' ? -grossAmount : grossAmount;
+                        cariRecord.delta = (cariRecord.delta || 0) + delta;
+                        touchedRecords.add(cariRecord);
+                    });
+
+                    touchedRecords.forEach(record => {
+                        const deltaAmount = Number((record.delta || 0).toFixed(2));
+                        if (record.isNew) {
+                            const payload = {
+                                unvan: record.unvan,
+                                tipi: deltaAmount < 0 ? 'Tedarikçi' : 'Müşteri',
+                                bakiye: deltaAmount,
+                                olusturmaTarihi: serverTimestamp(),
+                                isDeleted: false
+                            };
+                            batch.set(record.ref, payload);
+                            record.isNew = false;
+                        } else if (deltaAmount !== 0) {
+                            batch.update(record.ref, { bakiye: increment(deltaAmount) });
+                        }
+                        record.delta = 0;
+                    });
+
+                    await batch.commit();
+                }
+
+                showToast(`${rowsToImport.length} işlem başarıyla içe aktarıldı.`);
+                closeImportModal();
+            } catch (error) {
+                console.error('CSV içe aktarma hatası:', error);
+                showToast('İçe aktarma sırasında bir hata oluştu.', true);
+                if (importStatusMessage) {
+                    importStatusMessage.textContent = 'İçe aktarma sırasında bir hata oluştu. Bilgileri kontrol edip yeniden deneyin.';
+                }
+            } finally {
+                if (confirmImportBtn) {
+                    confirmImportBtn.disabled = false;
+                    confirmImportBtn.textContent = 'Seçili İşlemleri İçe Aktar';
+                    delete confirmImportBtn.dataset.loading;
+                }
+                updateConfirmButtonState();
+            }
+        }
+
         async function updateExistingIslem(existingIslem, updatedFields) {
             const islemRef = doc(db, 'islemler', existingIslem.id);
 
@@ -596,7 +1537,7 @@
         }
 
         function setActiveNav(activeBtn) {
-            [navDashboardBtn, navCarilerBtn].forEach(btn => {
+            [navDashboardBtn, navCarilerBtn, navNotesBtn].forEach(btn => {
                 if (!btn) return;
                 const isActive = btn === activeBtn;
                 btn.classList.toggle('bg-indigo-600', isActive);
@@ -612,6 +1553,7 @@
             mainView.classList.add('hidden');
             detailView.classList.add('hidden');
             islemDetailView.classList.add('hidden');
+            if (notesView) notesView.classList.add('hidden');
             populateDashboardOptions();
         }
 
@@ -620,7 +1562,21 @@
             if (dashboardView) dashboardView.classList.add('hidden');
             islemDetailView.classList.add('hidden');
             detailView.classList.add('hidden');
+            notesView.classList.add('hidden');
             mainView.classList.remove('hidden');
+        }
+
+        function showNotesView() {
+            setActiveNav(navNotesBtn);
+            if (dashboardView) dashboardView.classList.add('hidden');
+            mainView.classList.add('hidden');
+            detailView.classList.add('hidden');
+            islemDetailView.classList.add('hidden');
+            notesView.classList.remove('hidden');
+            updateNotesCariOptions(allCariler);
+            if (selectedNotesCariId) {
+                populateNotesArea(selectedNotesCariId);
+            }
         }
 
         function populateDashboardOptions() {
@@ -933,6 +1889,7 @@
             allCariler.sort((a, b) => a.unvan.localeCompare(b.unvan));
             renderCariler(allCariler);
             updateCariSelects(allCariler);
+            updateNotesCariOptions(allCariler);
             populateDashboardOptions();
         });
 
@@ -954,6 +1911,21 @@
                 if (currentIslemId) showIslemDetay(currentIslemId, { skipNavigation: true });
             }
             updateDashboardSummary();
+        });
+
+        onSnapshot(query(cariNotlariCollectionRef), (snapshot) => {
+            const newMap = new Map();
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data() || {};
+                newMap.set(docSnap.id, {
+                    content: data.content || '',
+                    updatedAt: data.updatedAt || null
+                });
+            });
+            cariNotesMap = newMap;
+            if (selectedNotesCariId) {
+                populateNotesArea(selectedNotesCariId);
+            }
         });
 
         // --- ARAYÜZ RENDER FONKSİYONLARI ---
@@ -1007,6 +1979,72 @@
                 });
                 select.value = currentValue;
             });
+        }
+
+        function updateNotesCariOptions(cariler) {
+            if (!notesCariSelect) return;
+            const currentValue = notesCariSelect.value;
+            notesCariSelect.innerHTML = '<option value="">Cari seçiniz...</option>';
+            cariler.forEach(cari => {
+                const option = document.createElement('option');
+                option.value = cari.id;
+                option.textContent = cari.unvan;
+                notesCariSelect.appendChild(option);
+            });
+            if (currentValue && cariler.some(c => c.id === currentValue)) {
+                notesCariSelect.value = currentValue;
+            } else {
+                notesCariSelect.value = '';
+                selectedNotesCariId = '';
+                if (notesTextarea) {
+                    notesTextarea.value = '';
+                    notesTextarea.disabled = true;
+                }
+                if (saveNotesBtn) {
+                    saveNotesBtn.disabled = true;
+                }
+                if (notesCariTitle) {
+                    notesCariTitle.textContent = 'Cari seçiniz';
+                }
+                if (notesHelperText) {
+                    notesHelperText.textContent = 'Not alanı cariyi seçene kadar kilitlidir.';
+                }
+                if (notesLastUpdated) {
+                    notesLastUpdated.textContent = 'Henüz bir not bulunmuyor.';
+                }
+            }
+        }
+
+        function populateNotesArea(cariId) {
+            if (!notesCariSelect || !notesTextarea || !saveNotesBtn || !notesCariTitle || !notesHelperText || !notesLastUpdated) return;
+
+            const cari = allCariler.find(c => c.id === cariId) || null;
+            selectedNotesCariId = cari ? cari.id : '';
+            notesCariSelect.value = selectedNotesCariId || '';
+
+            if (!cari) {
+                notesCariTitle.textContent = 'Cari seçiniz';
+                notesTextarea.value = '';
+                notesTextarea.disabled = true;
+                saveNotesBtn.disabled = true;
+                notesHelperText.textContent = 'Not alanı cariyi seçene kadar kilitlidir.';
+                notesLastUpdated.textContent = 'Henüz bir not bulunmuyor.';
+                return;
+            }
+
+            notesCariTitle.textContent = cari.unvan;
+            notesTextarea.disabled = false;
+            saveNotesBtn.disabled = false;
+
+            const noteRecord = cariNotesMap.get(cari.id) || null;
+            const content = noteRecord?.content || '';
+            const updatedAt = noteRecord?.updatedAt || null;
+
+            notesTextarea.value = content;
+            notesHelperText.textContent = 'Notu güncelledikten sonra "Notu Kaydet" butonuna basın.';
+            notesLastUpdated.textContent = updatedAt
+                ? `Son düzenleme: ${formatTimestampForDisplay(updatedAt)}`
+                : 'Henüz bir not bulunmuyor.';
         }
         
         function renderIslemler(cariId) {
@@ -1336,6 +2374,126 @@
 
         if (navCarilerBtn) {
             navCarilerBtn.addEventListener('click', () => showCarilerView());
+        }
+
+        if (navNotesBtn) {
+            navNotesBtn.addEventListener('click', () => showNotesView());
+        }
+
+        if (openImportModalBtn && importModal) {
+            openImportModalBtn.addEventListener('click', () => openImportModal());
+        }
+
+        if (closeImportModalBtn) {
+            closeImportModalBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                closeImportModal();
+            });
+        }
+
+        if (cancelImportBtn) {
+            cancelImportBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                closeImportModal();
+            });
+        }
+
+        if (importFileInput) {
+            importFileInput.addEventListener('change', handleImportFileChange);
+        }
+
+        if (importMappingBody) {
+            importMappingBody.addEventListener('change', (event) => {
+                const select = event.target?.closest('.import-field-select');
+                if (!select) return;
+                const columnIndex = Number(select.dataset.columnIndex);
+                importState.mappings.set(columnIndex, select.value);
+                renderImportPreview();
+                updateDetectedInfo();
+            });
+        }
+
+        if (importPreviewTableContainer) {
+            importPreviewTableContainer.addEventListener('change', (event) => {
+                if (!event.target) return;
+                const target = event.target;
+                if (target.classList.contains('import-row-include') || target.classList.contains('import-field-input')) {
+                    updateConfirmButtonState();
+                }
+            });
+            importPreviewTableContainer.addEventListener('input', (event) => {
+                if (event.target && event.target.classList.contains('import-field-input')) {
+                    updateConfirmButtonState();
+                }
+            });
+            importPreviewTableContainer.addEventListener('blur', (event) => {
+                if (!event.target || !event.target.classList) return;
+                if (!event.target.classList.contains('import-field-input')) return;
+
+                const fieldKey = event.target.dataset.field;
+                const trimmed = (event.target.value || '').trim();
+
+                if (['vergisizTutar', 'toplamTutar'].includes(fieldKey)) {
+                    if (!trimmed) {
+                        event.target.value = '';
+                    } else {
+                        const numeric = parseFlexibleNumber(trimmed);
+                        event.target.value = Number.isFinite(numeric)
+                            ? numeric.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            : '';
+                    }
+                    updateConfirmButtonState();
+                    return;
+                }
+
+                if (fieldKey === 'vergiOrani') {
+                    if (!trimmed) {
+                        event.target.value = '';
+                    } else {
+                        const numeric = parseFloat(trimmed.replace(',', '.'));
+                        event.target.value = Number.isFinite(numeric) ? numeric.toString().replace('.', ',') : '';
+                    }
+                    updateConfirmButtonState();
+                }
+            }, true);
+        }
+
+        if (confirmImportBtn) {
+            confirmImportBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                handleImportConfirm();
+            });
+        }
+
+        if (notesCariSelect) {
+            notesCariSelect.addEventListener('change', (event) => {
+                const cariId = event.target.value || '';
+                populateNotesArea(cariId);
+            });
+        }
+
+        if (saveNotesBtn) {
+            saveNotesBtn.addEventListener('click', async () => {
+                if (!selectedNotesCariId || !notesTextarea) return;
+                try {
+                    saveNotesBtn.disabled = true;
+                    saveNotesBtn.textContent = 'Kaydediliyor...';
+                    const content = notesTextarea.value || '';
+                    const noteRef = doc(db, 'cariNotlari', selectedNotesCariId);
+                    await setDoc(noteRef, {
+                        cariId: selectedNotesCariId,
+                        content,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                    showToast('Not kaydedildi.');
+                } catch (error) {
+                    console.error('Not kaydetme hatası:', error);
+                    showToast('Not kaydedilirken bir hata oluştu.', true);
+                } finally {
+                    saveNotesBtn.disabled = false;
+                    saveNotesBtn.textContent = 'Notu Kaydet';
+                }
+            });
         }
 
         if (dashboardBankSelect) {
@@ -1830,6 +2988,7 @@
             renderIslemler(cariId);
 
             mainView.classList.add('hidden');
+            if (notesView) notesView.classList.add('hidden');
             detailView.classList.remove('hidden');
         }
 
