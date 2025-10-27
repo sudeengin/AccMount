@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accmount - Basit Muhasebe</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link href="dist/styles.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -31,6 +32,7 @@
             </div>
         </nav>
 
+        <div id="tab-home" data-view="home">
         <!-- Dashboard Görünümü -->
         <div id="dashboardView" class="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-gray-100 rounded-3xl p-8 shadow-xl">
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
@@ -192,13 +194,16 @@
         </div>
 
         <!-- Muhasebe Not Defteri -->
-        <div id="companyNotebookView" class="hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        </div>
+        <div id="companyNotebookView" class="hidden space-y-6">
+            <div id="notebookViewRoot" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div class="lg:col-span-1">
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md h-full">
                         <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Yeni Not</h2>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Finansal kararlarınızı ve genel muhasebe notlarınızı buraya ekleyin.</p>
                         <textarea id="notebookTextarea" class="w-full h-48 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="Örn: 2024 bütçe revizyonu yapıldı, gider limitleri güncellendi."></textarea>
+                        <label for="notebookTagsInput" class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mt-4">Etiketler (virgülle ayırın)</label>
+                        <input id="notebookTagsInput" type="text" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Örn: vergi, politika">
                         <button id="saveNotebookBtn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition">Kaydet</button>
                         <p id="notebookStatus" class="mt-3 text-xs text-gray-500 dark:text-gray-400"></p>
                     </div>
@@ -212,10 +217,36 @@
                             </div>
                             <span id="notebookCount" class="text-xs font-semibold bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-200 px-3 py-1 rounded-full">0 Not</span>
                         </div>
+                        <div id="notebookStatusFilterBar" class="flex flex-wrap items-center gap-2 mb-3">
+                            <button data-status="all" class="px-3 py-1 rounded-full text-xs font-semibold border transition bg-indigo-600 text-white border-indigo-600">Tümü</button>
+                            <button data-status="open" class="px-3 py-1 rounded-full text-xs font-semibold border transition bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600">Açık</button>
+                            <button data-status="completed" class="px-3 py-1 rounded-full text-xs font-semibold border transition bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600">Tamamlandı</button>
+                        </div>
+                        <div id="notebookTagFilterBar" class="hidden flex flex-wrap items-center gap-2 mb-4">
+                            <button id="notebookTagAllBtn" data-tag="" class="px-3 py-1 rounded-full text-xs font-semibold border transition bg-indigo-600 text-white border-indigo-600">Tümü</button>
+                            <div id="notebookTagChips" class="flex flex-wrap gap-2"></div>
+                            <button id="notebookTagClearBtn" class="text-xs font-semibold text-gray-500 dark:text-gray-300 underline disabled:opacity-50" disabled>Filtreyi Temizle</button>
+                        </div>
                         <div id="notebookList" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Henüz not eklenmemiş.</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Yükleniyor...</p>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div id="activityViewRoot" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Aktivite Akışı</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Genel notlar, cari notları ve işlemler tek zaman çizelgesinde.</p>
+                    </div>
+                </div>
+                <div id="activityTagFilterBar" class="hidden flex flex-wrap items-center gap-2 mb-4">
+                    <button id="activityTagAllBtn" data-tag="" class="px-3 py-1 rounded-full text-xs font-semibold border transition bg-indigo-600 text-white border-indigo-600">Tümü</button>
+                    <div id="activityTagChips" class="flex flex-wrap gap-2"></div>
+                    <button id="activityTagClearBtn" class="text-xs font-semibold text-gray-500 dark:text-gray-300 underline disabled:opacity-50" disabled>Filtreyi Temizle</button>
+                </div>
+                <div id="activityList" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Yükleniyor...</p>
                 </div>
             </div>
         </div>
@@ -252,6 +283,14 @@
                         <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300">Fatura Numarası</h3>
                         <p id="islemDetailInvoice" class="text-sm text-gray-900 dark:text-gray-200 mt-1"></p>
                     </div>
+                    <div id="islemInvoiceGalleryWrapper" class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 md:col-span-2 hidden">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300">Fatura Görselleri</h3>
+                            <button id="invoiceRefreshBtn" class="text-xs font-semibold text-indigo-600 dark:text-indigo-300 hover:underline">Yenile</button>
+                        </div>
+                        <p id="islemInvoiceEmpty" class="text-xs text-gray-500 dark:text-gray-300 mt-2">Bu işleme ait görsel yok.</p>
+                        <div id="islemInvoiceGallery" class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                    </div>
                 </div>
 
                 <div class="flex flex-wrap gap-2 justify-between">
@@ -259,6 +298,33 @@
                     <div class="flex gap-2">
                         <button id="islemDetailEditBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">Düzenle</button>
                         <button id="islemDetailDeleteBtn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg">Sil</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="accountNotesPanel" class="hidden mt-6">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">Cari Notları</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Bu cariye ait manuel notları görüntüleyin ve ekleyin.</p>
+                    </div>
+                    <span id="accountNotesCount" class="text-xs font-semibold bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-200 px-3 py-1 rounded-full">0 Not</span>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-1">
+                        <div class="h-full bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex flex-col">
+                            <label for="accountNotesTextarea" class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Yeni Not</label>
+                            <textarea id="accountNotesTextarea" class="flex-1 min-h-[160px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="Bu cari için manuel not ekleyin..."></textarea>
+                            <button id="accountNotesSaveBtn" class="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition">Kaydet</button>
+                            <p id="accountNotesStatus" class="mt-3 text-xs text-gray-500 dark:text-gray-400"></p>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-3">
+                        <div id="accountNotesList" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Cari seçiniz.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -321,6 +387,21 @@
                             <button type="button" id="addRowBtn" class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg">+ Yeni Satır Ekle</button>
                         </div>
                     </div>
+
+                    <div id="invoiceUploadSection" class="mt-6 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Fatura Görselleri</h3>
+                            <span id="invoiceUploadCount" class="text-xs text-gray-500 dark:text-gray-400">0 / 5</span>
+                        </div>
+                        <div id="invoiceDropzone" class="relative flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center bg-gray-50 dark:bg-gray-800 cursor-pointer transition hover:border-indigo-400">
+                            <input type="file" id="invoiceFileInput" accept="image/*" multiple class="absolute inset-0 opacity-0 cursor-pointer">
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Görselleri buraya sürükleyip bırakın veya</p>
+                            <button type="button" id="invoiceSelectBtn" class="px-3 py-1 text-xs font-semibold bg-indigo-600 text-white rounded-lg">Dosya Seç</button>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">Maksimum 5 görsel, yalnızca görüntü dosyaları kabul edilir.</p>
+                        </div>
+                        <p id="invoiceUploadHint" class="text-xs text-yellow-600 dark:text-yellow-300 hidden">Birden fazla satır olduğunda fatura yükleme devre dışı kalır. Lütfen önce işlemleri kaydedip ardından düzenleyin.</p>
+                        <div id="invoiceUploadList" class="space-y-2"></div>
+                    </div>
                 </form>
             </div>
              <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
@@ -349,6 +430,24 @@
         </div>
     </div>
     
+    <div id="invoicePreviewModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden modal-backdrop opacity-0">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl modal-content transform scale-95">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Fatura Görseli</h2>
+                <button id="invoicePreviewCloseBtn" class="text-gray-400 hover:text-gray-200">&times;</button>
+            </div>
+            <div class="p-4">
+                <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 flex justify-center">
+                    <img id="invoicePreviewImage" src="" alt="Fatura Görseli" class="max-h-[60vh] rounded-lg object-contain">
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <p id="invoicePreviewMeta" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                    <a id="invoiceDownloadLink" href="#" target="_blank" rel="noopener" download class="px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-500">İndir</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-xl toast"><p id="toast-message"></p></div>
 
     <!-- Cari İçe Aktarım Modalı -->
@@ -419,40 +518,38 @@
         <option value="Personel"></option>
     </datalist>
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, runTransaction, serverTimestamp, increment, query, where, getDocs, writeBatch, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { collection, addDoc, onSnapshot, doc, runTransaction, serverTimestamp, increment, query, where, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { db, storage } from "./src/services/firebase.js";
+        import { listAccounts } from "./src/data/accounts.repo.js";
+        import { listTransactions } from "./src/data/transactions.repo.js";
+        import { createAccountNote, fetchAccountNotesFor, updateNote, deleteNote, toggleNoteStatus } from "./src/data/notes.repo.js";
+        import { createInvoiceFileRecord, listInvoiceFilesForTransaction } from "./src/data/files.repo.js";
+        import homeView from "./src/ui/views/home.view.js";
+        import createHomeNavigation from "./src/ui/home.navigation.js";
+        import notebookView from "./src/ui/views/notebook.view.js";
+        import activityView from "./src/ui/views/activity.view.js";
 
         // --- FIREBASE KURULUMU ---
-        // BURAYA FIREBASE CONFIG BİLGİLERİNİZİ YAPIŞTIRIN
-        const firebaseConfig = {
-  apiKey: "AIzaSyAGdas38WmY06iqyt7cYVv6P4Q18riP3iU",
-  authDomain: "accmount-b1a61.firebaseapp.com",
-  projectId: "accmount-b1a61",
-  storageBucket: "accmount-b1a61.firebasestorage.app",
-  messagingSenderId: "135195887185",
-  appId: "1:135195887185:web:17f901e8c2356d1a8b5a70"
-};
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        signInAnonymously(auth).catch(error => console.error("Anonim oturum açma hatası:", error));
+        // Firebase servisleri ayrı dosyada yönetiliyor
 
         const carilerCollectionRef = collection(db, 'cariler');
         const islemlerCollectionRef = collection(db, 'islemler');
-        const notebookCollectionRef = collection(db, 'notes');
 
         let allCariler = [];
         let allIslemler = [];
         let onConfirmCallback = () => {};
+        let onCancelCallback = null;
         let modalPrefillCariId = null;
         let editingIslem = null;
         let currentIslemDetail = null;
-        let detailFilters = { tip: '', start: null, end: null };
-        let cariSearchQuery = '';
         let dashboardSelectedBankId = null;
-        let notebookEntries = [];
+        let invoiceUploads = [];
+        let currentInvoiceFiles = [];
+        let invoiceExistingCount = 0;
+        const INVOICE_UPLOAD_LIMIT = 5;
+        const MULTI_ENTRY_TYPES = new Set(['gelir', 'gider']);
+        let invoiceGalleryLoadToken = 0;
 
         const CARI_TIP_OPTIONS = ['Müşteri', 'Tedarikçi', 'Banka', 'Finansman', 'Personel'];
         const IMPORT_FIELD_OPTIONS = [
@@ -486,9 +583,6 @@
         const mainView = document.getElementById('mainView');
         const detailView = document.getElementById('detailView');
         const addCariForm = document.getElementById('addCariForm');
-        const cariList = document.getElementById('cariList');
-        const cariSearchInput = document.getElementById('cariSearchInput');
-        const openModalBtn = document.getElementById('openModalBtn');
         const closeModalBtn = document.getElementById('closeModalBtn');
         const islemModal = document.getElementById('islemModal');
         const islemModalTitle = document.getElementById('islemModalTitle');
@@ -499,13 +593,6 @@
         const kaynakCariSingleSelect = document.getElementById('kaynakCariSingle');
         const hedefCariSingleSelect = document.getElementById('hedefCariSingle');
         const backToListBtn = document.getElementById('backToListBtn');
-        const detailIslemBtn = document.getElementById('detailIslemBtn');
-        const islemList = document.getElementById('islemList');
-        const detailIslemCount = document.getElementById('detailIslemCount');
-        const detailIslemTipFilter = document.getElementById('detailIslemTipFilter');
-        const detailIslemStart = document.getElementById('detailIslemStart');
-        const detailIslemEnd = document.getElementById('detailIslemEnd');
-        const detailResetFilters = document.getElementById('detailResetFilters');
         const islemDetailView = document.getElementById('islemDetailView');
         const islemDetailTitle = document.getElementById('islemDetailTitle');
         const islemDetailAmount = document.getElementById('islemDetailAmount');
@@ -558,11 +645,807 @@
         const confirmImportBtn = document.getElementById('confirmImportBtn');
         const dashboardViewDetailsBtn = document.getElementById('dashboardViewDetailsBtn');
         const companyNotebookView = document.getElementById('companyNotebookView');
-        const notebookTextarea = document.getElementById('notebookTextarea');
-        const saveNotebookBtn = document.getElementById('saveNotebookBtn');
-        const notebookList = document.getElementById('notebookList');
-        const notebookStatus = document.getElementById('notebookStatus');
-        const notebookCount = document.getElementById('notebookCount');
+        const notebookViewRoot = document.getElementById('notebookViewRoot');
+        const activityViewRoot = document.getElementById('activityViewRoot');
+        const invoiceUploadSection = document.getElementById('invoiceUploadSection');
+        const invoiceDropzone = document.getElementById('invoiceDropzone');
+        const invoiceFileInput = document.getElementById('invoiceFileInput');
+        const invoiceSelectBtn = document.getElementById('invoiceSelectBtn');
+        const invoiceUploadList = document.getElementById('invoiceUploadList');
+        const invoiceUploadCount = document.getElementById('invoiceUploadCount');
+        const invoiceUploadHint = document.getElementById('invoiceUploadHint');
+        const islemInvoiceGalleryWrapper = document.getElementById('islemInvoiceGalleryWrapper');
+        const islemInvoiceGallery = document.getElementById('islemInvoiceGallery');
+        const islemInvoiceEmpty = document.getElementById('islemInvoiceEmpty');
+        const invoicePreviewModal = document.getElementById('invoicePreviewModal');
+        const invoicePreviewImage = document.getElementById('invoicePreviewImage');
+        const invoicePreviewCloseBtn = document.getElementById('invoicePreviewCloseBtn');
+        const invoiceDownloadLink = document.getElementById('invoiceDownloadLink');
+        const invoicePreviewMeta = document.getElementById('invoicePreviewMeta');
+        const invoiceRefreshBtn = document.getElementById('invoiceRefreshBtn');
+
+        const appFlags = window.__APP_FLAGS__ = window.__APP_FLAGS__ || {};
+        if (typeof appFlags.USE_HOME_VIEW === 'undefined') {
+            appFlags.USE_HOME_VIEW = true;
+        }
+        let useHomeView = appFlags.USE_HOME_VIEW !== false;
+        let navigation = null;
+
+        function ensureNavigation() {
+            if (!useHomeView) return null;
+            if (!navigation) {
+                navigation = createHomeNavigation({
+                    buttons: {
+                        dashboard: navDashboardBtn,
+                        cariler: navCarilerBtn,
+                        notebook: navNotebookBtn
+                    },
+                    views: {
+                        dashboard: dashboardView,
+                        main: mainView,
+                        detail: detailView,
+                        transactionDetail: islemDetailView,
+                        notebook: companyNotebookView
+                    },
+                    callbacks: {
+                        onDashboard: () => populateDashboardOptions(),
+                        onNotebook: () => mountNotebookViews()
+                    }
+                });
+            }
+            return navigation;
+        }
+
+        function resetNavigation() {
+            navigation = null;
+        }
+
+        function logHomeError(error) {
+            console.warn('[home:error]', error);
+        }
+
+        function logInvoiceUploadError(error) {
+            console.warn('[invoice:upload:error]', error);
+        }
+
+        function logInvoiceRenderError(error) {
+            console.warn('[invoice:render:error]', error);
+        }
+
+        function legacySetActiveNav(activeBtn) {
+            [navDashboardBtn, navCarilerBtn, navNotebookBtn].forEach(btn => {
+                if (!btn) return;
+                const isActive = btn === activeBtn;
+                btn.classList.toggle('bg-indigo-600', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('bg-gray-800', !isActive);
+                btn.classList.toggle('text-gray-200', !isActive);
+            });
+        }
+
+        function legacyShowDashboard() {
+            legacySetActiveNav(navDashboardBtn);
+            if (dashboardView) dashboardView.classList.remove('hidden');
+            if (mainView) mainView.classList.add('hidden');
+            if (detailView) detailView.classList.add('hidden');
+            if (islemDetailView) islemDetailView.classList.add('hidden');
+            if (companyNotebookView) companyNotebookView.classList.add('hidden');
+            populateDashboardOptions();
+        }
+
+        function legacyShowCarilerView() {
+            legacySetActiveNav(navCarilerBtn);
+            if (dashboardView) dashboardView.classList.add('hidden');
+            if (islemDetailView) islemDetailView.classList.add('hidden');
+            if (detailView) detailView.classList.add('hidden');
+            if (companyNotebookView) companyNotebookView.classList.add('hidden');
+            if (mainView) mainView.classList.remove('hidden');
+        }
+
+        function legacyShowCompanyNotebook() {
+            legacySetActiveNav(navNotebookBtn);
+            if (dashboardView) dashboardView.classList.add('hidden');
+            if (mainView) mainView.classList.add('hidden');
+            if (detailView) detailView.classList.add('hidden');
+            if (islemDetailView) islemDetailView.classList.add('hidden');
+            if (companyNotebookView) {
+                companyNotebookView.classList.remove('hidden');
+                mountNotebookViews();
+            }
+        }
+
+        function generateInvoiceId() {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return 'inv-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes && bytes !== 0) return '';
+            const thresholds = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < thresholds.length - 1) {
+                size /= 1024;
+                unitIndex += 1;
+            }
+            return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${thresholds[unitIndex]}`;
+        }
+
+        function readImageDimensions(file) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const objectUrl = URL.createObjectURL(file);
+                img.onload = () => {
+                    resolve({ width: img.naturalWidth || img.width || null, height: img.naturalHeight || img.height || null });
+                    URL.revokeObjectURL(objectUrl);
+                };
+                img.onerror = () => {
+                    resolve({ width: null, height: null });
+                    URL.revokeObjectURL(objectUrl);
+                };
+                img.src = objectUrl;
+            });
+        }
+
+        function resetInvoiceUploads() {
+            invoiceUploads.forEach(item => {
+                if (item.uploadTask && typeof item.uploadTask.cancel === 'function') {
+                    try { item.uploadTask.cancel(); } catch (error) {
+                        logInvoiceUploadError(error);
+                    }
+                }
+                if (item.previewUrl) {
+                    URL.revokeObjectURL(item.previewUrl);
+                }
+            });
+            invoiceUploads = [];
+            updateInvoiceUploadUI();
+        }
+
+        function setInvoiceUploadAvailability({ enabled, hint = false }) {
+            if (!invoiceUploadSection) return;
+            if (enabled) {
+                invoiceUploadSection.classList.remove('opacity-50');
+                invoiceDropzone?.classList.remove('pointer-events-none');
+                if (invoiceUploadHint) {
+                    invoiceUploadHint.classList.toggle('hidden', true);
+                }
+            } else {
+                invoiceUploadSection.classList.add('opacity-50');
+                invoiceDropzone?.classList.add('pointer-events-none');
+                if (invoiceUploadHint) {
+                    invoiceUploadHint.classList.toggle('hidden', !hint);
+                }
+            }
+        }
+
+        function isMultiEntryType(type) {
+            return MULTI_ENTRY_TYPES.has(type);
+        }
+
+        function getMultiEntryRowCount() {
+            if (!multiEntryRowsContainer) return 0;
+            return multiEntryRowsContainer.querySelectorAll('.multi-entry-row').length;
+        }
+
+        function refreshInvoiceUploadAvailability({ resetUploadsIfDisabled = false } = {}) {
+            if (!invoiceUploadSection || !islemTipiSelect) return;
+            const selectedType = islemTipiSelect.value;
+            if (!isMultiEntryType(selectedType)) {
+                setInvoiceUploadAvailability({ enabled: true, hint: false });
+                updateInvoiceUploadUI();
+                return;
+            }
+
+            const rowCount = getMultiEntryRowCount();
+            const allowUploads = rowCount <= 1;
+            if (allowUploads) {
+                setInvoiceUploadAvailability({ enabled: true, hint: false });
+                updateInvoiceUploadUI();
+                return;
+            }
+
+            const hadUploads = invoiceUploads.length > 0;
+            let shouldUpdateUI = true;
+            if (hadUploads && resetUploadsIfDisabled) {
+                resetInvoiceUploads();
+                shouldUpdateUI = false;
+                showToast('Birden fazla satır olduğu için ekli faturalar kaldırıldı.', true);
+            }
+            setInvoiceUploadAvailability({ enabled: false, hint: true });
+            if (shouldUpdateUI) {
+                updateInvoiceUploadUI();
+            }
+        }
+
+        function updateInvoiceUploadUI() {
+            if (!invoiceUploadSection) return;
+            const usableUploads = invoiceUploads.filter(item => item.status !== 'canceled');
+            const totalCount = invoiceExistingCount + usableUploads.length;
+            if (invoiceUploadCount) {
+                invoiceUploadCount.textContent = `${Math.min(totalCount, INVOICE_UPLOAD_LIMIT)} / ${INVOICE_UPLOAD_LIMIT}`;
+            }
+            if (!invoiceUploadList) return;
+            invoiceUploadList.innerHTML = '';
+            usableUploads.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-3 bg-white/70 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2';
+
+                const info = document.createElement('div');
+                info.className = 'flex-1 min-w-0';
+                const name = document.createElement('p');
+                name.className = 'text-sm font-medium text-gray-800 dark:text-gray-100 truncate';
+                name.textContent = item.file?.name || 'Görsel';
+                info.appendChild(name);
+
+                const meta = document.createElement('p');
+                meta.className = 'text-xs text-gray-500 dark:text-gray-400';
+                let statusLabel = 'Hazır';
+                if (item.status === 'uploading') {
+                    statusLabel = `Yükleniyor %${item.progress}`;
+                } else if (item.status === 'uploaded') {
+                    statusLabel = 'Yüklendi';
+                } else if (item.status === 'error') {
+                    statusLabel = item.error ? `Hata: ${item.error}` : 'Hata';
+                } else if (item.status === 'canceled') {
+                    statusLabel = 'İptal edildi';
+                }
+                const labels = [];
+                const sizeLabel = formatBytes(item.file?.size);
+                if (sizeLabel) labels.push(sizeLabel);
+                if (statusLabel) labels.push(statusLabel);
+                meta.textContent = labels.join(' • ');
+                info.appendChild(meta);
+
+                if (item.status === 'uploading') {
+                    const bar = document.createElement('div');
+                    bar.className = 'w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden';
+                    const progress = document.createElement('div');
+                    progress.className = 'h-full bg-indigo-500 transition-all';
+                    progress.style.width = `${item.progress || 0}%`;
+                    bar.appendChild(progress);
+                    info.appendChild(bar);
+                }
+
+                row.appendChild(info);
+
+                const actions = document.createElement('div');
+                actions.className = 'flex items-center gap-2';
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.dataset.action = 'invoice-remove';
+                removeBtn.dataset.id = item.id;
+                removeBtn.className = 'text-xs font-semibold text-red-600 hover:text-red-500';
+                removeBtn.textContent = item.status === 'uploading' ? 'İptal' : 'Kaldır';
+                if (item.status === 'uploaded') {
+                    removeBtn.disabled = true;
+                    removeBtn.classList.add('opacity-50');
+                }
+                actions.appendChild(removeBtn);
+                row.appendChild(actions);
+
+                invoiceUploadList.appendChild(row);
+            });
+        }
+
+        function handleInvoiceFiles(files) {
+            if (!Array.isArray(files) || !files.length) return;
+            const usableUploads = invoiceUploads.filter(item => item.status !== 'canceled');
+            const existingCount = invoiceExistingCount + usableUploads.length;
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) {
+                    showToast('Yalnızca görsel dosyaları yükleyebilirsiniz.', true);
+                    continue;
+                }
+                if (existingCount + invoiceUploads.filter(item => item.status !== 'canceled').length >= INVOICE_UPLOAD_LIMIT) {
+                    showToast(`Maksimum ${INVOICE_UPLOAD_LIMIT} görsel yükleyebilirsiniz.`, true);
+                    break;
+                }
+                const previewUrl = URL.createObjectURL(file);
+                invoiceUploads.push({
+                    id: generateInvoiceId(),
+                    file,
+                    previewUrl,
+                    status: 'pending',
+                    progress: 0,
+                    error: null,
+                    uploadTask: null
+                });
+            }
+            updateInvoiceUploadUI();
+        }
+
+        function removeInvoiceUpload(id) {
+            const index = invoiceUploads.findIndex(item => item.id === id);
+            if (index === -1) return;
+            const item = invoiceUploads[index];
+            if (item.uploadTask && item.status === 'uploading') {
+                try {
+                    item.uploadTask.cancel();
+                } catch (error) {
+                    logInvoiceUploadError(error);
+                }
+            }
+            if (item.previewUrl) {
+                URL.revokeObjectURL(item.previewUrl);
+            }
+            invoiceUploads.splice(index, 1);
+            updateInvoiceUploadUI();
+        }
+
+        updateInvoiceUploadUI();
+
+        function resolveAccountIdForTransaction(transaction) {
+            if (!transaction) return null;
+            return transaction.islemCari || transaction.kaynakCari || transaction.hedefCari || transaction.accountId || null;
+        }
+
+        async function uploadInvoicesForTransaction({ transactionId, accountId, transaction }) {
+            const pending = invoiceUploads.filter(item => item.status === 'pending' || item.status === 'error');
+            if (!pending.length) return;
+            if (!transactionId) {
+                showToast('Fatura görselleri, işlem kaydedilmeden yüklenemez.', true);
+                return;
+            }
+
+            const resolvedAccountId = accountId || resolveAccountIdForTransaction(transaction) || 'general';
+            let uploadHadError = false;
+
+            try {
+                console.time('invoice:upload');
+            } catch (error) {
+                // ignore metrics failures
+            }
+
+            for (const item of pending) {
+                if (!item.file) continue;
+                item.status = 'uploading';
+                item.progress = 0;
+                item.error = null;
+                updateInvoiceUploadUI();
+
+                let dimensions = { width: null, height: null };
+                try {
+                    dimensions = await readImageDimensions(item.file);
+                } catch (error) {
+                    logInvoiceUploadError(error);
+                }
+
+                const folderAccount = resolvedAccountId || 'general';
+                const storagePath = `invoices/${folderAccount}/${transactionId}/${item.id}`;
+                const storageRef = ref(storage, storagePath);
+
+                try {
+                    const { canceled } = await new Promise((resolve, reject) => {
+                        const uploadTask = uploadBytesResumable(storageRef, item.file, { contentType: item.file.type });
+                        item.uploadTask = uploadTask;
+                        uploadTask.on('state_changed',
+                            (snapshot) => {
+                                const progress = snapshot.totalBytes ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100) : 0;
+                                item.progress = progress;
+                                updateInvoiceUploadUI();
+                            },
+                            (error) => {
+                                if (error.code === 'storage/canceled') {
+                                    item.status = 'canceled';
+                                    item.progress = 0;
+                                    item.error = null;
+                                    updateInvoiceUploadUI();
+                                    resolve({ canceled: true });
+                                } else {
+                                    reject(error);
+                                }
+                            },
+                            () => {
+                                item.status = 'uploaded';
+                                item.progress = 100;
+                                updateInvoiceUploadUI();
+                                resolve({ canceled: false });
+                            }
+                        );
+                    });
+
+                    if (canceled) {
+                        continue;
+                    }
+
+                    try {
+                        await createInvoiceFileRecord({
+                            transactionId,
+                            accountId: resolvedAccountId || null,
+                            storagePath,
+                            contentType: item.file.type,
+                            size: item.file.size,
+                            width: dimensions.width,
+                            height: dimensions.height,
+                            originalName: item.file.name
+                        });
+                        invoiceExistingCount += 1;
+                    } catch (error) {
+                        logInvoiceUploadError(error);
+                        item.status = 'error';
+                        item.error = error?.message || 'Kayıt oluşturulamadı';
+                        updateInvoiceUploadUI();
+                        uploadHadError = true;
+                    }
+                } catch (error) {
+                    logInvoiceUploadError(error);
+                    item.status = 'error';
+                    item.error = error?.message || 'Yükleme başarısız';
+                    updateInvoiceUploadUI();
+                    uploadHadError = true;
+                }
+            }
+
+            try {
+                console.timeEnd('invoice:upload');
+            } catch (error) {
+                // ignore
+            }
+
+            resetInvoiceUploads();
+            updateInvoiceUploadUI();
+
+            if (uploadHadError) {
+                showToast('Bazı fatura görselleri yüklenemedi.', true);
+            }
+
+            if (currentIslemDetail && currentIslemDetail.id === transactionId) {
+                await loadIslemInvoices(currentIslemDetail, { force: true });
+            }
+        }
+
+        async function loadIslemInvoices(islem, { force = false } = {}) {
+            if (!islem || !islem.id || !islemInvoiceGalleryWrapper) return;
+            const token = ++invoiceGalleryLoadToken;
+            try {
+                const files = await listInvoiceFilesForTransaction(islem.id);
+                if (token !== invoiceGalleryLoadToken) return;
+                currentInvoiceFiles = await Promise.all(files.map(async file => {
+                    try {
+                        const url = await getDownloadURL(ref(storage, file.storagePath));
+                        return {
+                            ...file,
+                            downloadURL: url
+                        };
+                    } catch (error) {
+                        logInvoiceRenderError(error);
+                        return {
+                            ...file,
+                            downloadURL: null
+                        };
+                    }
+                }));
+                if (token !== invoiceGalleryLoadToken) return;
+                invoiceExistingCount = files.length;
+                renderInvoiceGallery();
+                if (force) {
+                    updateInvoiceUploadUI();
+                }
+            } catch (error) {
+                logInvoiceRenderError(error);
+                currentInvoiceFiles = [];
+                invoiceExistingCount = 0;
+                renderInvoiceGallery(true);
+            }
+        }
+
+        function renderInvoiceGallery(hasError = false) {
+            if (!islemInvoiceGalleryWrapper || !islemInvoiceGallery || !islemInvoiceEmpty) return;
+            if (hasError) {
+                islemInvoiceGalleryWrapper.classList.remove('hidden');
+                islemInvoiceEmpty.classList.remove('hidden');
+                islemInvoiceEmpty.textContent = 'Fatura görselleri yüklenirken bir hata oluştu.';
+                islemInvoiceGallery.innerHTML = '';
+                updateInvoiceUploadUI();
+                return;
+            }
+            if (!currentInvoiceFiles.length) {
+                islemInvoiceGalleryWrapper.classList.add('hidden');
+                islemInvoiceGallery.innerHTML = '';
+                 updateInvoiceUploadUI();
+                return;
+            }
+            islemInvoiceGalleryWrapper.classList.remove('hidden');
+            islemInvoiceEmpty.classList.add('hidden');
+            islemInvoiceGallery.innerHTML = '';
+            currentInvoiceFiles.forEach((file, index) => {
+                if (!file.downloadURL) return;
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.dataset.invoiceIndex = index.toString();
+                button.className = 'group relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600 bg-white/70 dark:bg-gray-900/40 shadow-sm';
+                const img = document.createElement('img');
+                img.src = file.downloadURL;
+                img.alt = file.originalName || 'Fatura Görseli';
+                img.className = 'object-cover w-full h-32 transition-transform group-hover:scale-105';
+                button.appendChild(img);
+                const overlay = document.createElement('div');
+                overlay.className = 'absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold';
+                overlay.textContent = 'Görüntüle';
+                button.appendChild(overlay);
+                islemInvoiceGallery.appendChild(button);
+            });
+            updateInvoiceUploadUI();
+        }
+
+        function openInvoicePreview(index) {
+            if (!invoicePreviewModal) return;
+            const file = currentInvoiceFiles[index];
+            if (!file || !file.downloadURL) return;
+            invoicePreviewImage.src = file.downloadURL;
+            invoiceDownloadLink.href = file.downloadURL;
+            invoiceDownloadLink.download = file.originalName || `invoice-${file.id || index}.jpg`;
+            const parts = [];
+            if (file.originalName) parts.push(file.originalName);
+            if (file.size) parts.push(formatBytes(file.size));
+            if (file.contentType) parts.push(file.contentType);
+            invoicePreviewMeta.textContent = parts.join(' • ');
+            openModal(invoicePreviewModal);
+        }
+
+        function closeInvoicePreview() {
+            if (!invoicePreviewModal) return;
+            closeModal(invoicePreviewModal);
+        }
+
+        function legacyShowDetailView({ skipViewUpdate = false } = {}) {
+            legacySetActiveNav(navCarilerBtn);
+            if (skipViewUpdate) return;
+            if (dashboardView) dashboardView.classList.add('hidden');
+            if (companyNotebookView) companyNotebookView.classList.add('hidden');
+            if (mainView) mainView.classList.add('hidden');
+            if (islemDetailView) islemDetailView.classList.add('hidden');
+            if (detailView) detailView.classList.remove('hidden');
+        }
+
+        function legacyShowTransactionDetail({ skipViewUpdate = false } = {}) {
+            legacySetActiveNav(navCarilerBtn);
+            if (skipViewUpdate) return;
+            if (dashboardView) dashboardView.classList.add('hidden');
+            if (companyNotebookView) companyNotebookView.classList.add('hidden');
+            if (mainView) mainView.classList.add('hidden');
+            if (detailView) detailView.classList.add('hidden');
+            if (islemDetailView) islemDetailView.classList.remove('hidden');
+        }
+
+        function formatCurrencyValue(value) {
+            const numeric = Number(value) || 0;
+            return numeric.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+        }
+
+        function unmountNotebookViews() {
+            if (typeof notebookView.unmount === 'function') {
+                notebookView.unmount();
+            }
+            if (typeof activityView.unmount === 'function') {
+                activityView.unmount();
+            }
+        }
+
+        function mountNotebookViews() {
+            if (notebookViewRoot) {
+                if (typeof notebookView.isMounted === 'function' && notebookView.isMounted()) {
+                    notebookView.unmount();
+                }
+                notebookView.mount(notebookViewRoot, {
+                    onNoteCreated: () => {
+                        if (typeof activityView.reload === 'function') {
+                            activityView.reload();
+                        }
+                    },
+                    onNoteUpdated: () => {
+                        if (typeof activityView.reload === 'function') {
+                            activityView.reload();
+                        }
+                    },
+                    onNoteDeleted: () => {
+                        if (typeof activityView.reload === 'function') {
+                            activityView.reload();
+                        }
+                },
+                    toggleNoteStatus: (id, status) => toggleNoteStatus(id, status),
+                    onNoteStatusChanged: () => {
+                        if (typeof activityView.reload === 'function') {
+                            activityView.reload();
+                        }
+                    },
+                    updateNote: (id, payload) => updateNote(id, payload),
+                    deleteNote: (id) => deleteNote(id),
+                    confirmDelete: ({ title, message }) => confirmWithModal({ title, message }),
+                    showToast
+                });
+            }
+            if (activityViewRoot) {
+                if (typeof activityView.isMounted === 'function' && activityView.isMounted()) {
+                    activityView.unmount();
+                }
+                activityView.mount(activityViewRoot, {
+                    getAccountName: getCariName,
+                    getTransactionDate: getIslemDate,
+                    getTransactionTitle: (transaction) => getIslemTitleForCari(
+                        transaction,
+                        transaction?.islemCari || transaction?.kaynakCari || transaction?.hedefCari || null
+                    ),
+                    formatCurrency: formatCurrencyValue
+                });
+            }
+        }
+
+        function showDashboard() {
+            unmountNotebookViews();
+            const nav = ensureNavigation();
+            if (nav) {
+                nav.showDashboard();
+            } else {
+                legacyShowDashboard();
+            }
+        }
+
+        function showCarilerView() {
+            unmountNotebookViews();
+            const nav = ensureNavigation();
+            if (nav) {
+                nav.showCarilerView();
+            } else {
+                legacyShowCarilerView();
+            }
+        }
+
+        function showCompanyNotebook() {
+            const nav = ensureNavigation();
+            if (nav) {
+                nav.showCompanyNotebook();
+            } else {
+                legacyShowCompanyNotebook();
+            }
+            mountNotebookViews();
+        }
+
+        function showDetailView(options = {}) {
+            unmountNotebookViews();
+            const nav = ensureNavigation();
+            if (nav) {
+                nav.showDetailView(options);
+            } else {
+                legacyShowDetailView(options);
+            }
+        }
+
+        function showTransactionDetail(options = {}) {
+            unmountNotebookViews();
+            const nav = ensureNavigation();
+            if (nav) {
+                nav.showTransactionDetail(options);
+            } else {
+                legacyShowTransactionDetail(options);
+            }
+        }
+
+        function handleDetailBack() {
+            if (useHomeView) {
+                try {
+                    if (typeof homeView.resetTransactionFilters === 'function') {
+                        homeView.resetTransactionFilters({ silent: true });
+                    }
+                    if (typeof homeView.setSelectedAccount === 'function') {
+                        homeView.setSelectedAccount(null);
+                    }
+                } catch (error) {
+                    logHomeError(error);
+                }
+            }
+            delete islemDetailView.dataset.islemId;
+            currentIslemDetail = null;
+            delete detailView.dataset.cariId;
+            invoiceGalleryLoadToken += 1;
+            currentInvoiceFiles = [];
+            renderInvoiceGallery();
+            invoiceExistingCount = 0;
+            updateInvoiceUploadUI();
+            showCarilerView();
+        }
+
+        function handleTransactionBack() {
+            delete islemDetailView.dataset.islemId;
+            currentIslemDetail = null;
+            invoiceGalleryLoadToken += 1;
+            currentInvoiceFiles = [];
+            renderInvoiceGallery();
+            invoiceExistingCount = 0;
+            updateInvoiceUploadUI();
+            showDetailView();
+        }
+
+        function handleTransactionEdit() {
+            if (!currentIslemDetail) return;
+            openIslemModal({ islemToEdit: currentIslemDetail });
+        }
+
+        function handleTransactionDelete() {
+            if (!currentIslemDetail) return;
+            const islemId = currentIslemDetail.id;
+            const payload = {
+                title: 'İşlemi Sil',
+                message: 'Bu işlemi silmek istediğinize emin misiniz? Bu işlem, ilgili cari bakiyesini de güncelleyecektir.',
+                onConfirm: async () => {
+                    try {
+                        const islemRef = doc(db, 'islemler', islemId);
+                        await updateDoc(islemRef, {
+                            isDeleted: true,
+                            deletedAt: serverTimestamp()
+                        });
+                        showToast('İşlem başarıyla silindi.');
+                        delete islemDetailView.dataset.islemId;
+                        currentIslemDetail = null;
+                        showDetailView();
+                        refreshDetailIslemler();
+                    } catch (error) {
+                        logHomeError(error);
+                        showToast('İşlem silinirken bir hata oluştu.', true);
+                    }
+                }
+            };
+            if (homeView.modal && typeof homeView.modal.open === 'function') {
+                homeView.modal.open('confirmation', payload);
+            } else {
+                openHomeModal('confirmation', payload);
+            }
+        }
+
+        function handleDashboardBankChange(value) {
+            dashboardSelectedBankId = value || null;
+            updateDashboardSummary();
+        }
+
+        function handleDashboardViewDetails() {
+            if (!dashboardSelectedBankId) return;
+            showCariDetay(dashboardSelectedBankId);
+        }
+
+        function setUseHomeView(enable) {
+            const desired = Boolean(enable);
+            if (desired === useHomeView) return useHomeView;
+            unmountNotebookViews();
+            if (useHomeView && typeof homeView.isMounted === 'function' && homeView.isMounted()) {
+                try {
+                    homeView.unmount();
+                } catch (error) {
+                    logHomeError(error);
+                }
+            }
+            useHomeView = desired;
+            appFlags.USE_HOME_VIEW = desired;
+            if (window.__APP_HOME_CONFIG__) {
+                window.__APP_HOME_CONFIG__.flags = window.__APP_HOME_CONFIG__.flags || {};
+                window.__APP_HOME_CONFIG__.flags.useHomeView = desired;
+            }
+            if (useHomeView) {
+                resetNavigation();
+                const config = window.__APP_HOME_CONFIG__ || {};
+                if (typeof homeView.isMounted === 'function' && !homeView.isMounted()) {
+                    try {
+                        homeView.mount(config.root, config.deps || {});
+                    } catch (error) {
+                        logHomeError(error);
+                    }
+                }
+                ensureNavigation();
+                showDashboard();
+            } else {
+                resetNavigation();
+                legacyShowDashboard();
+            }
+            return useHomeView;
+        }
+
+        if (!useHomeView) {
+            legacyShowDashboard();
+        }
+
+        window.__APP_TOGGLE_HOME__ = setUseHomeView;
 
         // --- YARDIMCI FONKSİYONLAR ---
         function parseTurkishNumber(str) {
@@ -687,22 +1570,6 @@
                 if (!Number.isFinite(value) || value === 0) return;
                 target.set(key, (target.get(key) || 0) + value);
             });
-        }
-
-        function formatTimestampForDisplay(value) {
-            if (!value) return '';
-            let date;
-            if (typeof value.toDate === 'function') {
-                date = value.toDate();
-            } else if (value.seconds) {
-                date = new Date(value.seconds * 1000);
-            } else if (value instanceof Date) {
-                date = value;
-            } else if (typeof value === 'string') {
-                date = new Date(value);
-            }
-            if (!date || Number.isNaN(date.getTime())) return '';
-            return date.toLocaleString('tr-TR', { dateStyle: 'long', timeStyle: 'short' });
         }
 
         // --- CSV İÇE AKTARIM YARDIMCILARI ---
@@ -1263,7 +2130,7 @@
                     }
                     processImportedCsv(text);
                 } catch (error) {
-                    console.error('CSV okuma hatası:', error);
+                    logHomeError(error);
                     showToast('CSV dosyası okunurken bir hata oluştu.', true);
                     if (importStatusMessage) {
                         importStatusMessage.textContent = error?.message || 'CSV dosyası okunamadı.';
@@ -1452,7 +2319,7 @@
                 showToast(`${rowsToImport.length} işlem başarıyla içe aktarıldı.`);
                 closeImportModal();
             } catch (error) {
-                console.error('CSV içe aktarma hatası:', error);
+                logHomeError(error);
                 showToast('İçe aktarma sırasında bir hata oluştu.', true);
                 if (importStatusMessage) {
                     importStatusMessage.textContent = 'İçe aktarma sırasında bir hata oluştu. Bilgileri kontrol edip yeniden deneyin.';
@@ -1541,46 +2408,6 @@
             return allCariler.filter(c => (c.tipi || '').toLowerCase() === 'banka');
         }
 
-        function setActiveNav(activeBtn) {
-            [navDashboardBtn, navCarilerBtn, navNotebookBtn].forEach(btn => {
-                if (!btn) return;
-                const isActive = btn === activeBtn;
-                btn.classList.toggle('bg-indigo-600', isActive);
-                btn.classList.toggle('text-white', isActive);
-                btn.classList.toggle('bg-gray-800', !isActive);
-                btn.classList.toggle('text-gray-200', !isActive);
-            });
-        }
-
-        function showDashboard() {
-            setActiveNav(navDashboardBtn);
-            if (dashboardView) dashboardView.classList.remove('hidden');
-            mainView.classList.add('hidden');
-            detailView.classList.add('hidden');
-            islemDetailView.classList.add('hidden');
-            if (companyNotebookView) companyNotebookView.classList.add('hidden');
-            populateDashboardOptions();
-        }
-
-        function showCarilerView() {
-            setActiveNav(navCarilerBtn);
-            if (dashboardView) dashboardView.classList.add('hidden');
-            islemDetailView.classList.add('hidden');
-            detailView.classList.add('hidden');
-            if (companyNotebookView) companyNotebookView.classList.add('hidden');
-            mainView.classList.remove('hidden');
-        }
-
-        function showCompanyNotebook() {
-            setActiveNav(navNotebookBtn);
-            if (dashboardView) dashboardView.classList.add('hidden');
-            mainView.classList.add('hidden');
-            detailView.classList.add('hidden');
-            islemDetailView.classList.add('hidden');
-            if (companyNotebookView) companyNotebookView.classList.remove('hidden');
-            renderNotebookEntries(notebookEntries);
-        }
-
         function populateDashboardOptions() {
             if (!dashboardBankSelect) return;
             const bankCariler = getBankCariler();
@@ -1659,49 +2486,6 @@
             }
         }
 
-        function cariMatchesSearch(cari, query) {
-            const normalized = query.trim().toLowerCase();
-            if (!normalized) return true;
-
-            const basicFields = [cari.unvan, cari.tipi, cari.vergiNo, cari.email, cari.telefon];
-            if (basicFields.some(field => typeof field === 'string' && field.toLowerCase().includes(normalized))) {
-                return true;
-            }
-
-            const ilgiliIslemler = allIslemler.filter(islem => 
-                islem.islemCari === cari.id ||
-                islem.kaynakCari === cari.id ||
-                islem.hedefCari === cari.id
-            );
-
-            return ilgiliIslemler.some(islem => {
-                const title = getIslemTitleForCari(islem, cari.id);
-                const otherFields = [
-                    title,
-                    islem.aciklama,
-                    islem.faturaNumarasi,
-                    getCariName(islem.kaynakCari),
-                    getCariName(islem.hedefCari),
-                    islem.islemTipi
-                ];
-                return otherFields.some(field => typeof field === 'string' && field.toLowerCase().includes(normalized));
-            });
-        }
-
-        function resetDetailFilters() {
-            detailFilters = { tip: '', start: null, end: null };
-            if (detailIslemTipFilter) detailIslemTipFilter.value = '';
-            if (detailIslemStart) detailIslemStart.value = '';
-            if (detailIslemEnd) detailIslemEnd.value = '';
-        }
-
-        function refreshDetailIslemler() {
-            const currentCariId = detailView.dataset.cariId;
-            if (currentCariId) {
-                renderIslemler(currentCariId);
-            }
-        }
-
         function showIslemDetay(islemId, { skipNavigation = false } = {}) {
             const islem = allIslemler.find(i => i.id === islemId && i.isDeleted !== true);
             if (!islem) {
@@ -1709,7 +2493,11 @@
                 return;
             }
 
-            setActiveNav(navCarilerBtn);
+            if (skipNavigation) {
+                showTransactionDetail({ skipViewUpdate: true });
+            } else {
+                showTransactionDetail();
+            }
             currentIslemDetail = islem;
             islemDetailView.dataset.islemId = islemId;
 
@@ -1758,17 +2546,14 @@
                 islemDetailInvoice.textContent = '';
             }
 
-            if (!skipNavigation) {
-                detailView.classList.add('hidden');
-                mainView.classList.add('hidden');
-                islemDetailView.classList.remove('hidden');
-            }
+            loadIslemInvoices(islem);
+
         }
 
         function populateIslemFormForEdit() {
             if (!editingIslem) return;
 
-            const isMultiEntry = ['gelir', 'gider'].includes(editingIslem.islemTipi);
+            const isMultiEntry = isMultiEntryType(editingIslem.islemTipi);
             addRowBtn.classList.toggle('hidden', isMultiEntry);
             addRowBtn.disabled = isMultiEntry;
 
@@ -1837,6 +2622,9 @@
             formSubmitBtn.textContent = 'İşlemi Kaydet';
             islemModalTitle.textContent = 'Yeni Finansal İşlem';
             islemTipiSelect.value = 'gelir';
+            invoiceExistingCount = 0;
+            resetInvoiceUploads();
+            setInvoiceUploadAvailability({ enabled: true, hint: false });
         }
         
         // --- MODAL FONKSİYONLARI ---
@@ -1854,7 +2642,7 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
         
-        function showConfirmation({ title, message, inputLabel = null, expectedValue = null, onConfirm }) {
+        function showConfirmation({ title, message, inputLabel = null, expectedValue = null, onConfirm, onCancel = null }) {
             confirmationTitle.textContent = title;
             confirmationMessage.innerHTML = message;
             confirmationInput.value = '';
@@ -1872,6 +2660,7 @@
             }
 
             onConfirmCallback = onConfirm;
+            onCancelCallback = typeof onCancel === 'function' ? onCancel : null;
             openModal(confirmationModal);
         }
 
@@ -1883,8 +2672,19 @@
             setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
 
+        function confirmWithModal({ title, message }) {
+            return new Promise((resolve) => {
+                showConfirmation({
+                    title,
+                    message,
+                    onConfirm: () => resolve(true),
+                    onCancel: () => resolve(false)
+                });
+            });
+        }
+
         // --- VERİ DİNLEYİCİLER (GÜVENLİ FİLTRELEME İLE) ---
-        onSnapshot(query(carilerCollectionRef), (snapshot) => {
+        onSnapshot(listAccounts(), (snapshot) => {
             allCariler = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
@@ -1893,20 +2693,28 @@
                 }
             });
             allCariler.sort((a, b) => a.unvan.localeCompare(b.unvan));
-            renderCariler(allCariler);
+            if (typeof homeView.setAccounts === 'function') {
+                homeView.setAccounts(allCariler);
+            }
             updateCariSelects(allCariler);
             populateDashboardOptions();
+            if (typeof activityView.isMounted === 'function' && activityView.isMounted() && typeof activityView.reload === 'function') {
+                activityView.reload();
+            }
         });
 
-        onSnapshot(query(islemlerCollectionRef), (snapshot) => {
+        onSnapshot(listTransactions(), (snapshot) => {
             allIslemler = [];
             snapshot.forEach(doc => {
                  const data = doc.data();
                  if (data.isDeleted !== true) {
-                    allIslemler.push({ id: doc.id, ...data });
+                   allIslemler.push({ id: doc.id, ...data });
                  }
             });
             allIslemler.sort((a, b) => (b.kayitTarihi?.seconds || 0) - (a.kayitTarihi?.seconds || 0));
+            if (typeof homeView.setTransactions === 'function') {
+                homeView.setTransactions(allIslemler);
+            }
             if (!detailView.classList.contains('hidden')) {
                 const currentCariId = detailView.dataset.cariId;
                 if(currentCariId) showCariDetay(currentCariId);
@@ -1916,54 +2724,12 @@
                 if (currentIslemId) showIslemDetay(currentIslemId, { skipNavigation: true });
             }
             updateDashboardSummary();
-        });
-
-        onSnapshot(query(notebookCollectionRef, orderBy('createdAt', 'desc')), (snapshot) => {
-            notebookEntries = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-            renderNotebookEntries(notebookEntries);
+            if (typeof activityView.isMounted === 'function' && activityView.isMounted() && typeof activityView.reload === 'function') {
+                activityView.reload();
+            }
         });
 
         // --- ARAYÜZ RENDER FONKSİYONLARI ---
-        function renderCariler(cariler) {
-            cariList.innerHTML = '';
-            if (cariler.length === 0) {
-                cariList.innerHTML = `<p class="text-gray-500 dark:text-gray-400">Henüz cari eklenmemiş.</p>`;
-                return;
-            }
-
-            const displayCariler = cariSearchQuery
-                ? cariler.filter(cari => cariMatchesSearch(cari, cariSearchQuery))
-                : cariler;
-
-            if (displayCariler.length === 0) {
-                cariList.innerHTML = `<p class="text-gray-500 dark:text-gray-400">Arama kriterlerine uygun cari bulunamadı.</p>`;
-                return;
-            }
-
-            displayCariler.forEach(cari => {
-                const bakiye = cari.bakiye || 0;
-                const bakiyeRenk = bakiye > 0 ? 'text-green-500' : (bakiye < 0 ? 'text-red-500' : 'text-gray-500');
-                const cariElement = document.createElement('div');
-                cariElement.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center transition-all';
-                
-                cariElement.innerHTML = `
-                    <div class="flex-grow cursor-pointer cari-item" data-id="${cari.id}">
-                        <p class="font-semibold text-lg">${cari.unvan}</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">${cari.tipi}</p>
-                    </div>
-                    <div class="flex items-center flex-shrink-0">
-                        <div class="text-right mr-4 cursor-pointer cari-item" data-id="${cari.id}">
-                            <p class="font-bold text-xl ${bakiyeRenk}">${bakiye.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Bakiye</p>
-                        </div>
-                        <button data-id="${cari.id}" data-unvan="${cari.unvan}" class="delete-cari-btn p-2 rounded-full text-gray-400 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                        </button>
-                    </div>`;
-                cariList.appendChild(cariElement);
-            });
-        }
-
         function updateCariSelects(cariler) {
             const selects = document.querySelectorAll('.cari-select');
             selects.forEach(select => {
@@ -1976,140 +2742,145 @@
             });
         }
 
-        function renderNotebookEntries(entries) {
-            if (!notebookList) return;
-            const sorted = [...(entries || [])].sort((a, b) => {
-                const timeA = resolveTimestamp(a.createdAt)?.getTime() || 0;
-                const timeB = resolveTimestamp(b.createdAt)?.getTime() || 0;
-                return timeB - timeA;
-            });
-
-            notebookList.innerHTML = '';
-
-            if (!sorted.length) {
-                notebookList.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Henüz not eklenmemiş.</p>';
-            } else {
-                sorted.forEach(note => {
-                    const card = document.createElement('div');
-                    card.className = 'border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/60 shadow-sm';
-
-                    const header = document.createElement('div');
-                    header.className = 'flex items-center justify-between mb-2';
-
-                    const title = document.createElement('h3');
-                    title.className = 'text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide';
-                    title.textContent = 'Muhasebe Notu';
-
-                    const timestamp = document.createElement('span');
-                    timestamp.className = 'text-xs text-gray-500 dark:text-gray-400';
-                    const formatted = formatTimestampForDisplay(note.createdAt) || 'Tarih bilgisi yok';
-                    timestamp.textContent = formatted;
-
-                    header.appendChild(title);
-                    header.appendChild(timestamp);
-
-                    const content = document.createElement('p');
-                    content.className = 'text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap';
-                    content.textContent = note.text || '';
-
-                    card.appendChild(header);
-                    card.appendChild(content);
-
-                    notebookList.appendChild(card);
-                });
-            }
-
-            if (notebookCount) {
-                const count = sorted.length;
-                notebookCount.textContent = `${count} Not`;
+        function openHomeModal(id, payload = {}) {
+            switch (id) {
+                case 'transaction': {
+                    const mode = payload.mode || 'create';
+                    if (mode === 'edit') {
+                        const transactionId = payload.transactionId || payload.transaction?.id;
+                        const transaction = payload.transaction || allIslemler.find(tx => tx.id === transactionId);
+                        if (!transaction) {
+                            showToast('Düzenlenecek işlem bulunamadı.', true);
+                            return;
+                        }
+                        openIslemModal({ islemToEdit: transaction });
+                    } else {
+                        const accountId = payload.accountId || payload.account?.id || null;
+                        openIslemModal({ prefillCariId: accountId });
+                    }
+                    break;
+                }
+                case 'confirmation': {
+                    showConfirmation({
+                        title: payload.title || 'Onay',
+                        message: payload.message || '',
+                        inputLabel: payload.inputLabel || null,
+                        expectedValue: payload.expectedValue || null,
+                        onConfirm: async () => {
+                            if (typeof payload.onConfirm === 'function') {
+                                await payload.onConfirm();
+                            }
+                        }
+                    });
+                    break;
+                }
+                default:
+                    break;
             }
         }
 
-        function renderIslemler(cariId) {
-            islemList.innerHTML = '';
-            const ilgiliIslemler = allIslemler.filter(islem => 
-                islem.islemCari === cariId || 
-                islem.kaynakCari === cariId || 
-                islem.hedefCari === cariId
-            );
-
-            const filteredIslemler = ilgiliIslemler.filter(islem => {
-                if (detailFilters.tip && islem.islemTipi !== detailFilters.tip) return false;
-                const islemDate = getIslemDate(islem);
-                if (detailFilters.start && (!islemDate || islemDate < detailFilters.start)) return false;
-                if (detailFilters.end && (!islemDate || islemDate > detailFilters.end)) return false;
-                return true;
-            }).sort((a, b) => {
-                const dateA = getIslemDate(a);
-                const dateB = getIslemDate(b);
-                const timeA = dateA ? dateA.getTime() : 0;
-                const timeB = dateB ? dateB.getTime() : 0;
-                if (timeA === timeB) {
-                    const kayitA = a.kayitTarihi?.seconds || 0;
-                    const kayitB = b.kayitTarihi?.seconds || 0;
-                    return kayitB - kayitA;
-                }
-                return timeB - timeA;
-            });
-
-            if (detailIslemCount) {
-                detailIslemCount.textContent = `${filteredIslemler.length} işlem`;
+        function closeHomeModal(id) {
+            switch (id) {
+                case 'transaction':
+                    closeModal(islemModal);
+                    cleanupIslemModal();
+                    break;
+                case 'confirmation':
+                    closeModal(confirmationModal);
+                    break;
+                default:
+                    break;
             }
+        }
 
-            if (filteredIslemler.length === 0) {
-                const message = ilgiliIslemler.length === 0
-                    ? 'Bu cari için işlem geçmişi bulunmuyor.'
-                    : 'Seçilen filtrelere uygun işlem bulunmuyor.';
-                islemList.innerHTML = `<p class="text-gray-500 dark:text-gray-400 p-4 text-center">${message}</p>`;
-                return;
+        function closeTransactionModal() {
+            if (homeView.modal && typeof homeView.modal.close === 'function') {
+                homeView.modal.close('transaction');
+            } else {
+                closeHomeModal('transaction');
             }
+        }
 
-            filteredIslemler.forEach(islem => {
-                let tutar = islem.toplamTutar || islem.tutar || 0;
-                const tarihDate = getIslemDate(islem);
-                const tarih = tarihDate ? tarihDate.toLocaleDateString('tr-TR') : 'Bilinmiyor';
-                let description = islem.aciklama || '';
-                const title = getIslemTitleForCari(islem, cariId);
-                const netChange = getCariNetChange(islem, cariId);
-                const amountSign = netChange > 0 ? '+' : (netChange < 0 ? '-' : '');
-                const amountClass = netChange > 0 ? 'text-green-500' : (netChange < 0 ? 'text-red-500' : 'text-gray-500');
-                const amountValue = Math.abs(netChange) > 0 ? Math.abs(netChange) : Math.abs(Number(tutar) || 0);
-                const formattedAmount = amountValue.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+        async function legacyDeleteTransaction({ transaction }) {
+            if (!transaction) return;
+            try {
+                const islemRef = doc(db, 'islemler', transaction.id);
+                await updateDoc(islemRef, {
+                    isDeleted: true,
+                    deletedAt: serverTimestamp()
+                });
 
-                if ((islem.islemTipi === 'gelir' || islem.islemTipi === 'gider') && typeof islem.vergiOrani !== 'undefined') {
-                    const vergisizTutarFormatted = (islem.tutar || 0).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
-                    description = `
-                        ${islem.faturaNumarasi ? `Fatura No: ${islem.faturaNumarasi}<br>` : ''}
-                        ${description}
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                           (${vergisizTutarFormatted} + %${islem.vergiOrani} KDV)
-                        </div>
-                    `;
+                const affectedCariIds = new Set();
+                if (transaction.islemCari) affectedCariIds.add(transaction.islemCari);
+                if (transaction.kaynakCari) affectedCariIds.add(transaction.kaynakCari);
+                if (transaction.hedefCari) affectedCariIds.add(transaction.hedefCari);
+
+                for (const cariId of affectedCariIds) {
+                    const cariRef = doc(db, 'cariler', cariId);
+                    const q1 = query(islemlerCollectionRef, where('islemCari', '==', cariId), where('isDeleted', '==', false));
+                    const q2 = query(islemlerCollectionRef, where('kaynakCari', '==', cariId), where('isDeleted', '==', false));
+                    const q3 = query(islemlerCollectionRef, where('hedefCari', '==', cariId), where('isDeleted', '==', false));
+
+                    const [snap1, snap2, snap3] = await Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
+                    const merged = new Map();
+                    [...snap1.docs, ...snap2.docs, ...snap3.docs].forEach(docSnap => {
+                        if (!merged.has(docSnap.id)) {
+                            merged.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+                        }
+                    });
+
+                    const cariIslemler = Array.from(merged.values());
+                    const newBakiye = cariIslemler.reduce((acc, currentIslem) => acc + getCariNetChange(currentIslem, cariId), 0);
+                    await updateDoc(cariRef, { bakiye: newBakiye });
                 }
 
-                const islemElement = document.createElement('div');
-                islemElement.className = 'islem-item cursor-pointer bg-gray-100 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center';
-                islemElement.dataset.id = islem.id;
-                islemElement.innerHTML = `
-                    <div class="flex-grow">
-                        <p class="font-semibold">${title}</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">${description}</p>
-                    </div>
-                    <div class="text-right ml-4 flex-shrink-0 flex items-center">
-                        <div>
-                            <p class="font-bold text-lg ${amountClass}">${amountSign}${formattedAmount}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">${tarih}</p>
-                        </div>
-                        <button data-id="${islem.id}" class="edit-islem-btn ml-2 p-2 rounded-full text-gray-400 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793z"/><path d="M11.379 5.793L4 13.172V16h2.828l7.379-7.379-2.828-2.828z"/></svg>
-                        </button>
-                        <button data-id="${islem.id}" class="delete-islem-btn ml-2 p-2 rounded-full text-gray-400 transition-colors">
-                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                        </button>
-                    </div>
-                `;
-                islemList.appendChild(islemElement);
-            });
+                showToast('İşlem başarıyla silindi ve bakiye güncellendi.');
+            } catch (error) {
+                showToast('İşlem silinirken bir hata oluştu.', true);
+                logHomeError(error);
+            }
+        }
+
+        function handleAccountDelete({ id: cariId, name: cariUnvan }) {
+            if (!cariId) return;
+            const payload = {
+                title: 'Cari Hesabı Sil',
+                message: `<b>${cariUnvan}</b> adlı cariyi silmek üzeresiniz.<br>Bu işlem, cariye ait <b>tüm işlem geçmişini</b> de silecektir ve geri alınamaz. Onaylamak için lütfen aşağıya cari adını yazın.`,
+                inputLabel: `Onaylamak için "${cariUnvan}" yazın`,
+                expectedValue: cariUnvan,
+                onConfirm: async () => {
+                    try {
+                        const batch = writeBatch(db);
+                        const cariRef = doc(db, 'cariler', cariId);
+
+                        const q1 = query(islemlerCollectionRef, where('islemCari', '==', cariId));
+                        const q2 = query(islemlerCollectionRef, where('kaynakCari', '==', cariId));
+                        const q3 = query(islemlerCollectionRef, where('hedefCari', '==', cariId));
+
+                        const [snapshot1, snapshot2, snapshot3] = await Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
+                        const allSnapshots = [...snapshot1.docs, ...snapshot2.docs, ...snapshot3.docs];
+                        const uniqueIslemIds = [...new Set(allSnapshots.map(d => d.id))];
+
+                        uniqueIslemIds.forEach(islemId => {
+                            const islemRef = doc(db, 'islemler', islemId);
+                            batch.update(islemRef, { isDeleted: true, deletedAt: serverTimestamp() });
+                        });
+
+                        batch.update(cariRef, { isDeleted: true, deletedAt: serverTimestamp() });
+                        await batch.commit();
+                        showToast('Cari ve bağlı işlemleri başarıyla silindi.');
+                    } catch (error) {
+                        showToast('Cari silinirken bir hata oluştu.', true);
+                        logHomeError(error);
+                    }
+                }
+            };
+
+            if (homeView.modal && typeof homeView.modal.open === 'function') {
+                homeView.modal.open('confirmation', payload);
+            } else {
+                openHomeModal('confirmation', payload);
+            }
         }
 
         // --- ÇOKLU GİRİŞ FONKSİYONLARI ---
@@ -2233,11 +3004,14 @@
                 updateInputsState();
                 handleCalculation();
             }
+
+            refreshInvoiceUploadAvailability({ resetUploadsIfDisabled: true });
         }
 
         multiEntryRowsContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('remove-row-btn')) {
                 e.target.closest('.multi-entry-row').remove();
+                refreshInvoiceUploadAvailability();
             }
         });
 
@@ -2258,6 +3032,15 @@
 
             if (editingIslem) {
                 populateIslemFormForEdit();
+                setInvoiceUploadAvailability({ enabled: false, hint: false });
+                listInvoiceFilesForTransaction(editingIslem.id).then(files => {
+                    invoiceExistingCount = Array.isArray(files) ? files.length : 0;
+                    setInvoiceUploadAvailability({ enabled: true, hint: false });
+                    updateInvoiceUploadUI();
+                }).catch(error => {
+                    logInvoiceRenderError(error);
+                    setInvoiceUploadAvailability({ enabled: true, hint: false });
+                });
             } else {
                 if (!['gelir', 'gider'].includes(targetType)) {
                     const tarihSingle = document.getElementById('tarihSingle');
@@ -2283,80 +3066,10 @@
                 addCariForm.reset();
                 showToast("Cari başarıyla eklendi.");
             } catch (error) {
-                console.error("Cari ekleme hatası: ", error);
+                logHomeError(error);
                 showToast("Cari eklenirken bir hata oluştu.", true);
             }
         });
-
-        openModalBtn.addEventListener('click', () => openIslemModal());
-
-        if (detailIslemBtn) {
-            detailIslemBtn.addEventListener('click', () => {
-                const cariId = detailView.dataset.cariId;
-                if (!cariId) return;
-                openIslemModal({ prefillCariId: cariId });
-            });
-        }
-
-        if (detailIslemTipFilter) {
-            detailIslemTipFilter.addEventListener('change', () => {
-                detailFilters.tip = detailIslemTipFilter.value || '';
-                refreshDetailIslemler();
-            });
-        }
-
-        if (detailIslemStart) {
-            detailIslemStart.addEventListener('change', () => {
-                const newStart = parseDateInputValue(detailIslemStart.value, false);
-                if (detailFilters.end && newStart && newStart > detailFilters.end) {
-                    showToast('Başlangıç tarihi, bitiş tarihinden büyük olamaz.', true);
-                    detailIslemStart.value = formatDateForInput(detailFilters.start);
-                    return;
-                }
-                detailFilters.start = newStart;
-                refreshDetailIslemler();
-            });
-        }
-
-        if (detailIslemEnd) {
-            detailIslemEnd.addEventListener('change', () => {
-                const newEnd = parseDateInputValue(detailIslemEnd.value, true);
-                if (detailFilters.start && newEnd && newEnd < detailFilters.start) {
-                    showToast('Bitiş tarihi, başlangıç tarihinden küçük olamaz.', true);
-                    detailIslemEnd.value = formatDateForInput(detailFilters.end);
-                    return;
-                }
-                detailFilters.end = newEnd;
-                refreshDetailIslemler();
-            });
-        }
-
-        if (detailResetFilters) {
-            detailResetFilters.addEventListener('click', (event) => {
-                event.preventDefault();
-                resetDetailFilters();
-                refreshDetailIslemler();
-            });
-        }
-
-        if (cariSearchInput) {
-            cariSearchInput.addEventListener('input', (event) => {
-                cariSearchQuery = (event.target.value || '').toString();
-                renderCariler(allCariler);
-            });
-        }
-
-        if (navDashboardBtn) {
-            navDashboardBtn.addEventListener('click', () => showDashboard());
-        }
-
-        if (navCarilerBtn) {
-            navCarilerBtn.addEventListener('click', () => showCarilerView());
-        }
-
-        if (navNotebookBtn) {
-            navNotebookBtn.addEventListener('click', () => showCompanyNotebook());
-        }
 
         if (openImportModalBtn && importModal) {
             openImportModalBtn.addEventListener('click', () => openImportModal());
@@ -2443,120 +3156,134 @@
             });
         }
 
-        if (saveNotebookBtn) {
-            saveNotebookBtn.addEventListener('click', async () => {
-                if (!notebookTextarea) return;
-                const text = (notebookTextarea.value || '').trim();
-                if (!text) {
-                    if (notebookStatus) notebookStatus.textContent = 'Lütfen kaydetmeden önce bir not yazın.';
-                    return;
-                }
-
-                try {
-                    saveNotebookBtn.disabled = true;
-                    if (notebookStatus) notebookStatus.textContent = 'Kaydediliyor...';
-                    await addDoc(notebookCollectionRef, {
-                        text,
-                        type: 'general',
-                        createdAt: serverTimestamp()
-                    });
-                    if (notebookTextarea) notebookTextarea.value = '';
-                    if (notebookStatus) notebookStatus.textContent = 'Not kaydedildi.';
-                    showToast('Not kaydedildi.');
-                } catch (error) {
-                    console.error('Notebook kaydetme hatası:', error);
-                    showToast('Not kaydedilirken bir hata oluştu.', true);
-                    if (notebookStatus) notebookStatus.textContent = 'Not kaydedilirken bir hata oluştu.';
-                } finally {
-                    saveNotebookBtn.disabled = false;
-                    setTimeout(() => {
-                        if (notebookStatus) notebookStatus.textContent = '';
-                    }, 3000);
-                }
-            });
-        }
-
-        if (dashboardBankSelect) {
-            dashboardBankSelect.addEventListener('change', () => {
-                dashboardSelectedBankId = dashboardBankSelect.value || null;
-                updateDashboardSummary();
-            });
-        }
-
-        if (dashboardViewDetailsBtn) {
-            dashboardViewDetailsBtn.addEventListener('click', (event) => {
+        if (invoiceSelectBtn && invoiceFileInput) {
+            invoiceSelectBtn.addEventListener('click', (event) => {
                 event.preventDefault();
-                if (!dashboardSelectedBankId) return;
-                showCariDetay(dashboardSelectedBankId);
+                invoiceFileInput.click();
             });
         }
 
-        if (islemDetailBackBtn) {
-            islemDetailBackBtn.addEventListener('click', () => {
-                islemDetailView.classList.add('hidden');
-                detailView.classList.remove('hidden');
-                mainView.classList.add('hidden');
-                delete islemDetailView.dataset.islemId;
-                currentIslemDetail = null;
+        if (invoiceFileInput) {
+            invoiceFileInput.addEventListener('change', (event) => {
+                const files = Array.from(event.target.files || []);
+                handleInvoiceFiles(files);
+                invoiceFileInput.value = '';
             });
         }
 
-        if (islemDetailEditBtn) {
-            islemDetailEditBtn.addEventListener('click', () => {
-                if (!currentIslemDetail) return;
-                openIslemModal({ islemToEdit: currentIslemDetail });
+        if (invoiceDropzone) {
+            ['dragenter', 'dragover'].forEach(evt => {
+                invoiceDropzone.addEventListener(evt, (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    invoiceDropzone.classList.add('border-indigo-400', 'bg-indigo-50/60');
+                });
             });
-        }
-
-        if (islemDetailDeleteBtn) {
-            islemDetailDeleteBtn.addEventListener('click', () => {
-                if (!currentIslemDetail) return;
-                const islemId = currentIslemDetail.id;
-                showConfirmation({
-                    title: 'İşlemi Sil',
-                    message: 'Bu işlemi silmek istediğinize emin misiniz? Bu işlem, ilgili cari bakiyesini de güncelleyecektir.',
-                    onConfirm: async () => {
-                        try {
-                            const islemRef = doc(db, 'islemler', islemId);
-                            await updateDoc(islemRef, {
-                                isDeleted: true,
-                                deletedAt: serverTimestamp()
-                            });
-                            showToast('İşlem başarıyla silindi.');
-                            islemDetailView.classList.add('hidden');
-                            detailView.classList.remove('hidden');
-                            mainView.classList.add('hidden');
-                            currentIslemDetail = null;
-                            refreshDetailIslemler();
-                        } catch (error) {
-                            console.error('İşlem silme hatası:', error);
-                            showToast('İşlem silinirken bir hata oluştu.', true);
-                        }
+            ['dragleave', 'drop'].forEach(evt => {
+                invoiceDropzone.addEventListener(evt, (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    invoiceDropzone.classList.remove('border-indigo-400', 'bg-indigo-50/60');
+                    if (evt === 'drop' && event.dataTransfer?.files) {
+                        const files = Array.from(event.dataTransfer.files);
+                        handleInvoiceFiles(files);
                     }
                 });
+            });
+            invoiceDropzone.addEventListener('click', () => {
+                if (invoiceDropzone.classList.contains('pointer-events-none')) return;
+                invoiceFileInput?.click();
+            });
+        }
+
+        if (invoiceUploadList) {
+            invoiceUploadList.addEventListener('click', (event) => {
+                const btn = event.target.closest('[data-action="invoice-remove"]');
+                if (!btn) return;
+                const fileId = btn.dataset.id;
+                removeInvoiceUpload(fileId);
+            });
+        }
+
+        if (invoicePreviewCloseBtn) {
+            invoicePreviewCloseBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                closeInvoicePreview();
+            });
+        }
+
+        if (invoicePreviewModal) {
+            invoicePreviewModal.addEventListener('click', (event) => {
+                if (event.target === invoicePreviewModal) {
+                    closeInvoicePreview();
+                }
+            });
+        }
+
+        if (invoiceRefreshBtn) {
+            invoiceRefreshBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (currentIslemDetail) {
+                    loadIslemInvoices(currentIslemDetail, { force: true });
+                }
+            });
+        }
+
+        if (islemInvoiceGallery) {
+            islemInvoiceGallery.addEventListener('click', (event) => {
+                const card = event.target.closest('[data-invoice-index]');
+                if (!card) return;
+                const index = Number(card.dataset.invoiceIndex || 0);
+                openInvoicePreview(index);
             });
         }
 
         closeModalBtn.addEventListener('click', () => {
-            closeModal(islemModal);
-            cleanupIslemModal();
+            closeTransactionModal();
         });
-        cancelConfirmationBtn.addEventListener('click', () => closeModal(confirmationModal));
+        cancelConfirmationBtn.addEventListener('click', () => {
+            if (typeof onCancelCallback === 'function') {
+                try {
+                    onCancelCallback();
+                } catch (error) {
+                    console.warn('[confirmation:cancel:error]', error);
+                }
+            }
+            onCancelCallback = null;
+            onConfirmCallback = () => {};
+            if (homeView.modal && typeof homeView.modal.close === 'function') {
+                homeView.modal.close('confirmation');
+            } else {
+                closeHomeModal('confirmation');
+            }
+        });
         
         confirmActionBtn.addEventListener('click', () => {
             onConfirmCallback();
-            closeModal(confirmationModal);
+            onConfirmCallback = () => {};
+            onCancelCallback = null;
+            if (homeView.modal && typeof homeView.modal.close === 'function') {
+                homeView.modal.close('confirmation');
+            } else {
+                closeHomeModal('confirmation');
+            }
         });
 
         islemTipiSelect.addEventListener('change', (e) => {
             const selectedType = e.target.value;
-            const isMultiEntry = ['gelir', 'gider'].includes(selectedType);
+            const isMultiEntry = isMultiEntryType(selectedType);
             const isEditMode = Boolean(editingIslem);
 
             singleEntryContainer.classList.toggle('hidden', isMultiEntry);
             multiEntryContainer.classList.toggle('hidden', !isMultiEntry);
             
             const selectedOptionText = e.target.options[e.target.selectedIndex].text;
+            if (isMultiEntry && !isEditMode) {
+                resetInvoiceUploads();
+            } else if (!isMultiEntry) {
+                setInvoiceUploadAvailability({ enabled: true, hint: false });
+                updateInvoiceUploadUI();
+            }
 
             if (isMultiEntry) {
                 multiEntryRowsContainer.innerHTML = '';
@@ -2574,6 +3301,7 @@
                         removeBtn.disabled = true;
                     }
                 }
+                refreshInvoiceUploadAvailability({ resetUploadsIfDisabled: !isEditMode });
             } else {
                 multiEntryRowsContainer.innerHTML = '';
                 if (!isEditMode) {
@@ -2720,29 +3448,39 @@
                         currentIslemDetail = mergedIslem;
                     }
 
+                    if (invoiceUploads.some(item => item.status === 'pending' || item.status === 'error')) {
+                        await uploadInvoicesForTransaction({
+                            transactionId: editedIslemId,
+                            accountId: resolveAccountIdForTransaction(mergedIslem),
+                            transaction: mergedIslem
+                        });
+                    }
+
                     showToast('İşlem başarıyla güncellendi.');
-                    closeModal(islemModal);
-                    cleanupIslemModal();
+                    closeTransactionModal();
                     refreshDetailIslemler();
                     if (wasIslemDetailVisible) {
                         showIslemDetay(editedIslemId, { skipNavigation: true });
-                        islemDetailView.classList.remove('hidden');
-                        detailView.classList.add('hidden');
-                        mainView.classList.add('hidden');
+                        showTransactionDetail();
                     }
                 } catch (error) {
-                    console.error('İşlem güncelleme hatası:', error);
+                    logHomeError(error);
                     showToast(error.message || 'İşlem güncellenirken bir hata oluştu.', true);
                 }
                 return;
             }
 
             if (isMultiEntry) {
-                const rows = multiEntryRowsContainer.querySelectorAll('.multi-entry-row');
-                if (rows.length === 0) return showToast("Kaydedilecek işlem bulunmuyor.", true);
+                const rows = Array.from(multiEntryRowsContainer.querySelectorAll('.multi-entry-row'));
+                if (!rows.length) return showToast("Kaydedilecek işlem bulunmuyor.", true);
+                if (rows.length > 1 && invoiceUploads.length) {
+                    showToast('Birden fazla satır için fatura görseli eklenemez. Lütfen işlemleri kaydedip faturayı sonradan ekleyin.', true);
+                    return;
+                }
                 
                 const batch = writeBatch(db);
                 let isValid = true;
+                const newTransactions = [];
                 
                 rows.forEach(row => {
                     const islem = {
@@ -2775,6 +3513,7 @@
                     
                     const islemRef = doc(collection(db, "islemler"));
                     batch.set(islemRef, islem);
+                    newTransactions.push({ ref: islemRef, payload: { ...islem } });
 
                     const cariRef = doc(db, "cariler", islem.islemCari);
                     batch.update(cariRef, { bakiye: increment(bakiyeDegisimi) });
@@ -2784,11 +3523,19 @@
 
                 try {
                     await batch.commit();
+                    if (rows.length === 1 && invoiceUploads.some(item => item.status === 'pending' || item.status === 'error')) {
+                        const created = newTransactions[0];
+                        const transactionPayload = { ...created.payload, id: created.ref.id };
+                        await uploadInvoicesForTransaction({
+                            transactionId: created.ref.id,
+                            accountId: resolveAccountIdForTransaction(transactionPayload),
+                            transaction: transactionPayload
+                        });
+                    }
                     showToast(`${rows.length} adet işlem başarıyla kaydedildi.`);
-                    closeModal(islemModal);
-                    cleanupIslemModal();
+                    closeTransactionModal();
                 } catch(error) {
-                    console.error("Çoklu kayıt hatası:", error);
+                    logHomeError(error);
                     showToast("İşlemler kaydedilirken bir hata oluştu.", true);
                 }
 
@@ -2805,9 +3552,11 @@
                 if (isNaN(islem.tutar) || islem.tutar <= 0) return showToast("Lütfen geçerli bir tutar girin.", true);
                 if (!islem.kaynakCari || !islem.hedefCari || islem.kaynakCari === islem.hedefCari) return showToast("Geçerli ve farklı cariler seçin.", true);
 
+                let newIslemId = null;
                 try {
                     await runTransaction(db, async (transaction) => {
                         const islemRef = doc(collection(db, "islemler"));
+                        newIslemId = islemRef.id;
                         islem.isDeleted = false;
                         islem.kayitTarihi = serverTimestamp();
 
@@ -2817,172 +3566,97 @@
                         transaction.update(hedefRef, { bakiye: increment(islem.tutar) });
                         transaction.set(islemRef, islem);
                     });
+                    if (invoiceUploads.some(item => item.status === 'pending' || item.status === 'error')) {
+                        const transactionPayload = { ...islem, id: newIslemId };
+                        await uploadInvoicesForTransaction({
+                            transactionId: newIslemId,
+                            accountId: resolveAccountIdForTransaction(transactionPayload),
+                            transaction: transactionPayload
+                        });
+                    }
                     showToast("İşlem başarıyla kaydedildi.");
-                    closeModal(islemModal);
-                    cleanupIslemModal();
+                    closeTransactionModal();
                 } catch (error) {
-                    console.error("Tekli işlem hatası:", error);
+                    logHomeError(error);
                     showToast(error.message || "İşlem sırasında bir hata oluştu.", true);
                 }
             }
-        });
-        
-        cariList.addEventListener('click', (e) => {
-            const cariItem = e.target.closest('.cari-item');
-            const deleteBtn = e.target.closest('.delete-cari-btn');
-
-            if (cariItem) {
-                showCariDetay(cariItem.dataset.id);
-            } else if (deleteBtn) {
-                const cariId = deleteBtn.dataset.id;
-                const cariUnvan = deleteBtn.dataset.unvan;
-
-                showConfirmation({
-                    title: 'Cari Hesabı Sil',
-                    message: `<b>${cariUnvan}</b> adlı cariyi silmek üzeresiniz.<br>Bu işlem, cariye ait <b>tüm işlem geçmişini</b> de silecektir ve geri alınamaz. Onaylamak için lütfen aşağıya cari adını yazın.`,
-                    inputLabel: `Onaylamak için "${cariUnvan}" yazın`,
-                    expectedValue: cariUnvan,
-                    onConfirm: async () => {
-                        try {
-                           const batch = writeBatch(db);
-                           const cariRef = doc(db, 'cariler', cariId);
-                           
-                           const q1 = query(islemlerCollectionRef, where("islemCari", "==", cariId));
-                           const q2 = query(islemlerCollectionRef, where("kaynakCari", "==", cariId));
-                           const q3 = query(islemlerCollectionRef, where("hedefCari", "==", cariId));
-
-                           const [snapshot1, snapshot2, snapshot3] = await Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
-                           const allSnapshots = [...snapshot1.docs, ...snapshot2.docs, ...snapshot3.docs];
-                           const uniqueIslemIds = [...new Set(allSnapshots.map(d => d.id))];
-
-                           uniqueIslemIds.forEach(islemId => {
-                               const islemRef = doc(db, 'islemler', islemId);
-                               batch.update(islemRef, { isDeleted: true, deletedAt: serverTimestamp() });
-                           });
-
-                           batch.update(cariRef, { isDeleted: true, deletedAt: serverTimestamp() });
-                           await batch.commit();
-                           showToast('Cari ve bağlı işlemleri başarıyla silindi.');
-                        } catch (error) {
-                            showToast('Cari silinirken bir hata oluştu.', true);
-                            console.error("Cari ve işlemleri silme hatası:", error);
-                        }
-                    }
-                });
-            }
-        });
-        
-        islemList.addEventListener('click', async (e) => {
-            const editBtn = e.target.closest('.edit-islem-btn');
-            if (editBtn) {
-                const islemId = editBtn.dataset.id;
-                const islem = allIslemler.find(i => i.id === islemId);
-                if (!islem) return;
-                openIslemModal({ islemToEdit: islem });
-                return;
-            }
-
-            const deleteBtn = e.target.closest('.delete-islem-btn');
-            if (deleteBtn) {
-                const islemId = deleteBtn.dataset.id;
-                const islem = allIslemler.find(i => i.id === islemId);
-                if (!islem) return;
-
-                showConfirmation({
-                    title: 'İşlemi Sil',
-                    message: 'Bu işlemi silmek istediğinize emin misiniz? Bu işlem, ilgili cari bakiyesini de güncelleyecektir.',
-                    onConfirm: async () => {
-                        try {
-                            const islemRef = doc(db, 'islemler', islemId);
-                            await updateDoc(islemRef, { 
-                                isDeleted: true,
-                                deletedAt: serverTimestamp()
-                            });
-
-                            // Re-calculate balances for affected caris
-                            const affectedCariIds = new Set();
-                            if (islem.islemCari) affectedCariIds.add(islem.islemCari);
-                            if (islem.kaynakCari) affectedCariIds.add(islem.kaynakCari);
-                            if (islem.hedefCari) affectedCariIds.add(islem.hedefCari);
-
-                            for (const cariId of affectedCariIds) {
-                                const cariRef = doc(db, "cariler", cariId);
-                                const q1 = query(islemlerCollectionRef, where("islemCari", "==", cariId), where("isDeleted", "==", false));
-                                const q2 = query(islemlerCollectionRef, where("kaynakCari", "==", cariId), where("isDeleted", "==", false));
-                                const q3 = query(islemlerCollectionRef, where("hedefCari", "==", cariId), where("isDeleted", "==", false));
-                                
-                                const [snap1, snap2, snap3] = await Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
-                                const cariIslemlerMap = new Map();
-                                [...snap1.docs, ...snap2.docs, ...snap3.docs].forEach(d => {
-                                    if (!cariIslemlerMap.has(d.id)) {
-                                        cariIslemlerMap.set(d.id, {id: d.id, ...d.data()});
-                                    }
-                                });
-                                const cariIslemler = Array.from(cariIslemlerMap.values());
-
-                                const newBakiye = cariIslemler.reduce((acc, currentIslem) => acc + getCariNetChange(currentIslem, cariId), 0);
-                                
-                                await updateDoc(cariRef, { bakiye: newBakiye });
-                            }
-                            showToast('İşlem başarıyla silindi ve bakiye güncellendi.');
-
-                        } catch (error) {
-                            showToast('İşlem silinirken bir hata oluştu.', true);
-                            console.error("İşlem silme hatası:", error);
-                        }
-                    }
-                });
-                return;
-            }
-
-            const item = e.target.closest('.islem-item');
-            if (item && !e.target.closest('button')) {
-                showIslemDetay(item.dataset.id);
-            }
-        });
-        
-        backToListBtn.addEventListener('click', () => {
-            resetDetailFilters();
-            delete islemDetailView.dataset.islemId;
-            currentIslemDetail = null;
-            islemDetailView.classList.add('hidden');
-            delete detailView.dataset.cariId;
-            detailView.classList.add('hidden');
-            mainView.classList.remove('hidden');
         });
         
         function showCariDetay(cariId) {
             const cari = allCariler.find(c => c.id === cariId);
             if (!cari) return;
 
-            setActiveNav(navCarilerBtn);
-            if (dashboardView) dashboardView.classList.add('hidden');
             const previousCariId = detailView.dataset.cariId;
             const isSameCari = previousCariId === cariId;
-            if (!isSameCari) {
-                resetDetailFilters();
+            detailView.dataset.cariId = cariId;
+            if (useHomeView && !isSameCari && typeof homeView.resetTransactionFilters === 'function') {
+                homeView.resetTransactionFilters({ silent: true });
             }
 
-            detailView.dataset.cariId = cariId;
-            document.getElementById('detailCariUnvan').textContent = cari.unvan;
-            document.getElementById('detailCariTipi').textContent = cari.tipi;
-            const bakiye = cari.bakiye || 0;
-            const bakiyeEl = document.getElementById('detailCariBakiye');
-            bakiyeEl.textContent = bakiye.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
-            bakiyeEl.className = 'text-3xl font-bold ' + (bakiye > 0 ? 'text-green-500' : (bakiye < 0 ? 'text-red-500' : 'text-gray-500'));
-            
-            islemDetailView.classList.add('hidden');
+            if (useHomeView && typeof homeView.setSelectedAccount === 'function') {
+                homeView.setSelectedAccount(cari);
+            }
+
+            delete islemDetailView.dataset.islemId;
             currentIslemDetail = null;
 
-            renderIslemler(cariId);
-
-            mainView.classList.add('hidden');
-            if (companyNotebookView) companyNotebookView.classList.add('hidden');
-            detailView.classList.remove('hidden');
+            showDetailView();
         }
 
-        showDashboard();
+        window.__APP_HOME_CONFIG__ = {
+            root: document.getElementById('tab-home'),
+            flags: { useHomeView },
+            deps: {
+                showDashboard,
+                showCarilerView,
+                showCompanyNotebook,
+                showCariDetay,
+                onAccountSelect: showCariDetay,
+                onAccountDelete: handleAccountDelete,
+                createAccountNote: createAccountNote,
+                fetchAccountNotesFor,
+                onAccountNoteCreated: ({ accountId }) => {
+                    if (typeof activityView.reload === 'function') {
+                        activityView.reload();
+                    }
+                },
+                onAccountNoteUpdated: ({ accountId }) => {
+                    if (typeof activityView.reload === 'function') {
+                        activityView.reload();
+                    }
+                },
+                onAccountNoteDeleted: ({ accountId }) => {
+                    if (typeof activityView.reload === 'function') {
+                        activityView.reload();
+                    }
+                },
+                onAccountNoteStatusChanged: ({ accountId }) => {
+                    if (typeof activityView.reload === 'function') {
+                        activityView.reload();
+                    }
+                },
+                getAccountName: getCariName,
+                getTransactionTitle: getIslemTitleForCari,
+                getTransactionDate: getIslemDate,
+                getTransactionNetChange: getCariNetChange,
+                openLegacyModal: openHomeModal,
+                closeLegacyModal: closeHomeModal,
+                legacyDelete: legacyDeleteTransaction,
+                onTransactionShow: showIslemDetay,
+                onDetailBack: handleDetailBack,
+                onTransactionBack: handleTransactionBack,
+                onTransactionEdit: handleTransactionEdit,
+                onTransactionDelete: handleTransactionDelete,
+                onDashboardBankChange: handleDashboardBankChange,
+                onDashboardViewDetails: handleDashboardViewDetails,
+                showToast,
+                toggleAccountNoteStatus: (id, status) => toggleNoteStatus(id, status)
+            }
+        };
+        window.__APP_NOTEBOOK_ROOT__ = document.getElementById('companyNotebookView');
 
     </script>
+    <script type="module" src="src/app.js"></script>
 </body>
 </html>
