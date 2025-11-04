@@ -14,8 +14,10 @@ const homeDeps = homeConfig.deps || {};
 const notebookRoot = getNotebookRoot();
 
 const navDashboardBtn = document.getElementById("navDashboardBtn");
+const navFinancialSummaryBtn = document.getElementById("navFinancialSummaryBtn");
 const navCarilerBtn = document.getElementById("navCarilerBtn");
 const navNotebookBtn = document.getElementById("navNotebookBtn");
+const navMigrationBtn = document.getElementById("navMigrationBtn");
 
 function isHomeViewEnabled() {
     const config = getHomeConfig();
@@ -76,10 +78,31 @@ function showHomeCariler() {
     }
 }
 
+function showFinancialSummary() {
+    ensureHomeMounted();
+    if (typeof homeDeps?.showFinancialSummary === "function") {
+        homeDeps.showFinancialSummary();
+    }
+}
+
+function showMigration() {
+    ensureHomeMounted();
+    if (typeof homeDeps?.showMigration === "function") {
+        homeDeps.showMigration();
+    }
+}
+
 if (navDashboardBtn) {
     navDashboardBtn.addEventListener("click", (event) => {
         event.preventDefault();
         showHomeDashboard();
+    });
+}
+
+if (navFinancialSummaryBtn) {
+    navFinancialSummaryBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        showFinancialSummary();
     });
 }
 
@@ -94,6 +117,13 @@ if (navNotebookBtn) {
     navNotebookBtn.addEventListener("click", (event) => {
         event.preventDefault();
         showNotebook();
+    });
+}
+
+if (navMigrationBtn) {
+    navMigrationBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        showMigration();
     });
 }
 

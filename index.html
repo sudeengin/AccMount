@@ -27,6 +27,7 @@
             </div>
             <div class="flex gap-2">
                 <button id="navDashboardBtn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium shadow">Dashboard</button>
+                <button id="navFinancialSummaryBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Finansal Özet</button>
                 <button id="navCarilerBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Cariler</button>
                 <button id="navNotebookBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Muhasebe Not Defteri</button>
             </div>
@@ -82,6 +83,183 @@
             </div>
         </div>
 
+        <!-- Finansal Özet Görünümü -->
+        <div id="financialSummaryView" class="hidden space-y-6">
+            <!-- Header with Date Filter and Mode Toggle -->
+            <div class="card-base border-indigo-500/30">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                    <div class="flex-1">
+                        <p class="text-sm uppercase tracking-widest text-indigo-400">Finansal Rapor</p>
+                        <h2 class="text-4xl font-bold mt-2 text-white" id="reportModeTitle">Gelir ve Gider Raporu</h2>
+                        <p class="text-sm text-neutral-text mt-2">Dönem: <span id="dateRangeLabel" class="font-semibold text-white">Tüm Zamanlar</span></p>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <!-- Report Mode Toggle -->
+                        <div class="w-full md:w-56">
+                            <label for="reportModeToggle" class="block text-xs uppercase tracking-wide text-neutral-text mb-2">Rapor Türü</label>
+                            <select id="reportModeToggle" class="control-input w-full">
+                                <option value="income">Gelir/Gider (P&L)</option>
+                                <option value="cashflow">Nakit Akışı</option>
+                            </select>
+                        </div>
+                        <!-- Date Range Selector -->
+                        <div class="w-full md:w-56">
+                            <label for="dateRangeSelect" class="block text-xs uppercase tracking-wide text-neutral-text mb-2">Tarih Aralığı</label>
+                            <select id="dateRangeSelect" class="control-input w-full">
+                                <option value="all_time">Tüm Zamanlar</option>
+                                <option value="this_month">Bu Ay</option>
+                                <option value="last_30_days">Son 30 Gün</option>
+                                <option value="last_90_days">Son 90 Gün</option>
+                                <option value="this_year">Bu Yıl</option>
+                                <option value="custom">Özel Tarih</option>
+                            </select>
+                            <div class="mt-2 space-y-2 hidden" id="customDateRange">
+                                <input type="date" id="customStartDate" class="control-input w-full hidden">
+                                <input type="date" id="customEndDate" class="control-input w-full hidden">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Total Income Card -->
+                <div class="summary-card-income">
+                    <div class="flex items-center justify-between mb-4">
+                        <p id="summaryIncomeLabel" class="text-sm font-semibold uppercase tracking-wide text-income">Toplam Gelir</p>
+                        <svg class="w-8 h-8 text-income flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+                        </svg>
+                    </div>
+                    <p id="summaryIncome" class="text-xl sm:text-2xl md:text-3xl font-bold amount-income overflow-hidden text-ellipsis whitespace-nowrap" title="₺0,00">₺0,00</p>
+                </div>
+
+                <!-- Total Expense Card -->
+                <div class="summary-card-expense">
+                    <div class="flex items-center justify-between mb-4">
+                        <p id="summaryExpenseLabel" class="text-sm font-semibold uppercase tracking-wide text-expense">Toplam Gider</p>
+                        <svg class="w-8 h-8 text-expense flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+                        </svg>
+                    </div>
+                    <p id="summaryExpense" class="text-xl sm:text-2xl md:text-3xl font-bold amount-expense overflow-hidden text-ellipsis whitespace-nowrap" title="₺0,00">₺0,00</p>
+                </div>
+
+                <!-- Net Balance Card -->
+                <div class="summary-card-balance">
+                    <div class="flex items-center justify-between mb-4">
+                        <p id="summaryBalanceLabel" class="text-sm font-semibold uppercase tracking-wide text-neutral-text">Net Bakiye</p>
+                        <svg class="w-8 h-8 text-neutral-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <p id="summaryBalance" class="text-xl sm:text-2xl md:text-3xl font-bold amount-neutral overflow-hidden text-ellipsis whitespace-nowrap" title="₺0,00">₺0,00</p>
+                </div>
+            </div>
+
+            <!-- Phase 3: Advanced Filters -->
+            <div class="card-base">
+                <h3 class="text-xl font-bold text-white mb-4">Filtreler</h3>
+                <div class="space-y-4">
+                    <!-- Account and Transaction Type filters -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="accountFilter" class="block text-sm font-medium text-neutral-text mb-2">Cari Filtresi</label>
+                            <select id="accountFilter" class="control-input w-full">
+                                <option value="">Tüm Cariler</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="typeFilter" class="block text-sm font-medium text-neutral-text mb-2">İşlem Tipi</label>
+                            <select id="typeFilter" class="control-input w-full">
+                                <option value="">Tüm İşlem Tipleri</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Action buttons -->
+                    <div class="flex gap-2 justify-end">
+                        <button id="filterResetBtn" class="control-button-secondary">
+                            Sıfırla
+                        </button>
+                        <button id="exportCsvBtn" class="flex items-center gap-2 control-button-primary bg-income hover:bg-income/90">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            CSV Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 3: Insights Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Top 5 Expense Accounts -->
+                <div class="card-base border-expense/30">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white">Top 5 Gider Hesapları</h3>
+                        <svg class="w-6 h-6 text-expense" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+                        </svg>
+                    </div>
+                    <div id="topExpenseAccounts" class="space-y-4">
+                        <p class="text-sm text-neutral-text">Yükleniyor...</p>
+                    </div>
+                </div>
+
+                <!-- Top 5 Income Sources -->
+                <div class="card-base border-income/30">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white">Top 5 Gelir Kaynakları</h3>
+                        <svg class="w-6 h-6 text-income" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+                        </svg>
+                    </div>
+                    <div id="topIncomeSources" class="space-y-4">
+                        <p class="text-sm text-neutral-text">Yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2: Transaction Table -->
+            <div class="card-base overflow-hidden">
+                <div class="pb-4 border-b border-card-border">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-2xl font-bold text-white">Detaylı İşlem Raporu</h3>
+                        <p id="transactionCount" class="text-sm text-neutral-text">0 işlem</p>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto -mx-8 mt-6">
+                    <table class="w-full">
+                        <thead class="bg-card-border/50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Tarih</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Yön</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Tip</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Açıklama</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Tutar</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Cari</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <tr class="bg-card-bg">
+                                <td colspan="6" class="px-6 py-8 text-center text-neutral-text">
+                                    Yükleniyor...
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-card-border/70">
+                            <tr id="reportSummaryRow" class="font-bold text-white">
+                                <!-- Will be dynamically populated -->
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Ana Görünüm -->
         <div id="mainView" class="hidden">
             <header class="text-center mb-8">
@@ -123,7 +301,15 @@
 
                 <!-- Sağ Panel: Cari Listesi -->
                 <div class="md:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                    <h2 class="text-2xl font-semibold mb-4">Cari Hesaplar</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold">Cari Hesaplar</h2>
+                        <button id="exportAccountsBtn" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            CSV Export
+                        </button>
+                    </div>
                     <div class="mb-4">
                         <label for="cariSearchInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Cari veya işlem ara</label>
                         <input type="text" id="cariSearchInput" placeholder="Cari adı, işlem açıklaması veya başlık arayın..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-sm">
@@ -139,13 +325,29 @@
         <div id="detailView" class="hidden">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
                 <div class="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <div>
-                        <h2 id="detailCariUnvan" class="text-3xl font-bold"></h2>
-                        <p id="detailCariTipi" class="text-gray-500 dark:text-gray-400"></p>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3">
+                            <h2 id="detailCariUnvan" class="text-3xl font-bold"></h2>
+                            <span id="accountResetBadge" class="hidden inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-500/20 text-slate-400 border border-slate-500/30" title="Bu hesap manuel olarak sıfırlandı">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                                </svg>
+                                Sıfırlandı
+                            </span>
+                        </div>
+                        <p id="detailCariTipi" class="text-gray-500 dark:text-gray-400 mt-1"></p>
                     </div>
-                    <div class="text-right">
-                        <p id="detailCariBakiye" class="text-3xl font-bold"></p>
-                        <p class="text-gray-500 dark:text-gray-400">Güncel Bakiye</p>
+                    <div class="text-right flex items-start gap-3">
+                        <div>
+                            <p id="detailCariBakiye" class="text-3xl font-bold"></p>
+                            <p class="text-gray-500 dark:text-gray-400">Güncel Bakiye</p>
+                        </div>
+                        <button id="resetAccountBtn" class="hidden flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 font-medium py-2 px-3 rounded-lg transition" title="Hesabı Sıfırla (Admin)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                            </svg>
+                            Sıfırla
+                        </button>
                     </div>
                 </div>
                 
@@ -155,6 +357,12 @@
                         <p id="detailIslemCount" class="text-sm text-gray-500 dark:text-gray-400">0 işlem</p>
                     </div>
                     <div class="flex items-center gap-2">
+                        <button id="exportTransactionsBtn" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            CSV
+                        </button>
                         <button id="detailIslemBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">İşlem Yap</button>
                         <button id="backToListBtn" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">
                             &larr; Geri Dön
@@ -172,6 +380,7 @@
                             <option value="tahsilat">Tahsilat</option>
                             <option value="odeme">Ödeme</option>
                             <option value="transfer">Transfer</option>
+                            <option value="administrative_reset">Sıfırlama (Admin)</option>
                         </select>
                     </div>
                     <div>
@@ -525,10 +734,14 @@
         import { listTransactions } from "./src/data/transactions.repo.js";
         import { createAccountNote, fetchAccountNotesFor, updateNote, deleteNote, toggleNoteStatus } from "./src/data/notes.repo.js";
         import { createInvoiceFileRecord, listInvoiceFilesForTransaction } from "./src/data/files.repo.js";
+        import { getTransactionDirection } from "./src/utils/transaction-direction.js";
+        import { resetAccountBalance, canResetAccounts, hasBeenReset } from "./src/utils/account-reset.js";
         import homeView from "./src/ui/views/home.view.js";
         import createHomeNavigation from "./src/ui/home.navigation.js";
         import notebookView from "./src/ui/views/notebook.view.js";
         import activityView from "./src/ui/views/activity.view.js";
+        import financialSummaryView from "./src/ui/views/financial-summary.view.js";
+        import migrationView from "./src/ui/views/migration.view.js";
 
         // --- FIREBASE KURULUMU ---
         // Firebase servisleri ayrı dosyada yönetiliyor
@@ -606,6 +819,8 @@
         const islemDetailBackBtn = document.getElementById('islemDetailBackBtn');
         const islemDetailEditBtn = document.getElementById('islemDetailEditBtn');
         const islemDetailDeleteBtn = document.getElementById('islemDetailDeleteBtn');
+        const resetAccountBtn = document.getElementById('resetAccountBtn');
+        const accountResetBadge = document.getElementById('accountResetBadge');
         const dashboardView = document.getElementById('dashboardView');
         const dashboardBankSelect = document.getElementById('dashboardBankSelect');
         const dashboardBalance = document.getElementById('dashboardBalance');
@@ -614,9 +829,13 @@
         const dashboardLastTransaction = document.getElementById('dashboardLastTransaction');
         const dashboardUpdatedAt = document.getElementById('dashboardUpdatedAt');
         const dashboardEmptyState = document.getElementById('dashboardEmptyState');
+        const financialSummaryViewEl = document.getElementById('financialSummaryView');
         const navDashboardBtn = document.getElementById('navDashboardBtn');
+        const navFinancialSummaryBtn = document.getElementById('navFinancialSummaryBtn');
         const navCarilerBtn = document.getElementById('navCarilerBtn');
         const navNotebookBtn = document.getElementById('navNotebookBtn');
+        const navMigrationBtn = document.getElementById('navMigrationBtn');
+        const migrationViewEl = document.getElementById('migrationView');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
         const confirmationModal = document.getElementById('confirmationModal');
@@ -677,11 +896,13 @@
                 navigation = createHomeNavigation({
                     buttons: {
                         dashboard: navDashboardBtn,
+                        financialSummary: navFinancialSummaryBtn,
                         cariler: navCarilerBtn,
                         notebook: navNotebookBtn
                     },
                     views: {
                         dashboard: dashboardView,
+                        financialSummary: financialSummaryViewEl,
                         main: mainView,
                         detail: detailView,
                         transactionDetail: islemDetailView,
@@ -689,6 +910,7 @@
                     },
                     callbacks: {
                         onDashboard: () => populateDashboardOptions(),
+                        onFinancialSummary: () => mountFinancialSummary(),
                         onNotebook: () => mountNotebookViews()
                     }
                 });
@@ -713,7 +935,7 @@
         }
 
         function legacySetActiveNav(activeBtn) {
-            [navDashboardBtn, navCarilerBtn, navNotebookBtn].forEach(btn => {
+            [navDashboardBtn, navCarilerBtn, navNotebookBtn, navMigrationBtn].forEach(btn => {
                 if (!btn) return;
                 const isActive = btn === activeBtn;
                 btn.classList.toggle('bg-indigo-600', isActive);
@@ -730,6 +952,7 @@
             if (detailView) detailView.classList.add('hidden');
             if (islemDetailView) islemDetailView.classList.add('hidden');
             if (companyNotebookView) companyNotebookView.classList.add('hidden');
+            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             populateDashboardOptions();
         }
 
@@ -739,6 +962,7 @@
             if (islemDetailView) islemDetailView.classList.add('hidden');
             if (detailView) detailView.classList.add('hidden');
             if (companyNotebookView) companyNotebookView.classList.add('hidden');
+            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             if (mainView) mainView.classList.remove('hidden');
         }
 
@@ -1196,6 +1420,7 @@
             if (skipViewUpdate) return;
             if (dashboardView) dashboardView.classList.add('hidden');
             if (companyNotebookView) companyNotebookView.classList.add('hidden');
+            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             if (mainView) mainView.classList.add('hidden');
             if (islemDetailView) islemDetailView.classList.add('hidden');
             if (detailView) detailView.classList.remove('hidden');
@@ -1206,6 +1431,7 @@
             if (skipViewUpdate) return;
             if (dashboardView) dashboardView.classList.add('hidden');
             if (companyNotebookView) companyNotebookView.classList.add('hidden');
+            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             if (mainView) mainView.classList.add('hidden');
             if (detailView) detailView.classList.add('hidden');
             if (islemDetailView) islemDetailView.classList.remove('hidden');
@@ -1222,6 +1448,32 @@
             }
             if (typeof activityView.unmount === 'function') {
                 activityView.unmount();
+            }
+        }
+
+        function mountFinancialSummary() {
+            const summaryContainer = document.getElementById('financialSummaryView');
+            if (summaryContainer) {
+                if (typeof financialSummaryView.isMounted === 'function' && financialSummaryView.isMounted()) {
+                    financialSummaryView.unmount();
+                }
+                financialSummaryView.mount(summaryContainer, {
+                    getAccountName: getCariName,
+                    getTransactionDate: (tx) => {
+                        const val = tx?.tarih;
+                        if (!val) return null;
+                        const date = new Date(val);
+                        return Number.isNaN(date.getTime()) ? null : date;
+                    },
+                    showToast: showToast
+                });
+                // Set transactions and accounts data
+                if (typeof financialSummaryView.setTransactions === 'function') {
+                    financialSummaryView.setTransactions(allIslemler);
+                }
+                if (typeof financialSummaryView.setAccounts === 'function') {
+                    financialSummaryView.setAccounts(allCariler);
+                }
             }
         }
 
@@ -1281,6 +1533,17 @@
                 nav.showDashboard();
             } else {
                 legacyShowDashboard();
+            }
+        }
+
+        function showFinancialSummary() {
+            unmountNotebookViews();
+            const nav = ensureNavigation();
+            if (nav) {
+                nav.showFinancialSummary();
+            } else {
+                // No legacy support needed - this is a new feature
+                console.warn('[app] Financial summary requires home view to be enabled');
             }
         }
 
@@ -2287,7 +2550,8 @@
                             isDeleted: false,
                             kayitTarihi: serverTimestamp(),
                             kaynakCari: null,
-                            hedefCari: null
+                            hedefCari: null,
+                            direction: getTransactionDirection(islemTipiNormalized)
                         });
 
                         const delta = islemTipiNormalized === 'gider' ? -grossAmount : grossAmount;
@@ -3269,6 +3533,49 @@
             }
         });
 
+        // Reset Account Button Handler
+        if (resetAccountBtn) {
+            resetAccountBtn.addEventListener('click', async () => {
+                const cariId = detailView.dataset.cariId;
+                if (!cariId) return;
+                
+                const cari = allCariler.find(c => c.id === cariId);
+                if (!cari) return;
+                
+                // Show confirmation dialog
+                showConfirmation({
+                    title: 'Hesabı Sıfırla',
+                    message: `"${cari.unvan}" hesabının bakiyesini sıfırlamak istediğine emin misin?<br><br>Bu işlem sadece bu hesaptaki bakiye kaydını sıfırlar. Gerçek bir tahsilat veya ödeme oluşturmaz. İşlem geçmişinde görünür bir sıfırlama kaydı oluşturulacaktır.`,
+                    onConfirm: async () => {
+                        try {
+                            // Change button text for reset action
+                            confirmActionBtn.textContent = 'Sıfırla';
+                            confirmActionBtn.className = 'bg-blue-600 text-white font-bold py-2 px-4 rounded-lg';
+                            
+                            resetAccountBtn.disabled = true;
+                            resetAccountBtn.innerHTML = '<svg class="animate-spin h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Sıfırlanıyor...';
+                            
+                            const result = await resetAccountBalance(cariId, allIslemler);
+                            
+                            if (result.success) {
+                                showToast('Hesap başarıyla sıfırlandı. Sayfa yenileniyor...');
+                                
+                                // Refresh data after a short delay to allow toast to show
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1500);
+                            }
+                        } catch (error) {
+                            console.error('[Reset Account] Error:', error);
+                            showToast(error.message || 'Hesap sıfırlama işlemi başarısız oldu.', true);
+                            resetAccountBtn.disabled = false;
+                            resetAccountBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg> Sıfırla';
+                        }
+                    }
+                });
+            });
+        }
+
         islemTipiSelect.addEventListener('change', (e) => {
             const selectedType = e.target.value;
             const isMultiEntry = isMultiEntryType(selectedType);
@@ -3407,7 +3714,8 @@
                             toplamTutar,
                             faturaNumarasi: row.querySelector('[name="faturaNumarasi"]').value || '',
                             kaynakCari: null,
-                            hedefCari: null
+                            hedefCari: null,
+                            direction: getTransactionDirection(islemTipi)
                         };
                     } else {
                         const tarihValue = document.getElementById('tarihSingle').value;
@@ -3430,7 +3738,8 @@
                             toplamTutar: null,
                             vergiOrani: null,
                             islemCari: null,
-                            faturaNumarasi: editingIslem.faturaNumarasi || ''
+                            faturaNumarasi: editingIslem.faturaNumarasi || '',
+                            direction: getTransactionDirection(islemTipi)
                         };
                     }
 
@@ -3489,7 +3798,8 @@
                         tarih: new Date(row.querySelector('[name="tarih"]').value),
                         aciklama: row.querySelector('[name="aciklama"]').value || '',
                         isDeleted: false,
-                        kayitTarihi: serverTimestamp()
+                        kayitTarihi: serverTimestamp(),
+                        direction: getTransactionDirection(islemTipi)
                     };
                     
                     const tersHesaplaCb = row.querySelector('.ters-hesapla-cb');
@@ -3547,6 +3857,7 @@
                     tarih: new Date(document.getElementById('tarihSingle').value),
                     tutar: parseTurkishNumber(document.getElementById('tutarSingle').value),
                     aciklama: document.getElementById('aciklamaSingle').value,
+                    direction: getTransactionDirection(islemTipi)
                 };
 
                 if (isNaN(islem.tutar) || islem.tutar <= 0) return showToast("Lütfen geçerli bir tutar girin.", true);
@@ -3598,7 +3909,28 @@
                 homeView.setSelectedAccount(cari);
             }
 
+            // Update reset button and badge visibility
+            if (resetAccountBtn && accountResetBadge) {
+                const userCanReset = canResetAccounts();
+                const accountWasReset = hasBeenReset(cariId, allIslemler);
+                
+                // Show reset button only if user has permission
+                if (userCanReset) {
+                    resetAccountBtn.classList.remove('hidden');
+                } else {
+                    resetAccountBtn.classList.add('hidden');
+                }
+                
+                // Show badge if account has been reset
+                if (accountWasReset) {
+                    accountResetBadge.classList.remove('hidden');
+                } else {
+                    accountResetBadge.classList.add('hidden');
+                }
+            }
+
             delete islemDetailView.dataset.islemId;
+            delete islemDetailView.dataset.cariId;
             currentIslemDetail = null;
 
             showDetailView();
@@ -3609,6 +3941,7 @@
             flags: { useHomeView },
             deps: {
                 showDashboard,
+                showFinancialSummary,
                 showCarilerView,
                 showCompanyNotebook,
                 showCariDetay,

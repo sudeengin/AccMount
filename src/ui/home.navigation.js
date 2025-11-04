@@ -23,19 +23,23 @@ export default function createHomeNavigation({
 } = {}) {
     const navButtons = {
         dashboard: buttons.dashboard || null,
+        financialSummary: buttons.financialSummary || null,
         cariler: buttons.cariler || null,
-        notebook: buttons.notebook || null
+        notebook: buttons.notebook || null,
+        migration: buttons.migration || null
     };
 
     const viewRefs = {
         dashboard: views.dashboard || null,
+        financialSummary: views.financialSummary || null,
         main: views.main || null,
         detail: views.detail || null,
         transactionDetail: views.transactionDetail || null,
-        notebook: views.notebook || null
+        notebook: views.notebook || null,
+        migration: views.migration || null
     };
 
-    const { onDashboard, onNotebook } = callbacks || {};
+    const { onDashboard, onFinancialSummary, onNotebook, onMigration } = callbacks || {};
 
     function setActiveNav(key) {
         Object.entries(navButtons).forEach(([navKey, button]) => {
@@ -53,6 +57,15 @@ export default function createHomeNavigation({
         showView(viewRefs.dashboard);
         if (typeof onDashboard === "function") {
             onDashboard();
+        }
+    }
+
+    function showFinancialSummary() {
+        setActiveNav("financialSummary");
+        hideAllViews();
+        showView(viewRefs.financialSummary);
+        if (typeof onFinancialSummary === "function") {
+            onFinancialSummary();
         }
     }
 
@@ -85,12 +98,23 @@ export default function createHomeNavigation({
         }
     }
 
+    function showMigration() {
+        setActiveNav("migration");
+        hideAllViews();
+        showView(viewRefs.migration);
+        if (typeof onMigration === "function") {
+            onMigration();
+        }
+    }
+
     return {
         setActiveNav,
         showDashboard,
+        showFinancialSummary,
         showCarilerView,
         showDetailView,
         showTransactionDetail,
-        showCompanyNotebook
+        showCompanyNotebook,
+        showMigration
     };
 }
