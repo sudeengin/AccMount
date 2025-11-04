@@ -1,0 +1,168 @@
+═══════════════════════════════════════════════════════
+  DEBT TRANSFER BACKFILL - INTEGRATION SNIPPET
+═══════════════════════════════════════════════════════
+
+Copy and paste these snippets into index.html to add the backfill tool.
+
+═══════════════════════════════════════════════════════
+1. ADD NAVIGATION BUTTON (in <nav> section, ~line 33)
+═══════════════════════════════════════════════════════
+
+<!-- Add after navMigrationBtn -->
+<button id="navBackfillBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">
+    🔧 Admin: Balance Fix
+</button>
+
+═══════════════════════════════════════════════════════
+2. ADD VIEW CONTAINER (after migration view container)
+═══════════════════════════════════════════════════════
+
+<!-- Add around line 800, after other view containers -->
+<div id="backfillView" class="hidden"></div>
+
+═══════════════════════════════════════════════════════
+3. IMPORT THE VIEW (in <script type="module">, ~line 816)
+═══════════════════════════════════════════════════════
+
+// Add after migrationView import
+import { renderBackfillView } from "./src/ui/views/debt-transfer-backfill.view.js";
+
+═══════════════════════════════════════════════════════
+4. ADD BUTTON REFERENCE (~line 914)
+═══════════════════════════════════════════════════════
+
+// Add after navMigrationBtn
+const navBackfillBtn = document.getElementById('navBackfillBtn');
+
+═══════════════════════════════════════════════════════
+5. UPDATE legacySetActiveNav (~line 1015)
+═══════════════════════════════════════════════════════
+
+// Replace the array with:
+[navDashboardBtn, navCarilerBtn, navNotebookBtn, navMigrationBtn, navBackfillBtn].forEach(btn => {
+    if (!btn) return;
+    const isActive = btn === activeBtn;
+    btn.classList.toggle('bg-indigo-600', isActive);
+    btn.classList.toggle('text-white', isActive);
+    btn.classList.toggle('bg-gray-800', !isActive);
+    btn.classList.toggle('text-gray-200', !isActive);
+});
+
+═══════════════════════════════════════════════════════
+6. ADD showBackfill FUNCTION (after showMigration, ~line 1080)
+═══════════════════════════════════════════════════════
+
+function showBackfill() {
+    legacySetActiveNav(navBackfillBtn);
+    if (dashboardView) dashboardView.classList.add('hidden');
+    if (mainView) mainView.classList.add('hidden');
+    if (detailView) detailView.classList.add('hidden');
+    if (islemDetailView) islemDetailView.classList.add('hidden');
+    if (companyNotebookView) companyNotebookView.classList.add('hidden');
+    if (financialSummaryViewEl) financialSummaryViewEl.classList.add('hidden');
+    
+    const migrationViewEl = document.getElementById('migrationView');
+    if (migrationViewEl) migrationViewEl.classList.add('hidden');
+    
+    const backfillView = document.getElementById('backfillView');
+    if (backfillView) {
+        backfillView.classList.remove('hidden');
+        renderBackfillView(backfillView);
+    }
+}
+
+═══════════════════════════════════════════════════════
+7. ADD BUTTON EVENT LISTENER (after navMigrationBtn listener, ~line 4560)
+═══════════════════════════════════════════════════════
+
+if (navBackfillBtn) {
+    navBackfillBtn.addEventListener('click', () => {
+        showBackfill();
+    });
+}
+
+═══════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════
+
+After adding the snippets:
+
+[ ] "Admin: Balance Fix" button visible in navigation
+[ ] Button is gray (inactive state)
+[ ] Clicking button shows backfill view
+[ ] Button turns blue when active
+[ ] Other views hide when backfill is shown
+[ ] "Analyze Balances" button works
+[ ] No console errors
+
+═══════════════════════════════════════════════════════
+QUICK TEST
+═══════════════════════════════════════════════════════
+
+1. Refresh the page
+2. Click "Admin: Balance Fix" button
+3. Click "Analyze Balances"
+4. View the results
+5. If corrections needed, click "Apply Corrections"
+6. Verify success message
+
+═══════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════
+
+"Button not showing"
+→ Check step 1 - button HTML added correctly
+
+"Click does nothing"
+→ Check step 7 - event listener added
+
+"View doesn't load"
+→ Check step 3 - import statement added
+→ Check browser console for errors
+
+"Module not found"
+→ Verify files exist:
+  - src/utils/debt-transfer-backfill.js
+  - src/ui/views/debt-transfer-backfill.view.js
+
+═══════════════════════════════════════════════════════
+ALTERNATIVE: SIMPLE CONSOLE METHOD
+═══════════════════════════════════════════════════════
+
+If you want to run backfill without UI integration:
+
+1. Open browser console (F12)
+2. Paste this code:
+
+```javascript
+import { 
+    analyzeBalanceCorrections, 
+    applyBalanceCorrections 
+} from './src/utils/debt-transfer-backfill.js';
+import { fetchRecentAccounts } from './src/data/accounts.repo.js';
+import { fetchRecentTransactions } from './src/data/transactions.repo.js';
+
+// Load data
+const accounts = await fetchRecentAccounts(10000);
+const transactions = await fetchRecentTransactions(10000);
+
+// Analyze
+const corrections = analyzeBalanceCorrections(accounts, transactions);
+console.log('Accounts needing correction:', corrections.length);
+console.table(corrections);
+
+// Apply (uncomment to run)
+// const result = await applyBalanceCorrections(accounts, transactions);
+// console.log('Result:', result);
+```
+
+═══════════════════════════════════════════════════════
+DONE!
+═══════════════════════════════════════════════════════
+
+Once integrated, navigate to "Admin: Balance Fix" to use the tool.
+
+For full documentation, see:
+- DEBT-TRANSFER-BACKFILL-GUIDE.md (detailed usage)
+- DEBT-TRANSFER-COMPLETE-FIX-SUMMARY.md (overview)
+

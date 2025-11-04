@@ -6,6 +6,31 @@ import {
     toggleNoteStatus as toggleNoteStatusRepo
 } from "../../data/notes.repo.js";
 import { ensureAuthUser, getCurrentUserId } from "../../services/firebase.js";
+import { exportAccountsToCSV, exportTransactionsToCSV } from "../../utils/csv-export.js";
+import { 
+    getTransactionDirection, 
+    getDirectionColorClass, 
+    getDirectionBadgeClass, 
+    ensureTransactionDirection,
+    getTransactionTypeLabel,
+    getTransactionTypeBadgeClass,
+    getTransactionTypeColorClass
+} from "../../utils/transaction-direction.js";
+import { 
+    getAccountType, 
+    getAccountTypeLabel, 
+    isInternalAccount, 
+    isExternalAccount,
+    getInternalAccounts,
+    getExternalAccounts
+} from "../../utils/account-type.js";
+import { 
+    isSystemLog, 
+    isRealTransaction, 
+    separateTransactionsAndLogs,
+    getLogTypeLabel,
+    getLogDescription
+} from "../../utils/transaction-log.js";
 
 let currentRoot = null;
 let currentDeps = {};
@@ -13,17 +38,26 @@ let mounted = false;
 
 let searchInputEl = null;
 let listContainerEl = null;
+let exportAccountsBtnEl = null;
+let exportTransactionsBtnEl = null;
 let detailNameEl = null;
 let detailTypeEl = null;
 let detailBalanceEl = null;
 let transactionListEl = null;
 let transactionCountEl = null;
+let logListEl = null;
+let logCountEl = null;
+let transactionsTabEl = null;
+let logsTabEl = null;
+let transactionsTabContentEl = null;
+let logsTabContentEl = null;
 let newTransactionBtnEl = null;
 let primaryNewTransactionBtnEl = null;
 let filterTypeEl = null;
 let filterStartEl = null;
 let filterEndEl = null;
 let filterResetBtnEl = null;
+let showPendingTransfersToggleEl = null;
 let detailBackBtnEl = null;
 let transactionBackBtnEl = null;
 let transactionEditBtnEl = null;
@@ -39,7 +73,8 @@ let accountNotesStatusEl = null;
 const defaultTransactionFilters = () => ({
     type: "",
     start: null,
-    end: null
+    end: null,
+    showPendingTransfers: true // Show pending transfers by default
 });
 
 let accountNotesLoadToken = 0;
@@ -49,6 +84,7 @@ const state = {
     transactions: [],
     searchQuery: "",
     selectedAccountId: null,
+    activeTab: 'transactions', // 'transactions' or 'logs'
     transactionFilters: defaultTransactionFilters(),
     accountNotes: {
         items: [],
@@ -297,30 +333,57 @@ function renderAccountList() {
             return;
         }
 
-        const fragment = document.createDocumentFragment();
-        displayAccounts.forEach(account => {
-            const bakiye = Number(account.bakiye || 0);
-            const bakiyeRenk = bakiye > 0 ? "text-green-500" : (bakiye < 0 ? "text-red-500" : "text-gray-500");
+        // Separate accounts by type
+        const internalAccounts = getInternalAccounts(displayAccounts);
+        const externalAccounts = getExternalAccounts(displayAccounts);
 
-            const wrapper = document.createElement("div");
-            wrapper.className = "bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center transition-all";
-            wrapper.innerHTML = `
-                <div class="flex-grow cursor-pointer cari-item" data-id="${account.id}">
-                    <p class="font-semibold text-lg">${account.unvan}</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">${account.tipi}</p>
-                </div>
-                <div class="flex items-center flex-shrink-0">
-                    <div class="text-right mr-4 cursor-pointer cari-item" data-id="${account.id}">
-                        <p class="font-bold text-xl ${bakiyeRenk}">${formatCurrency(bakiye)}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Bakiye</p>
-                    </div>
-                    <button data-id="${account.id}" data-unvan="${account.unvan}" class="delete-cari-btn p-2 rounded-full text-gray-400 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                    </button>
-                </div>
+        const fragment = document.createDocumentFragment();
+
+        // Render internal accounts section (Bank Accounts)
+        if (internalAccounts.length > 0) {
+            const internalHeader = document.createElement("div");
+            internalHeader.className = "mb-3 mt-2";
+            internalHeader.innerHTML = `
+                <h3 class="text-sm font-semibold text-indigo-600 dark:text-indigo-300 uppercase tracking-wide flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/>
+                        <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                    </svg>
+                    Banka Hesapları / Kasa
+                </h3>
             `;
-            fragment.appendChild(wrapper);
-        });
+            fragment.appendChild(internalHeader);
+
+            internalAccounts.forEach(account => {
+                const accountEl = createAccountListItem(account, true);
+                fragment.appendChild(accountEl);
+            });
+
+            // Add separator
+            const separator = document.createElement("div");
+            separator.className = "my-4 border-t border-gray-300 dark:border-gray-600";
+            fragment.appendChild(separator);
+        }
+
+        // Render external accounts section (Suppliers/Customers)
+        if (externalAccounts.length > 0) {
+            const externalHeader = document.createElement("div");
+            externalHeader.className = "mb-3";
+            externalHeader.innerHTML = `
+                <h3 class="text-sm font-semibold text-indigo-600 dark:text-indigo-300 uppercase tracking-wide flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                    </svg>
+                    Cariler (Tedarikçi / Müşteri)
+                </h3>
+            `;
+            fragment.appendChild(externalHeader);
+
+            externalAccounts.forEach(account => {
+                const accountEl = createAccountListItem(account, false);
+                fragment.appendChild(accountEl);
+            });
+        }
 
         listContainerEl.appendChild(fragment);
     } catch (error) {
@@ -328,6 +391,39 @@ function renderAccountList() {
     } finally {
         completeFirstPaintTimer();
     }
+}
+
+function createAccountListItem(account, isInternal) {
+    const bakiye = Number(account.bakiye || 0);
+    const bakiyeRenk = bakiye > 0 ? "text-green-500" : (bakiye < 0 ? "text-red-500" : "text-gray-500");
+    const accountTypeLabel = getAccountTypeLabel(getAccountType(account));
+    
+    // Different styling for internal vs external accounts
+    const bgClass = isInternal 
+        ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800" 
+        : "bg-gray-50 dark:bg-gray-700";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = `${bgClass} p-4 rounded-lg flex justify-between items-center transition-all mb-2`;
+    wrapper.innerHTML = `
+        <div class="flex-grow cursor-pointer cari-item" data-id="${account.id}">
+            <div class="flex items-center gap-2">
+                <p class="font-semibold text-lg">${account.unvan}</p>
+                ${isInternal ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">Banka/Kasa</span>' : ''}
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">${account.tipi || accountTypeLabel}</p>
+        </div>
+        <div class="flex items-center flex-shrink-0">
+            <div class="text-right mr-4 cursor-pointer cari-item" data-id="${account.id}">
+                <p class="font-bold text-xl ${bakiyeRenk}">${formatCurrency(bakiye)}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Bakiye</p>
+            </div>
+            <button data-id="${account.id}" data-unvan="${account.unvan}" class="delete-cari-btn p-2 rounded-full text-gray-400 hover:text-red-500 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+    `;
+    return wrapper;
 }
 
 function formatBalanceClass(balance) {
@@ -347,11 +443,55 @@ function updateDetailHeader(account) {
         return;
     }
 
+    const accountType = getAccountType(account);
+    const accountTypeLabel = getAccountTypeLabel(accountType);
+    const isInternal = accountType === "internal";
+    
     detailNameEl.textContent = account.unvan || "";
-    detailTypeEl.textContent = account.tipi || "";
-    const balance = Number(account.bakiye || 0);
-    detailBalanceEl.textContent = formatCurrency(balance);
-    detailBalanceEl.className = formatBalanceClass(balance);
+    
+    // Show account type info in the detail view
+    const typeText = account.tipi || accountTypeLabel;
+    const typeWithBadge = isInternal 
+        ? `${typeText} • Banka/Kasa` 
+        : typeText;
+    detailTypeEl.textContent = typeWithBadge;
+    
+    // Calculate balance from transactions for verification
+    const storedBalance = Number(account.bakiye || 0);
+    const accountId = account.id;
+    const relatedTransactions = filterTransactionsByAccount(accountId);
+    
+    let calculatedBalance = 0;
+    relatedTransactions.forEach(tx => {
+        // Only include transactions that affect balance
+        // Pending transfers (affectsBalance=false) should not be counted
+        const affectsBalance = tx.affectsBalance !== false; // Default to true
+        if (affectsBalance) {
+            const netChange = getTransactionNetChange(tx, accountId);
+            calculatedBalance += netChange;
+        }
+    });
+    
+    // Show stored balance (with warning if mismatch)
+    const balanceDiff = Math.abs(storedBalance - calculatedBalance);
+    const hasMismatch = balanceDiff > 0.01;
+    
+    if (hasMismatch) {
+        // Show both balances with warning
+        const warningIcon = '⚠️';
+        detailBalanceEl.innerHTML = `
+            <span class="text-orange-500" title="Bakiye uyumsuzluğu! Veritabanı: ${formatCurrency(storedBalance)}, Hesaplanan: ${formatCurrency(calculatedBalance)}">
+                ${warningIcon} ${formatCurrency(storedBalance)}
+            </span>
+            <div class="text-xs text-orange-400 mt-1">
+                (İşlemlerden hesaplanan: ${formatCurrency(calculatedBalance)})
+            </div>
+        `;
+        detailBalanceEl.className = "text-3xl font-bold";
+    } else {
+        detailBalanceEl.textContent = formatCurrency(storedBalance);
+        detailBalanceEl.className = formatBalanceClass(storedBalance);
+    }
 }
 
 function parseDateValue(value, isEnd = false) {
@@ -430,17 +570,25 @@ function renderTransactionList() {
         transactionListEl.innerHTML = "";
 
         if (!state.selectedAccountId) {
-            if (transactionCountEl) transactionCountEl.textContent = "0 işlem";
+            if (transactionCountEl) transactionCountEl.textContent = "0";
             renderEmptyMessage(transactionListEl, "Cari seçiniz.");
+            renderLogList([]); // Clear logs too
             return;
         }
 
         const accountId = state.selectedAccountId;
-        const relatedTransactions = filterTransactionsByAccount(accountId);
-        const filtered = applyTransactionFilters(relatedTransactions);
+        const relatedRecords = filterTransactionsByAccount(accountId);
+        
+        // Separate real transactions from system logs
+        const { transactions: realTransactions, logs: systemLogs } = separateTransactionsAndLogs(relatedRecords);
+        
+        const filtered = applyTransactionFilters(realTransactions);
         const sorted = sortTransactions(filtered);
 
-        if (transactionCountEl) transactionCountEl.textContent = `${sorted.length} işlem`;
+        if (transactionCountEl) transactionCountEl.textContent = `${sorted.length}`;
+        
+        // Render system logs separately
+        renderLogList(systemLogs, accountId);
 
         if (!sorted.length) {
             const message = relatedTransactions.length === 0
@@ -451,14 +599,46 @@ function renderTransactionList() {
         }
 
         const fragment = document.createDocumentFragment();
+        
+        // Filter pending transfers if showPendingTransfers is false
+        const visibleTransactions = state.transactionFilters.showPendingTransfers 
+            ? sorted 
+            : sorted.filter(tx => {
+                const txType = String(tx.islemTipi || '').toLowerCase().trim();
+                const isDebtTransfer = (txType === 'transfer' && tx.kaynakCari && tx.hedefCari) ||
+                                       txType === 'borç transferi' || 
+                                       txType === 'borc transferi' || 
+                                       txType === 'debt_transfer';
+                const affectsBalance = tx.affectsBalance !== false;
+                const isPending = isDebtTransfer && !affectsBalance;
+                return !isPending; // Exclude pending transfers
+            });
 
-        sorted.forEach(tx => {
+        visibleTransactions.forEach(tx => {
             const date = getTransactionDate(tx);
             const tarih = date ? date.toLocaleDateString('tr-TR') : 'Bilinmiyor';
             const title = getTransactionTitle(tx, accountId);
             const netChange = getTransactionNetChange(tx, accountId);
+            
+            // Check if this is a debt transfer
+            const txType = String(tx.islemTipi || '').toLowerCase().trim();
+            const isDebtTransfer = (txType === 'transfer' && tx.kaynakCari && tx.hedefCari) ||
+                                   txType === 'borç transferi' || 
+                                   txType === 'borc transferi' || 
+                                   txType === 'debt_transfer';
+            
+            // Check if transaction affects balance
+            const affectsBalance = tx.affectsBalance !== false; // Default to true if not specified
+            const isPending = isDebtTransfer && !affectsBalance;
+            
+            // Use type-based labels instead of direction-based
+            const typeLabel = getTransactionTypeLabel(tx);
+            const typeBadgeClass = getTransactionTypeBadgeClass(tx);
+            const typeColorClass = getTransactionTypeColorClass(tx);
+            
             const amountSign = netChange > 0 ? '+' : (netChange < 0 ? '-' : '');
-            const amountClass = netChange > 0 ? 'text-green-500' : (netChange < 0 ? 'text-red-500' : 'text-gray-500');
+            const amountClass = isPending ? 'text-gray-400 dark:text-gray-500' : 
+                               (netChange > 0 ? 'text-green-500' : (netChange < 0 ? 'text-red-500' : 'text-gray-500'));
             const effectiveAmount = Math.abs(netChange) > 0 ? Math.abs(netChange) : Math.abs(Number(tx.toplamTutar || tx.tutar || 0));
             const formattedAmount = formatCurrency(effectiveAmount);
             let description = buildTransactionDescription(tx);
@@ -473,24 +653,58 @@ function renderTransactionList() {
             }
 
             const item = document.createElement('div');
-            item.className = 'islem-item cursor-pointer bg-gray-100 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center';
+            // Apply muted styling for pending transfers
+            const baseClasses = isPending 
+                ? 'islem-item cursor-pointer bg-gray-900/30 dark:bg-gray-900/30 border border-gray-600/20 dark:border-gray-600/20 p-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex justify-between items-center opacity-75'
+                : 'islem-item cursor-pointer bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex justify-between items-center';
+            item.className = baseClasses;
             item.dataset.id = tx.id;
+            
+            // Build type badge HTML with proper type-specific styling
+            let badgeHTML = '';
+            if (isPending) {
+                // Pending transfer badge (muted gray)
+                badgeHTML = `
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-700/40 text-gray-400 border border-gray-600/20 ml-2" title="Bu transfer henüz bakiyeye uygulanmadı">
+                        Transfer (Pending)
+                    </span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 ml-2" title="Bakiyeye dahil değil">
+                        ⚠️ Bakiyeye Uygulanmadı
+                    </span>
+                `;
+            } else if (typeLabel) {
+                badgeHTML = `<span class="inline-flex items-center ${typeBadgeClass} ml-2">${typeLabel}</span>`;
+            }
+            
+            // Add auto-payment badge
+            const autoBadgeHTML = (tx.source === 'auto_from_expense') ?
+                `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 ml-2" title="Gider kaydıyla birlikte otomatik oluşturuldu">🤖 Otomatik</span>` : '';
+            
+            const titleColorClass = isPending ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white';
+            const descriptionColorClass = isPending ? 'text-gray-500 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400';
+            
             item.innerHTML = `
                 <div class="flex-grow">
-                    <p class="font-semibold">${title}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">${description}</p>
+                    <p class="text-base font-semibold ${titleColorClass} flex items-center flex-wrap">
+                        <span>${title}</span>
+                        ${badgeHTML}
+                        ${autoBadgeHTML}
+                    </p>
+                    <p class="text-sm ${descriptionColorClass} mt-1">${description}</p>
                 </div>
-                <div class="text-right ml-4 flex-shrink-0 flex items-center">
+                <div class="text-right ml-4 flex-shrink-0 flex items-center gap-2">
                     <div>
-                        <p class="font-bold text-lg ${amountClass}">${amountSign}${formattedAmount}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">${tarih}</p>
+                        <p class="font-bold text-lg ${amountClass}">${isPending ? '' : amountSign}${formattedAmount}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${tarih}</p>
                     </div>
-                    <button data-id="${tx.id}" class="edit-islem-btn ml-2 p-2 rounded-full text-gray-400 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793z"/><path d="M11.379 5.793L4 13.172V16h2.828l7.379-7.379-2.828-2.828z"/></svg>
-                    </button>
-                    <button data-id="${tx.id}" class="delete-islem-btn ml-2 p-2 rounded-full text-gray-400 transition-colors">
-                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                    </button>
+                    <div class="flex flex-col gap-1">
+                        <button data-id="${tx.id}" class="edit-islem-btn p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793z"/><path d="M11.379 5.793L4 13.172V16h2.828l7.379-7.379-2.828-2.828z"/></svg>
+                        </button>
+                        <button data-id="${tx.id}" class="delete-islem-btn p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
                 </div>
             `;
             fragment.appendChild(item);
@@ -508,6 +722,132 @@ function renderTransactionList() {
             }
         }
     }
+}
+
+/**
+ * Switch between tabs
+ */
+function switchTab(tabName) {
+    state.activeTab = tabName;
+    
+    // Update tab button styles
+    if (transactionsTabEl && logsTabEl) {
+        const activeClasses = 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm';
+        const inactiveClasses = 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200';
+        
+        if (tabName === 'transactions') {
+            transactionsTabEl.className = `tab-button px-4 py-2 rounded-md font-medium text-sm transition ${activeClasses}`;
+            logsTabEl.className = `tab-button px-4 py-2 rounded-md font-medium text-sm transition ${inactiveClasses}`;
+        } else {
+            transactionsTabEl.className = `tab-button px-4 py-2 rounded-md font-medium text-sm transition ${inactiveClasses}`;
+            logsTabEl.className = `tab-button px-4 py-2 rounded-md font-medium text-sm transition ${activeClasses}`;
+        }
+    }
+    
+    // Show/hide tab content
+    if (transactionsTabContentEl && logsTabContentEl) {
+        if (tabName === 'transactions') {
+            transactionsTabContentEl.classList.remove('hidden');
+            logsTabContentEl.classList.add('hidden');
+        } else {
+            transactionsTabContentEl.classList.add('hidden');
+            logsTabContentEl.classList.remove('hidden');
+        }
+    }
+}
+
+/**
+ * Render system logs list
+ */
+function renderLogList(logs = [], accountId = null) {
+    if (!logListEl) return;
+    
+    logListEl.innerHTML = "";
+    
+    // Update log count badge
+    if (logCountEl) logCountEl.textContent = logs.length;
+    
+    console.log('[home:logs] Rendering', logs.length, 'system logs for account', accountId);
+    
+    // Show empty state if no logs
+    if (!logs.length) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-2 border-dashed border-gray-300 dark:border-gray-700 p-8 rounded-2xl text-center';
+        emptyState.innerHTML = `
+            <div class="max-w-sm mx-auto">
+                <div class="bg-gray-200 dark:bg-gray-700 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Henüz sistem logu bulunmuyor
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Borç transferi, migration veya yönetici sıfırlama işlemleri burada görünecektir
+                </p>
+            </div>
+        `;
+        logListEl.appendChild(emptyState);
+        return;
+    }
+    
+    console.log('[home:logs] Rendering', logs.length, 'system logs');
+    
+    const sortedLogs = sortTransactions(logs);
+    const fragment = document.createDocumentFragment();
+    
+    sortedLogs.forEach(log => {
+        const date = getTransactionDate(log);
+        const tarih = date ? date.toLocaleDateString('tr-TR') : 'Bilinmiyor';
+        const typeLabel = getLogTypeLabel(log);
+        const description = getLogDescription(log, (id) => {
+            const account = state.accounts.find(a => a.id === id);
+            return account?.unvan || id;
+        });
+        
+        // Use same card structure as transactions but with muted styling
+        const logItem = document.createElement('div');
+        logItem.className = 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors';
+        
+        const amount = Math.abs(Number(log.toplamTutar || log.tutar || 0));
+        const formattedAmount = amount > 0 ? formatCurrency(amount) : '';
+        
+        logItem.innerHTML = `
+            <div class="flex items-start justify-between">
+                <div class="flex-grow flex items-start gap-2">
+                    <!-- Info icon for logs -->
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-500/20 text-gray-500 dark:text-gray-400 border border-gray-500/30">
+                                ${typeLabel}
+                            </span>
+                            ${log.needsReview ? `
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30">
+                                    İnceleme Gerekli
+                                </span>
+                            ` : ''}
+                        </div>
+                        <p class="text-base font-semibold text-gray-600 dark:text-gray-300">${description}</p>
+                        ${log.aciklama ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${log.aciklama}</p>` : ''}
+                    </div>
+                </div>
+                <div class="text-right ml-4 flex-shrink-0">
+                    ${formattedAmount ? `
+                        <p class="font-bold text-lg text-gray-400 dark:text-gray-500">${formattedAmount}</p>
+                    ` : ''}
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${tarih}</p>
+                </div>
+            </div>
+        `;
+        
+        fragment.appendChild(logItem);
+    });
+    
+    logListEl.appendChild(fragment);
 }
 
 function openModal(id, payload = {}) {
@@ -1286,12 +1626,115 @@ function handleFilterReset(event) {
     resetTransactionFilters();
 }
 
+function handlePendingTransfersToggle(event) {
+    state.transactionFilters.showPendingTransfers = event.target.checked;
+    renderTransactionList();
+}
+
+function handleExportAccountsClick(event) {
+    if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+    }
+    
+    try {
+        const displayAccounts = filterAccounts();
+        
+        if (!displayAccounts || displayAccounts.length === 0) {
+            if (typeof currentDeps.showToast === 'function') {
+                currentDeps.showToast('Dışa aktarılacak cari bulunamadı.', true);
+            }
+            return;
+        }
+        
+        const isFiltered = state.searchQuery && state.searchQuery.trim().length > 0;
+        const filename = isFiltered 
+            ? `cariler_filtrelenmis_${new Date().toISOString().split('T')[0]}.csv`
+            : null;
+        
+        exportAccountsToCSV(displayAccounts, filename);
+        
+        const message = isFiltered
+            ? `${displayAccounts.length} cari (filtrelenmiş sonuçlar) başarıyla CSV formatında dışa aktarıldı.`
+            : `${displayAccounts.length} cari başarıyla CSV formatında dışa aktarıldı.`;
+        
+        if (typeof currentDeps.showToast === 'function') {
+            currentDeps.showToast(message);
+        }
+    } catch (error) {
+        logHomeError(error);
+        if (typeof currentDeps.showToast === 'function') {
+            currentDeps.showToast(error?.message || 'CSV dışa aktarma sırasında bir hata oluştu.', true);
+        }
+    }
+}
+
+function handleExportTransactionsClick(event) {
+    if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+    }
+    
+    try {
+        if (!state.selectedAccountId) {
+            if (typeof currentDeps.showToast === 'function') {
+                currentDeps.showToast('Lütfen önce bir cari seçin.', true);
+            }
+            return;
+        }
+        
+        const accountId = state.selectedAccountId;
+        const relatedTransactions = filterTransactionsByAccount(accountId);
+        const filtered = applyTransactionFilters(relatedTransactions);
+        const sorted = sortTransactions(filtered);
+        
+        if (!sorted || sorted.length === 0) {
+            if (typeof currentDeps.showToast === 'function') {
+                currentDeps.showToast('Dışa aktarılacak işlem bulunamadı.', true);
+            }
+            return;
+        }
+        
+        const account = findAccount(accountId);
+        const accountName = account ? account.unvan : 'cari';
+        const sanitizedName = accountName.replace(/[^a-zA-Z0-9-_]/g, '_').toLowerCase();
+        
+        const hasFilters = state.transactionFilters.type || 
+                          state.transactionFilters.start || 
+                          state.transactionFilters.end;
+        
+        const filename = hasFilters
+            ? `${sanitizedName}_islemler_filtrelenmis_${new Date().toISOString().split('T')[0]}.csv`
+            : `${sanitizedName}_islemler_${new Date().toISOString().split('T')[0]}.csv`;
+        
+        // Pass findAccount function to export for account type detection
+        exportTransactionsToCSV(sorted, getAccountName, filename, findAccount);
+        
+        const message = hasFilters
+            ? `${sorted.length} işlem (filtrelenmiş) başarıyla CSV formatında dışa aktarıldı.`
+            : `${sorted.length} işlem başarıyla CSV formatında dışa aktarıldı.`;
+        
+        if (typeof currentDeps.showToast === 'function') {
+            currentDeps.showToast(message);
+        }
+    } catch (error) {
+        logHomeError(error);
+        if (typeof currentDeps.showToast === 'function') {
+            currentDeps.showToast(error?.message || 'CSV dışa aktarma sırasında bir hata oluştu.', true);
+        }
+    }
+}
+
 function attachEventListeners() {
     if (searchInputEl) {
         searchInputEl.addEventListener('input', handleSearchInput);
     }
     if (listContainerEl) {
         listContainerEl.addEventListener('click', handleAccountListClick);
+    }
+    if (exportAccountsBtnEl) {
+        exportAccountsBtnEl.addEventListener('click', handleExportAccountsClick);
+    }
+    if (exportTransactionsBtnEl) {
+        exportTransactionsBtnEl.addEventListener('click', handleExportTransactionsClick);
     }
     if (newTransactionBtnEl) {
         newTransactionBtnEl.addEventListener('click', handleDetailNewTransactionClick);
@@ -1301,6 +1744,12 @@ function attachEventListeners() {
     }
     if (transactionListEl) {
         transactionListEl.addEventListener('click', handleTransactionListClick);
+    }
+    if (transactionsTabEl) {
+        transactionsTabEl.addEventListener('click', () => switchTab('transactions'));
+    }
+    if (logsTabEl) {
+        logsTabEl.addEventListener('click', () => switchTab('logs'));
     }
     if (detailBackBtnEl) {
         detailBackBtnEl.addEventListener('click', handleDetailBackButtonClick);
@@ -1332,6 +1781,9 @@ function attachEventListeners() {
     if (filterResetBtnEl) {
         filterResetBtnEl.addEventListener('click', handleFilterReset);
     }
+    if (showPendingTransfersToggleEl) {
+        showPendingTransfersToggleEl.addEventListener('change', handlePendingTransfersToggle);
+    }
     if (accountNotesSaveBtnEl) {
         accountNotesSaveBtnEl.addEventListener('click', handleAccountNoteSave);
     }
@@ -1350,6 +1802,12 @@ function detachEventListeners() {
     }
     if (listContainerEl) {
         listContainerEl.removeEventListener('click', handleAccountListClick);
+    }
+    if (exportAccountsBtnEl) {
+        exportAccountsBtnEl.removeEventListener('click', handleExportAccountsClick);
+    }
+    if (exportTransactionsBtnEl) {
+        exportTransactionsBtnEl.removeEventListener('click', handleExportTransactionsClick);
     }
     if (newTransactionBtnEl) {
         newTransactionBtnEl.removeEventListener('click', handleDetailNewTransactionClick);
@@ -1413,17 +1871,26 @@ function mount(container, deps = {}) {
 
     searchInputEl = container.querySelector('#cariSearchInput');
     listContainerEl = container.querySelector('#cariList');
+    exportAccountsBtnEl = container.querySelector('#exportAccountsBtn');
+    exportTransactionsBtnEl = container.querySelector('#exportTransactionsBtn');
     detailNameEl = container.querySelector('#detailCariUnvan');
     detailTypeEl = container.querySelector('#detailCariTipi');
     detailBalanceEl = container.querySelector('#detailCariBakiye');
     transactionListEl = container.querySelector('#islemList');
     transactionCountEl = container.querySelector('#detailIslemCount');
+    logListEl = container.querySelector('#logList');
+    logCountEl = container.querySelector('#detailLogCount');
+    transactionsTabEl = container.querySelector('#transactionsTab');
+    logsTabEl = container.querySelector('#logsTab');
+    transactionsTabContentEl = container.querySelector('#transactionsTabContent');
+    logsTabContentEl = container.querySelector('#logsTabContent');
     newTransactionBtnEl = container.querySelector('#detailIslemBtn');
     primaryNewTransactionBtnEl = container.querySelector('#openModalBtn');
     filterTypeEl = container.querySelector('#detailIslemTipFilter');
     filterStartEl = container.querySelector('#detailIslemStart');
     filterEndEl = container.querySelector('#detailIslemEnd');
     filterResetBtnEl = container.querySelector('#detailResetFilters');
+    showPendingTransfersToggleEl = container.querySelector('#showPendingTransfersToggle');
     detailBackBtnEl = container.querySelector('#backToListBtn');
     transactionBackBtnEl = container.querySelector('#islemDetailBackBtn');
     transactionEditBtnEl = container.querySelector('#islemDetailEditBtn');
@@ -1443,6 +1910,7 @@ function mount(container, deps = {}) {
     if (filterTypeEl) filterTypeEl.value = state.transactionFilters.type || '';
     if (filterStartEl) filterStartEl.value = formatDateForInput(state.transactionFilters.start);
     if (filterEndEl) filterEndEl.value = formatDateForInput(state.transactionFilters.end);
+    if (showPendingTransfersToggleEl) showPendingTransfersToggleEl.checked = state.transactionFilters.showPendingTransfers !== false;
 
     attachEventListeners();
     if (currentRoot) currentRoot.classList.remove('hidden');
@@ -1467,11 +1935,19 @@ function unmount() {
     if (currentRoot) currentRoot.classList.add('hidden');
     searchInputEl = null;
     listContainerEl = null;
+    exportAccountsBtnEl = null;
+    exportTransactionsBtnEl = null;
     detailNameEl = null;
     detailTypeEl = null;
     detailBalanceEl = null;
     transactionListEl = null;
     transactionCountEl = null;
+    logListEl = null;
+    logCountEl = null;
+    transactionsTabEl = null;
+    logsTabEl = null;
+    transactionsTabContentEl = null;
+    logsTabContentEl = null;
     newTransactionBtnEl = null;
     primaryNewTransactionBtnEl = null;
     filterTypeEl = null;
@@ -1535,6 +2011,7 @@ function resetTransactionFilters(options = {}) {
     if (filterTypeEl) filterTypeEl.value = '';
     if (filterStartEl) filterStartEl.value = '';
     if (filterEndEl) filterEndEl.value = '';
+    if (showPendingTransfersToggleEl) showPendingTransfersToggleEl.checked = true;
     if (!options.silent) {
         renderTransactionList();
     }

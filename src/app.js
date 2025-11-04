@@ -1,4 +1,5 @@
 import homeView from "./ui/views/home.view.js";
+import adminUtils from "./utils/admin-console.js";
 
 function getHomeConfig() {
     return window.__APP_HOME_CONFIG__ || {};
@@ -129,3 +130,9 @@ if (navMigrationBtn) {
 
 // Initial mount
 showHomeDashboard();
+
+// Expose admin utilities to window for console access
+if (typeof window !== 'undefined') {
+    window.adminUtils = adminUtils;
+    console.log('✨ Admin utilities loaded! Type window.adminUtils.help() for commands');
+}

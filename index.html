@@ -30,6 +30,7 @@
                 <button id="navFinancialSummaryBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Finansal Özet</button>
                 <button id="navCarilerBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Cariler</button>
                 <button id="navNotebookBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Muhasebe Not Defteri</button>
+                <button id="navMigrationBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">🔧 Admin: Migration</button>
             </div>
         </nav>
 
@@ -342,19 +343,34 @@
                             <p id="detailCariBakiye" class="text-3xl font-bold"></p>
                             <p class="text-gray-500 dark:text-gray-400">Güncel Bakiye</p>
                         </div>
-                        <button id="resetAccountBtn" class="hidden flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 font-medium py-2 px-3 rounded-lg transition" title="Hesabı Sıfırla (Admin)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                            </svg>
-                            Sıfırla
-                        </button>
+                        <div class="flex flex-col gap-2">
+                            <button id="fixBalanceBtn" class="hidden flex items-center gap-2 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/30 font-medium py-2 px-3 rounded-lg transition text-sm" title="Bakiyeyi işlemlerden yeniden hesapla">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                                </svg>
+                                Bakiyeyi Düzelt
+                            </button>
+                            <button id="resetAccountBtn" class="hidden flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 font-medium py-2 px-3 rounded-lg transition text-sm" title="Hesabı Sıfırla (Admin)">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                                </svg>
+                                Sıfırla
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
+                <!-- Tab Navigation -->
                 <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h3 class="text-xl font-semibold">İşlem Geçmişi</h3>
-                        <p id="detailIslemCount" class="text-sm text-gray-500 dark:text-gray-400">0 işlem</p>
+                    <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                        <button id="transactionsTab" class="tab-button px-4 py-2 rounded-md font-medium text-sm transition bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm">
+                            İşlem Geçmişi
+                            <span id="detailIslemCount" class="ml-2 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-semibold">0</span>
+                        </button>
+                        <button id="logsTab" class="tab-button px-4 py-2 rounded-md font-medium text-sm transition text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+                            Hesap Logları
+                            <span id="detailLogCount" class="ml-2 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-xs font-semibold">0</span>
+                        </button>
                     </div>
                     <div class="flex items-center gap-2">
                         <button id="exportTransactionsBtn" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
@@ -379,7 +395,7 @@
                             <option value="gider">Gider</option>
                             <option value="tahsilat">Tahsilat</option>
                             <option value="odeme">Ödeme</option>
-                            <option value="transfer">Transfer</option>
+                            <option value="transfer">Transfer (Borç Transferi)</option>
                             <option value="administrative_reset">Sıfırlama (Admin)</option>
                         </select>
                     </div>
@@ -395,9 +411,40 @@
                         <button id="detailResetFilters" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-sm font-semibold">Filtreleri Sıfırla</button>
                     </div>
                 </div>
+                
+                <!-- Pending Transfers Toggle -->
+                <div class="mb-4 flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <input type="checkbox" id="showPendingTransfersToggle" checked 
+                           class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="showPendingTransfersToggle" class="text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+                        Bakiyeye uygulanmamış transferleri göster (Pending)
+                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                            Migration öncesi kayıtlar gri renkte gösterilir
+                        </span>
+                    </label>
+                </div>
 
-                <div id="islemList" class="space-y-3">
-                    <!-- İşlem geçmişi buraya gelecek -->
+                <!-- Tab Content Container -->
+                <div id="tabContent" class="mt-4">
+                    <!-- Transaction History Tab Content -->
+                    <div id="transactionsTabContent" class="tab-content">
+                        <div id="islemList" class="space-y-3">
+                            <!-- İşlem geçmişi buraya gelecek -->
+                        </div>
+                    </div>
+                    
+                    <!-- Account Logs Tab Content -->
+                    <div id="logsTabContent" class="tab-content hidden">
+                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-4">
+                            <p class="text-sm text-blue-800 dark:text-blue-200">
+                                <strong>ℹ️ Bilgi:</strong> Bu kayıtlar bakiye ve nakit akışını etkilemez. 
+                                Yalnızca işlem geçmişine referans sağlar (borç transferleri, migration, yönetici sıfırlamaları vb.).
+                            </p>
+                        </div>
+                        <div id="logList" class="space-y-3">
+                            <!-- Sistem logları buraya gelecek -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -458,6 +505,11 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400">Yükleniyor...</p>
                 </div>
             </div>
+        </div>
+
+        <!-- Debt Transfer Migration View -->
+        <div id="migrationView" class="hidden">
+            <!-- Migration content will be rendered here by JavaScript -->
         </div>
 
         <!-- İşlem Detay Görünümü (Başlangıçta Gizli) -->
@@ -585,6 +637,51 @@
                         <div>
                             <label for="aciklamaSingle" class="block text-sm font-medium">Açıklama</label>
                             <textarea id="aciklamaSingle" name="aciklama" rows="2" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Debt Transfer (Three-Party) Container -->
+                    <div id="debtTransferContainer" class="hidden space-y-4 mt-4">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg">
+                            <p class="text-sm text-gray-700 dark:text-gray-300">
+                                <strong>ℹ️ Borç Transferi (Bilgi Kaydı):</strong> Borç sahipliği değişikliğini kayıt altına alır.
+                            </p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                                💰 <strong>Akış:</strong> Borç Veren → Borçlu → Borcu Kapanan
+                            </p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                ⚠️ Bu bir bilgi kaydıdır, hiçbir bakiyeyi değiştirmez<br>
+                                ✓ "Hesap Logları" bölümünde görünür<br>
+                                ✓ Gelir/Gider ve nakit akışına etki etmez<br>
+                                ✓ CSV dışa aktarmalarına dahil edilmez
+                            </p>
+                        </div>
+                        <div>
+                            <label for="debtorCari" class="block text-sm font-medium">Borçlu (Şirket)</label>
+                            <select id="debtorCari" name="islemCari" class="cari-select mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3"></select>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Borç alan ve ödeyen taraf (genellikle şirket hesabınız)</p>
+                        </div>
+                        <div>
+                            <label for="lenderCari" class="block text-sm font-medium">Borç Veren (Yeni Alacaklı)</label>
+                            <select id="lenderCari" name="kaynakCari" class="cari-select mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3"></select>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Borç veren taraf - borçluya para veren</p>
+                        </div>
+                        <div>
+                            <label for="creditorPaidOffCari" class="block text-sm font-medium">Borcu Kapanan (Eski Alacaklı)</label>
+                            <select id="creditorPaidOffCari" name="hedefCari" class="cari-select mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3"></select>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Borcu kapanan taraf - alacağı tahsil edilen</p>
+                        </div>
+                        <div>
+                            <label for="tarihDebtTransfer" class="block text-sm font-medium">İşlem Tarihi</label>
+                            <input type="date" id="tarihDebtTransfer" name="tarih" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3">
+                        </div>
+                        <div>
+                            <label for="tutarDebtTransfer" class="block text-sm font-medium">Tutar (₺)</label>
+                            <input type="text" id="tutarDebtTransfer" name="tutar" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3">
+                        </div>
+                        <div>
+                            <label for="aciklamaDebtTransfer" class="block text-sm font-medium">Açıklama</label>
+                            <textarea id="aciklamaDebtTransfer" name="aciklama" rows="2" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3"></textarea>
                         </div>
                     </div>
 
@@ -748,6 +845,95 @@
 
         const carilerCollectionRef = collection(db, 'cariler');
         const islemlerCollectionRef = collection(db, 'islemler');
+        
+        // Temporary: Expose fix function to window for Sezon balance fix
+        window.fixSezonBalance = async function() {
+            console.log('🔧 Fixing Sezon balance...');
+            
+            try {
+                // Fix debt transfers
+                const txSnap = await getDocs(islemlerCollectionRef);
+                const batch = writeBatch(db);
+                let fixed = 0;
+                const allTx = [];
+                
+                txSnap.forEach(d => {
+                    const data = d.data();
+                    allTx.push({ id: d.id, ...data });
+                    const type = String(data.islemTipi || '').toLowerCase();
+                    if ((type === 'borç transferi' || type === 'borc transferi') && data.affectsBalance !== true) {
+                        batch.update(doc(db, 'islemler', d.id), { affectsBalance: true });
+                        fixed++;
+                    }
+                });
+                
+                if (fixed > 0) await batch.commit();
+                console.log(`✅ Fixed ${fixed} debt transfers`);
+                
+                // Find Sezon
+                const accSnap = await getDocs(carilerCollectionRef);
+                let sezon = null;
+                accSnap.forEach(d => {
+                    const data = d.data();
+                    if ((data.unvan || '').toLowerCase().includes('sezon') && (data.unvan || '').toLowerCase().includes('tekstil')) {
+                        sezon = { id: d.id, ...data };
+                    }
+                });
+                
+                if (!sezon) throw new Error('Sezon not found!');
+                console.log(`📊 Found: ${sezon.unvan}`);
+                
+                // Calculate balance using getCariNetChange
+                let calc = 0;
+                allTx.forEach(tx => {
+                    if (tx.isDeleted || tx.affectsBalance === false) return;
+                    const amt = Math.abs(Number(tx.toplamTutar || tx.tutar || 0));
+                    const type = String(tx.islemTipi || '').toLowerCase();
+                    const isDT = type === 'borç transferi' || type === 'borc transferi';
+                    
+                    let change = 0;
+                    if (isDT) {
+                        if (tx.islemCari === sezon.id) change = 0;
+                        else if (tx.kaynakCari === sezon.id) change = -amt;
+                        else if (tx.hedefCari === sezon.id) change = amt;
+                    } else if (tx.islemCari === sezon.id) {
+                        if (type === 'gelir') change = amt;
+                        else if (type === 'gider') change = -amt;
+                        else if (type === 'administrative_reset') change = amt;
+                    } else if (tx.kaynakCari === sezon.id) {
+                        change = -amt;
+                    } else if (tx.hedefCari === sezon.id) {
+                        change = amt;
+                    }
+                    calc += change;
+                });
+                
+                const stored = Number(sezon.bakiye || 0);
+                const diff = Math.abs(calc - stored);
+                
+                console.log(`Database: ₺${stored.toLocaleString('tr-TR', {minimumFractionDigits:2})}`);
+                console.log(`Calculated: ₺${calc.toLocaleString('tr-TR', {minimumFractionDigits:2})}`);
+                console.log(`Difference: ₺${diff.toLocaleString('tr-TR', {minimumFractionDigits:2})}`);
+                
+                if (diff > 0.01) {
+                    await updateDoc(doc(db, 'cariler', sezon.id), {
+                        bakiye: calc,
+                        balanceAutoFixed: true,
+                        lastBalanceRecalculation: serverTimestamp()
+                    });
+                    console.log(`✅ Updated: ₺${stored.toLocaleString('tr-TR')} → ₺${calc.toLocaleString('tr-TR')}`);
+                } else {
+                    console.log('✅ Balance already correct!');
+                }
+                
+                alert('✅ Fix complete! Please refresh the page.');
+                return { success: true, debtTransfersFixed: fixed, oldBalance: stored, newBalance: calc };
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('❌ Error: ' + error.message);
+                throw error;
+            }
+        };
 
         let allCariler = [];
         let allIslemler = [];
@@ -763,6 +949,7 @@
         const INVOICE_UPLOAD_LIMIT = 5;
         const MULTI_ENTRY_TYPES = new Set(['gelir', 'gider']);
         let invoiceGalleryLoadToken = 0;
+        let isSubmittingTransaction = false;
 
         const CARI_TIP_OPTIONS = ['Müşteri', 'Tedarikçi', 'Banka', 'Finansman', 'Personel'];
         const IMPORT_FIELD_OPTIONS = [
@@ -803,8 +990,12 @@
         const islemTipiSelect = document.getElementById('islemTipi');
         const singleEntryContainer = document.getElementById('singleEntryContainer');
         const multiEntryContainer = document.getElementById('multiEntryContainer');
+        const debtTransferContainer = document.getElementById('debtTransferContainer');
         const kaynakCariSingleSelect = document.getElementById('kaynakCariSingle');
         const hedefCariSingleSelect = document.getElementById('hedefCariSingle');
+        const debtorCariSelect = document.getElementById('debtorCari');
+        const lenderCariSelect = document.getElementById('lenderCari');
+        const creditorPaidOffCariSelect = document.getElementById('creditorPaidOffCari');
         const backToListBtn = document.getElementById('backToListBtn');
         const islemDetailView = document.getElementById('islemDetailView');
         const islemDetailTitle = document.getElementById('islemDetailTitle');
@@ -820,6 +1011,7 @@
         const islemDetailEditBtn = document.getElementById('islemDetailEditBtn');
         const islemDetailDeleteBtn = document.getElementById('islemDetailDeleteBtn');
         const resetAccountBtn = document.getElementById('resetAccountBtn');
+        const fixBalanceBtn = document.getElementById('fixBalanceBtn');
         const accountResetBadge = document.getElementById('accountResetBadge');
         const dashboardView = document.getElementById('dashboardView');
         const dashboardBankSelect = document.getElementById('dashboardBankSelect');
@@ -972,10 +1164,123 @@
             if (mainView) mainView.classList.add('hidden');
             if (detailView) detailView.classList.add('hidden');
             if (islemDetailView) islemDetailView.classList.add('hidden');
+            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             if (companyNotebookView) {
                 companyNotebookView.classList.remove('hidden');
                 mountNotebookViews();
             }
+        }
+
+        function showMigrationView() {
+            legacySetActiveNav(navMigrationBtn);
+            if (dashboardView) dashboardView.classList.add('hidden');
+            if (mainView) mainView.classList.add('hidden');
+            if (detailView) detailView.classList.add('hidden');
+            if (islemDetailView) islemDetailView.classList.add('hidden');
+            if (companyNotebookView) companyNotebookView.classList.add('hidden');
+            if (financialSummaryViewEl) financialSummaryViewEl.classList.add('hidden');
+            
+            if (migrationViewEl) {
+                migrationViewEl.classList.remove('hidden');
+                
+                // Mount migration view if not already mounted
+                // NOTE: Migration view gets ALL transactions (including those with migrationFlag)
+                // This allows admins to review and manage migration records
+                if (!migrationView.isMounted()) {
+                    migrationView.mount(migrationViewEl, {
+                        transactions: allIslemler, // ALL transactions, including migration records
+                        accounts: allCariler,
+                        getAccount: (id) => allCariler.find(c => c.id === id),
+                        onMigrate: handleMigration
+                    });
+                } else {
+                    // Update data
+                    migrationView.setData({
+                        transactions: allIslemler, // ALL transactions
+                        accounts: allCariler
+                    });
+                }
+            }
+        }
+
+        async function handleMigration(selectedItems) {
+            // Execute migration for selected items
+            const batch = writeBatch(db);
+            const balanceUpdates = new Map();
+            
+            for (const item of selectedItems) {
+                const { transaction, analysis } = item;
+                const { proposed } = analysis;
+                
+                if (!proposed) continue;
+                
+                // Update transaction to new format
+                const txRef = doc(db, 'islemler', transaction.id);
+                batch.update(txRef, {
+                    islemTipi: proposed.islemTipi,
+                    islemCari: proposed.islemCari,
+                    kaynakCari: proposed.kaynakCari,
+                    hedefCari: proposed.hedefCari,
+                    direction: proposed.direction,
+                    migrationFlag: true,
+                    needsReview: proposed.needsReview || false,
+                    affectsBalance: true,  // Ensure migrated debt transfers affect balance
+                    originalTransaction: transaction.id,
+                    migratedAt: serverTimestamp(),
+                    aciklama: proposed.aciklama
+                });
+                
+                // Calculate balance corrections
+                const corrections = calculateBalanceCorrections(transaction, proposed);
+                corrections.forEach((delta, accountId) => {
+                    balanceUpdates.set(accountId, (balanceUpdates.get(accountId) || 0) + delta);
+                });
+            }
+            
+            // Apply balance corrections
+            balanceUpdates.forEach((delta, accountId) => {
+                const cariRef = doc(db, 'cariler', accountId);
+                batch.update(cariRef, {
+                    bakiye: increment(delta)
+                });
+            });
+            
+            // Commit batch
+            await batch.commit();
+            
+            showToast(`${selectedItems.length} işlem başarıyla migrate edildi!`);
+        }
+
+        function calculateBalanceCorrections(oldTx, newTx) {
+            const corrections = new Map();
+            const amount = Math.abs(Number(newTx.toplamTutar || newTx.tutar || 0));
+            
+            // SINGLE-SIDED balance adjustment for debt transfer migration
+            // This calculates NET ownership change only, not undo-reapply
+            //
+            // Old creditor (kaynakCari in new structure) LOSES debt ownership: balance -= amount
+            // New creditor (hedefCari in new structure) GAINS debt ownership: balance += amount
+            // Debtor (islemCari) total liability is unchanged (not included)
+            
+            // Old creditor's balance DECREASES
+            if (newTx.kaynakCari) {
+                corrections.set(newTx.kaynakCari, (corrections.get(newTx.kaynakCari) || 0) - amount);
+            }
+            
+            // New creditor's balance INCREASES
+            if (newTx.hedefCari) {
+                corrections.set(newTx.hedefCari, (corrections.get(newTx.hedefCari) || 0) + amount);
+            }
+            
+            // Remove zero corrections
+            const filtered = new Map();
+            corrections.forEach((value, key) => {
+                if (Math.abs(value) > 0.01) {
+                    filtered.set(key, value);
+                }
+            });
+            
+            return filtered;
         }
 
         function generateInvoiceId() {
@@ -1601,6 +1906,7 @@
                 }
             }
             delete islemDetailView.dataset.islemId;
+            delete islemDetailView.dataset.cariId;
             currentIslemDetail = null;
             delete detailView.dataset.cariId;
             invoiceGalleryLoadToken += 1;
@@ -1612,14 +1918,26 @@
         }
 
         function handleTransactionBack() {
+            // Retrieve stored account ID for proper navigation
+            const storedCariId = islemDetailView.dataset.cariId || null;
+            
+            // Clean up dataset
             delete islemDetailView.dataset.islemId;
+            delete islemDetailView.dataset.cariId;
+            
             currentIslemDetail = null;
             invoiceGalleryLoadToken += 1;
             currentInvoiceFiles = [];
             renderInvoiceGallery();
             invoiceExistingCount = 0;
             updateInvoiceUploadUI();
-            showDetailView();
+            
+            // Navigate to specific account detail if available, otherwise show general detail view
+            if (storedCariId) {
+                showCariDetay(storedCariId);
+            } else {
+                showDetailView();
+            }
         }
 
         function handleTransactionEdit() {
@@ -1642,6 +1960,7 @@
                         });
                         showToast('İşlem başarıyla silindi.');
                         delete islemDetailView.dataset.islemId;
+                        delete islemDetailView.dataset.cariId;
                         currentIslemDetail = null;
                         showDetailView();
                         refreshDetailIslemler();
@@ -1784,13 +2103,51 @@
             if (amount === 0) return 0;
 
             let change = 0;
+            const type = String(islem.islemTipi || '').toLowerCase().trim();
+            
+            // Check if this is a debt transfer (three-party event)
+            const isDebtTransfer = type === 'borç transferi' || type === 'borc transferi' || type === 'debt_transfer';
 
-            if (islem.islemCari === cariId) {
-                if (islem.islemTipi === 'gelir') change += amount;
-                if (islem.islemTipi === 'gider') change -= amount;
+            if (isDebtTransfer) {
+                // ═══════════════════════════════════════════════════════════════
+                // GLOBAL SIGN STANDARD - DEBT TRANSFER DELTAS:
+                // 
+                // Debt transfer is a LIABILITY REASSIGNMENT (not cashflow).
+                // Deltas represent how the balance moves for each party:
+                // 
+                // - Debtor (islemCari):           0        - Total debt unchanged
+                // - New Creditor (kaynakCari):   -amount   - Our payable increases
+                // - Old Creditor (hedefCari):    +amount   - Our payable decreases
+                // ═══════════════════════════════════════════════════════════════
+                
+                if (islem.islemCari === cariId) {
+                    // Debtor: Total liability unchanged, only counterparty changes
+                    return 0;
+                }
+                if (islem.kaynakCari === cariId) {
+                    // New creditor (lender): Our payable to them INCREASES
+                    return -amount;  // Negative delta (moves toward payable)
+                }
+                if (islem.hedefCari === cariId) {
+                    // Old creditor (settled): Our payable to them DECREASES
+                    return +amount;  // Positive delta (moves toward receivable/zero)
+                }
+                return 0;
+            } else {
+                // Standard two-party or single-party transactions
+                // GLOBAL SIGN STANDARD:
+                // - Gelir (income): increases receivable → +amount
+                // - Gider (expense): increases payable → -amount
+                // - Tahsilat (collection): decreases receivable → -amount (hedef receives)
+                // - Ödeme (payment): decreases payable → +amount (kaynak pays)
+                
+                if (islem.islemCari === cariId) {
+                    if (islem.islemTipi === 'gelir') change += amount;
+                    if (islem.islemTipi === 'gider') change -= amount;
+                }
+                if (islem.kaynakCari === cariId) change -= amount;
+                if (islem.hedefCari === cariId) change += amount;
             }
-            if (islem.kaynakCari === cariId) change -= amount;
-            if (islem.hedefCari === cariId) change += amount;
 
             return change;
         }
@@ -1812,17 +2169,46 @@
                 deltas.set(cariId, (deltas.get(cariId) || 0) + delta);
             };
 
-            switch (islem.islemTipi) {
-                case 'gelir':
-                    addDelta(islem.islemCari, factor * amount);
-                    break;
-                case 'gider':
-                    addDelta(islem.islemCari, factor * -amount);
-                    break;
-                default:
-                    addDelta(islem.kaynakCari, factor * -amount);
-                    addDelta(islem.hedefCari, factor * amount);
-                    break;
+            const type = String(islem.islemTipi || '').toLowerCase().trim();
+            const isDebtTransfer = type === 'borç transferi' || type === 'borc transferi' || type === 'debt_transfer';
+
+            if (isDebtTransfer) {
+                // ═══════════════════════════════════════════════════════════════
+                // GLOBAL SIGN STANDARD - DEBT TRANSFER DELTAS:
+                // 
+                // Debt transfer is a LIABILITY REASSIGNMENT:
+                // - Debtor (islemCari):           0        - Total debt unchanged
+                // - New Creditor (kaynakCari):   -amount   - Our payable increases
+                // - Old Creditor (hedefCari):    +amount   - Our payable decreases
+                // ═══════════════════════════════════════════════════════════════
+                
+                // Debtor: no change (total liability constant)
+                // Not added to deltas (implicitly 0)
+                
+                // New creditor: payable increases (negative delta)
+                addDelta(islem.kaynakCari, factor * -amount);
+                
+                // Old creditor: payable decreases (positive delta)
+                addDelta(islem.hedefCari, factor * amount);
+                
+                return deltas;
+            } else {
+                // Standard transactions (GLOBAL SIGN STANDARD)
+                switch (islem.islemTipi) {
+                    case 'gelir':
+                        // Income: increases receivable
+                        addDelta(islem.islemCari, factor * amount);
+                        break;
+                    case 'gider':
+                        // Expense: increases payable
+                        addDelta(islem.islemCari, factor * -amount);
+                        break;
+                    default:
+                        // Transfer/Payment: kaynak pays (+ toward receivable), hedef receives (+ toward receivable)
+                        addDelta(islem.kaynakCari, factor * -amount);
+                        addDelta(islem.hedefCari, factor * amount);
+                        break;
+                }
             }
 
             return deltas;
@@ -2650,8 +3036,12 @@
                     return 'Gelir İşlemi';
                 case 'gider':
                     return 'Gider İşlemi';
+                case 'borç transferi':
+                case 'borc transferi':
+                case 'debt_transfer':
+                    return 'Borç Transferi';
                 default:
-                    return islemTipiSelect.querySelector(`option[value=${islem.islemTipi}]`)?.textContent || 'İşlem';
+                    return islemTipiSelect.querySelector(`option[value="${islem.islemTipi}"]`)?.textContent || 'İşlem';
             }
         }
 
@@ -2765,7 +3155,24 @@
             currentIslemDetail = islem;
             islemDetailView.dataset.islemId = islemId;
 
-            const cariId = detailView.dataset.cariId || null;
+            // Store the account ID for proper back navigation
+            let cariId = detailView.dataset.cariId || null;
+            
+            // If no account context from detail view, determine from transaction type
+            if (!cariId) {
+                const islemTipi = (islem.islemTipi || '').toLowerCase();
+                if (islemTipi === 'gelir' || islemTipi === 'gider') {
+                    cariId = islem.islemCari || null;
+                } else if (islemTipi === 'ödeme' || islemTipi === 'tahsilat' || islemTipi === 'transfer') {
+                    cariId = islem.kaynakCari || islem.hedefCari || null;
+                }
+            }
+            
+            // Store the cariId for back navigation
+            if (cariId) {
+                islemDetailView.dataset.cariId = cariId;
+            }
+            
             const title = cariId ? getIslemTitleForCari(islem, cariId) : getIslemTipiLabel(islem.islemTipi);
             islemDetailTitle.textContent = title;
             islemDetailType.textContent = getIslemTipiLabel(islem.islemTipi);
@@ -2969,15 +3376,41 @@
 
         onSnapshot(listTransactions(), (snapshot) => {
             allIslemler = [];
+            const userVisibleTransactions = [];
+            
             snapshot.forEach(doc => {
                  const data = doc.data();
                  if (data.isDeleted !== true) {
-                   allIslemler.push({ id: doc.id, ...data });
+                   const transaction = { id: doc.id, ...data };
+                   allIslemler.push(transaction);
+                   
+                   // Filter out migration records from user-visible views
+                   // BUT: Debt transfers are ALWAYS visible, even if they have migration flags
+                   const transactionType = String(data.islemTipi || '').toLowerCase().trim();
+                   
+                   // Debt transfer detection: either explicitly named OR three-party transfer
+                   const isExplicitDebtTransfer = transactionType === 'borç transferi' || 
+                                                   transactionType === 'borc transferi' || 
+                                                   transactionType === 'debt_transfer';
+                   
+                   const isThreePartyTransfer = transactionType === 'transfer' && 
+                                                data.kaynakCari && 
+                                                data.hedefCari;
+                   
+                   const isDebtTransfer = isExplicitDebtTransfer || isThreePartyTransfer;
+                   
+                   const isMigrationRecord = (data.migrationFlag === true || data.needsReview === true) && !isDebtTransfer;
+                   
+                   if (!isMigrationRecord) {
+                       userVisibleTransactions.push(transaction);
+                   }
                  }
             });
             allIslemler.sort((a, b) => (b.kayitTarihi?.seconds || 0) - (a.kayitTarihi?.seconds || 0));
+            
+            // Only show user-visible transactions (exclude migration records from normal views)
             if (typeof homeView.setTransactions === 'function') {
-                homeView.setTransactions(allIslemler);
+                homeView.setTransactions(userVisibleTransactions);
             }
             if (!detailView.classList.contains('hidden')) {
                 const currentCariId = detailView.dataset.cariId;
@@ -3058,6 +3491,13 @@
         }
 
         function closeTransactionModal() {
+            // Reset submission state when modal closes
+            isSubmittingTransaction = false;
+            if (formSubmitBtn) {
+                formSubmitBtn.disabled = false;
+                formSubmitBtn.style.pointerEvents = '';
+            }
+            
             if (homeView.modal && typeof homeView.modal.close === 'function') {
                 homeView.modal.close('transaction');
             } else {
@@ -3201,6 +3641,24 @@
                     <div class="col-span-12 md:col-span-1 flex items-end">
                          <button type="button" class="remove-row-btn p-2 w-full rounded-md bg-red-500 text-white text-xs">Sil</button>
                     </div>`;
+                
+                // Add auto-payment checkbox only for gider (expenses)
+                if (type === 'gider') {
+                    rowHTML += `
+                    <div class="col-span-12 mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <div class="flex items-start gap-2">
+                            <input type="checkbox" name="autoPayment" class="auto-payment-cb h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300 mt-0.5">
+                            <div class="flex-1">
+                                <label class="text-sm font-semibold text-blue-900 dark:text-blue-100 cursor-pointer select-none">
+                                    Ödeme yapıldı (gider kaydıyla birlikte)
+                                </label>
+                                <p class="text-xs text-blue-700 dark:text-blue-300 mt-1 auto-payment-hint hidden">
+                                    ✓ Kaydı oluşturduğunuzda ödeme işlemi de otomatik eklenecek.
+                                </p>
+                            </div>
+                        </div>
+                    </div>`;
+                }
             }
 
             row.innerHTML = rowHTML;
@@ -3267,6 +3725,17 @@
                 
                 updateInputsState();
                 handleCalculation();
+                
+                // Add event listener for auto-payment checkbox (gider only)
+                if (type === 'gider') {
+                    const autoPaymentCb = row.querySelector('.auto-payment-cb');
+                    const autoPaymentHint = row.querySelector('.auto-payment-hint');
+                    if (autoPaymentCb && autoPaymentHint) {
+                        autoPaymentCb.addEventListener('change', () => {
+                            autoPaymentHint.classList.toggle('hidden', !autoPaymentCb.checked);
+                        });
+                    }
+                }
             }
 
             refreshInvoiceUploadAvailability({ resetUploadsIfDisabled: true });
@@ -3284,6 +3753,13 @@
 
             editingIslem = islemToEdit;
             modalPrefillCariId = islemToEdit ? null : prefillCariId;
+            
+            // Reset submission state when modal opens
+            isSubmittingTransaction = false;
+            if (formSubmitBtn) {
+                formSubmitBtn.disabled = false;
+                formSubmitBtn.style.pointerEvents = '';
+            }
 
             addIslemForm.reset();
             multiEntryRowsContainer.innerHTML = '';
@@ -3469,6 +3945,21 @@
             });
         }
 
+        // Transaction detail back button
+        if (islemDetailBackBtn) {
+            islemDetailBackBtn.addEventListener('click', handleTransactionBack);
+        }
+
+        // Transaction detail edit button
+        if (islemDetailEditBtn) {
+            islemDetailEditBtn.addEventListener('click', handleTransactionEdit);
+        }
+
+        // Transaction detail delete button
+        if (islemDetailDeleteBtn) {
+            islemDetailDeleteBtn.addEventListener('click', handleTransactionDelete);
+        }
+
         if (invoicePreviewCloseBtn) {
             invoicePreviewCloseBtn.addEventListener('click', (event) => {
                 event.preventDefault();
@@ -3533,6 +4024,66 @@
             }
         });
 
+        // Fix Balance Button Handler
+        if (fixBalanceBtn) {
+            fixBalanceBtn.addEventListener('click', async () => {
+                const cariId = detailView.dataset.cariId;
+                if (!cariId) return;
+                
+                const cari = allCariler.find(c => c.id === cariId);
+                if (!cari) return;
+                
+                // Calculate correct balance from transactions
+                let calculatedBalance = 0;
+                allIslemler.forEach(islem => {
+                    const netChange = getCariNetChange(islem, cariId);
+                    calculatedBalance += netChange;
+                });
+                
+                const storedBalance = Number(cari.bakiye || 0);
+                const balanceDiff = calculatedBalance - storedBalance;
+                
+                const formattedStored = storedBalance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+                const formattedCalculated = calculatedBalance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+                const formattedDiff = Math.abs(balanceDiff).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+                
+                const confirmMessage = 
+                    `BAKİYE DÜZELTME\n\n` +
+                    `Hesap: ${cari.unvan}\n\n` +
+                    `Mevcut bakiye (veritabanı): ${formattedStored}\n` +
+                    `İşlemlerden hesaplanan: ${formattedCalculated}\n` +
+                    `Fark: ${formattedDiff}\n\n` +
+                    `Bakiye işlemlerden hesaplanan değere (${formattedCalculated}) güncellenecek.\n\n` +
+                    `Devam etmek istiyor musunuz?`;
+                
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+                
+                try {
+                    fixBalanceBtn.disabled = true;
+                    fixBalanceBtn.innerHTML = '<svg class="animate-spin h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Düzeltiliyor...';
+                    
+                    // Update balance in database
+                    const cariRef = doc(db, 'cariler', cariId);
+                    await updateDoc(cariRef, {
+                        bakiye: calculatedBalance,
+                        lastBalanceRecalculation: serverTimestamp()
+                    });
+                    
+                    showToast('Bakiye başarıyla düzeltildi. Sayfa yenileniyor...');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } catch (error) {
+                    console.error('[Fix Balance] Error:', error);
+                    showToast(error.message || 'Bakiye düzeltme işlemi başarısız oldu.', true);
+                    fixBalanceBtn.disabled = false;
+                    fixBalanceBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg> Bakiyeyi Düzelt';
+                }
+            });
+        }
+        
         // Reset Account Button Handler
         if (resetAccountBtn) {
             resetAccountBtn.addEventListener('click', async () => {
@@ -3579,10 +4130,14 @@
         islemTipiSelect.addEventListener('change', (e) => {
             const selectedType = e.target.value;
             const isMultiEntry = isMultiEntryType(selectedType);
+            const isDebtTransfer = selectedType === 'transfer'; // "transfer" option means "Borç Transferi"
             const isEditMode = Boolean(editingIslem);
 
-            singleEntryContainer.classList.toggle('hidden', isMultiEntry);
-            multiEntryContainer.classList.toggle('hidden', !isMultiEntry);
+            singleEntryContainer.classList.toggle('hidden', isMultiEntry || isDebtTransfer);
+            multiEntryContainer.classList.toggle('hidden', !isMultiEntry || isDebtTransfer);
+            if (debtTransferContainer) {
+                debtTransferContainer.classList.toggle('hidden', !isDebtTransfer);
+            }
             
             const selectedOptionText = e.target.options[e.target.selectedIndex].text;
             if (isMultiEntry && !isEditMode) {
@@ -3592,7 +4147,38 @@
                 updateInvoiceUploadUI();
             }
 
-            if (isMultiEntry) {
+            if (isDebtTransfer) {
+                // Handle debt transfer (three-party transaction)
+                multiEntryRowsContainer.innerHTML = '';
+                if (!isEditMode) {
+                    islemModalTitle.textContent = 'Borç Transferi (Üç Taraflı)';
+                    formSubmitBtn.textContent = 'Transferi Kaydet';
+                }
+                
+                // Set default date
+                const tarihDebtTransferInput = document.getElementById('tarihDebtTransfer');
+                if (tarihDebtTransferInput && !isEditMode) {
+                    tarihDebtTransferInput.valueAsDate = new Date();
+                }
+                
+                // Populate all three account selects
+                if (debtorCariSelect && lenderCariSelect && creditorPaidOffCariSelect) {
+                    populateSelect(debtorCariSelect, allCariler);
+                    populateSelect(lenderCariSelect, allCariler);
+                    populateSelect(creditorPaidOffCariSelect, allCariler);
+                }
+                
+                // Prefill if coming from account page
+                if (!isEditMode && modalPrefillCariId && debtorCariSelect) {
+                    setSelectValueIfOption(debtorCariSelect, modalPrefillCariId);
+                }
+                
+                addRowBtn.classList.add('hidden');
+                addRowBtn.disabled = true;
+                
+                setInvoiceUploadAvailability({ enabled: true, hint: false });
+                updateInvoiceUploadUI();
+            } else if (isMultiEntry) {
                 multiEntryRowsContainer.innerHTML = '';
                 addMultiEntryRow(selectedType);
                 if (!isEditMode) {
@@ -3667,12 +4253,88 @@
         
         addRowBtn.addEventListener('click', () => addMultiEntryRow(islemTipiSelect.value));
 
+        /**
+         * Creates an automatic payment (ödeme) transaction for an expense (gider)
+         * when the user marks the expense as paid immediately.
+         * @param {Object} expense - The expense transaction object
+         */
+        async function createAutoPaymentForExpense(expense) {
+            console.log('[auto-payment] Creating automatic payment for expense', expense.id);
+            
+            // Get bank accounts (internal accounts) - prefer the first bank account
+            const bankAccounts = allCariler.filter(c => {
+                const accountType = getAccountType(c);
+                return accountType === 'internal';
+            });
+            
+            if (bankAccounts.length === 0) {
+                console.warn('[auto-payment] No bank accounts found for auto-payment');
+                throw new Error('Ödeme oluşturmak için bir banka hesabı gerekli.');
+            }
+            
+            // Use the first bank account as the source (kaynak)
+            const bankAccount = bankAccounts[0];
+            
+            // Create the payment transaction
+            const payment = {
+                islemTipi: 'odeme',
+                kaynakCari: bankAccount.id,  // Money comes from bank
+                hedefCari: expense.islemCari, // Money goes to expense account
+                tarih: expense.tarih,         // Same date as expense
+                tutar: expense.toplamTutar,   // Total amount including tax
+                aciklama: (expense.aciklama || '') + ' (Otomatik ödeme)',
+                isDeleted: false,
+                kayitTarihi: serverTimestamp(),
+                direction: 0, // Neutral for P&L (payment is a transfer, not income/expense)
+                source: 'auto_from_expense',  // Tag for traceability
+                linkedExpenseId: expense.id,   // Link back to the expense
+                faturaNumarasi: expense.faturaNumarasi || ''
+            };
+            
+            // Create the payment using a transaction to ensure atomicity
+            await runTransaction(db, async (transaction) => {
+                const paymentRef = doc(collection(db, "islemler"));
+                
+                // Update bank account balance (decrease)
+                const kaynakRef = doc(db, "cariler", payment.kaynakCari);
+                transaction.update(kaynakRef, { bakiye: increment(-payment.tutar) });
+                
+                // Update expense account balance (increase - paying off debt)
+                const hedefRef = doc(db, "cariler", payment.hedefCari);
+                transaction.update(hedefRef, { bakiye: increment(payment.tutar) });
+                
+                // Create the payment record
+                transaction.set(paymentRef, payment);
+                
+                console.log('[auto-payment] Payment created successfully', paymentRef.id);
+            });
+        }
+
         addIslemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const islemTipi = islemTipiSelect.value;
-            const isMultiEntry = ['gelir', 'gider'].includes(islemTipi);
+            
+            // Prevent duplicate submissions
+            if (isSubmittingTransaction) {
+                console.warn('[form:submit] Duplicate submission attempt blocked');
+                return;
+            }
+            
+            console.log('[form:submit] Starting submission');
+            isSubmittingTransaction = true;
+            
+            // Disable submit button immediately
+            const originalButtonText = formSubmitBtn.textContent;
+            formSubmitBtn.disabled = true;
+            formSubmitBtn.textContent = 'Kaydediliyor...';
+            
+            // Also prevent form from being submitted again via other means
+            formSubmitBtn.style.pointerEvents = 'none';
+            
+            try {
+                const islemTipi = islemTipiSelect.value;
+                const isMultiEntry = ['gelir', 'gider'].includes(islemTipi);
 
-            if (editingIslem) {
+                if (editingIslem) {
                 try {
                     let updatedIslem;
 
@@ -3814,6 +4476,11 @@
                     }
                     
                     islem.faturaNumarasi = row.querySelector('[name="faturaNumarasi"]').value || '';
+                    
+                    // Check if auto-payment is requested (gider only)
+                    const autoPaymentCb = row.querySelector('.auto-payment-cb');
+                    const autoPaymentRequested = autoPaymentCb && autoPaymentCb.checked;
+                    
                     const bakiyeDegisimi = (islemTipi === 'gelir') ? islem.toplamTutar : -islem.toplamTutar;
                     
                     if (!islem.islemCari || (islem.tutar <= 0 && islem.toplamTutar <= 0)) {
@@ -3823,7 +4490,11 @@
                     
                     const islemRef = doc(collection(db, "islemler"));
                     batch.set(islemRef, islem);
-                    newTransactions.push({ ref: islemRef, payload: { ...islem } });
+                    newTransactions.push({ 
+                        ref: islemRef, 
+                        payload: { ...islem },
+                        autoPaymentRequested // Store flag for later processing
+                    });
 
                     const cariRef = doc(db, "cariler", islem.islemCari);
                     batch.update(cariRef, { bakiye: increment(bakiyeDegisimi) });
@@ -3832,7 +4503,11 @@
                 if (!isValid) return showToast("Lütfen tüm satırlardaki Cari ve Tutar alanlarını doldurun.", true);
 
                 try {
+                    console.log('[form:submit] Committing batch with', newTransactions.length, 'transactions');
                     await batch.commit();
+                    console.log('[form:submit] Batch committed successfully');
+                    
+                    // Handle invoice uploads for single-row transactions
                     if (rows.length === 1 && invoiceUploads.some(item => item.status === 'pending' || item.status === 'error')) {
                         const created = newTransactions[0];
                         const transactionPayload = { ...created.payload, id: created.ref.id };
@@ -3842,7 +4517,32 @@
                             transaction: transactionPayload
                         });
                     }
-                    showToast(`${rows.length} adet işlem başarıyla kaydedildi.`);
+                    
+                    // Create automatic payments for expenses with autoPayment checked
+                    let autoPaymentsCreated = 0;
+                    if (islemTipi === 'gider') {
+                        const expensesWithAutoPayment = newTransactions.filter(tx => tx.autoPaymentRequested);
+                        if (expensesWithAutoPayment.length > 0) {
+                            console.log('[form:submit] Creating', expensesWithAutoPayment.length, 'automatic payments');
+                            for (const expenseTx of expensesWithAutoPayment) {
+                                try {
+                                    const expense = { ...expenseTx.payload, id: expenseTx.ref.id };
+                                    await createAutoPaymentForExpense(expense);
+                                    autoPaymentsCreated++;
+                                } catch (error) {
+                                    console.warn('[form:submit] Failed to create auto-payment for expense', expenseTx.ref.id, error);
+                                    // Continue with other auto-payments even if one fails
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Show appropriate success message
+                    if (autoPaymentsCreated > 0) {
+                        showToast(`${rows.length} adet gider kaydedildi. ${autoPaymentsCreated} ödeme otomatik oluşturuldu. ✓`);
+                    } else {
+                        showToast(`${rows.length} adet işlem başarıyla kaydedildi.`);
+                    }
                     closeTransactionModal();
                 } catch(error) {
                     logHomeError(error);
@@ -3850,6 +4550,165 @@
                 }
 
             } else { // Tekli İşlem (Transfer, Tahsilat, Ödeme)
+                const isDebtTransfer = islemTipi === 'transfer';
+                
+                if (isDebtTransfer && debtorCariSelect && lenderCariSelect && creditorPaidOffCariSelect) {
+                    // Handle three-party debt transfer
+                    // Simple behavior: Always applies balances automatically
+                    const islem = {
+                        islemTipi: 'borç transferi', // Save as 'borç transferi' in database
+                        islemCari: debtorCariSelect.value,  // Debtor (company)
+                        kaynakCari: lenderCariSelect.value,  // Lender (borç veren)
+                        hedefCari: creditorPaidOffCariSelect.value,  // Creditor paid off (borcu kapanan)
+                        tarih: new Date(document.getElementById('tarihDebtTransfer').value),
+                        tutar: parseTurkishNumber(document.getElementById('tutarDebtTransfer').value),
+                        toplamTutar: parseTurkishNumber(document.getElementById('tutarDebtTransfer').value),
+                        aciklama: document.getElementById('aciklamaDebtTransfer').value || 'Borç transferi',
+                        direction: 0,  // Neutral direction for P&L
+                        affectsBalance: true,  // Always affects balance (not a pending transfer)
+                        isDebtTransfer: true,
+                        transferType: 'debt_settlement_via_borrowing'
+                        // NOTE: No migrationFlag or needsReview - this is a real transaction
+                    };
+
+                    // ═══════════════════════════════════════════════════════
+                    // VALIDATION: Prevent incorrect debt transfer creation
+                    // ═══════════════════════════════════════════════════════
+                    
+                    // 1. Amount validation
+                    if (isNaN(islem.tutar) || islem.tutar <= 0) {
+                        return showToast("Lütfen geçerli bir tutar girin (sıfırdan büyük olmalı).", true);
+                    }
+                    
+                    // 2. Account selection validation
+                    if (!islem.islemCari) {
+                        return showToast("Lütfen borçlu (şirket) hesabını seçin.", true);
+                    }
+                    if (!islem.kaynakCari) {
+                        return showToast("Lütfen yeni alacaklı (borç veren) hesabını seçin.", true);
+                    }
+                    if (!islem.hedefCari) {
+                        return showToast("Lütfen eski alacaklı (borcu kapanan) hesabını seçin.", true);
+                    }
+                    
+                    // 3. All three parties must be different
+                    if (islem.islemCari === islem.kaynakCari) {
+                        return showToast("Hata: Borçlu ve yeni alacaklı aynı hesap olamaz.", true);
+                    }
+                    if (islem.islemCari === islem.hedefCari) {
+                        return showToast("Hata: Borçlu ve eski alacaklı aynı hesap olamaz.", true);
+                    }
+                    if (islem.kaynakCari === islem.hedefCari) {
+                        return showToast("Hata: Yeni alacaklı ve eski alacaklı aynı hesap olamaz. Borç transferi için iki farklı alacaklı gereklidir.", true);
+                    }
+                    
+                    // 4. Get account details and validate old creditor has sufficient receivable
+                    const getAccountById = (accountId) => {
+                        return allCariler.find(c => c.id === accountId);
+                    };
+                    
+                    const getAccountNameById = (accountId) => {
+                        const account = getAccountById(accountId);
+                        return account?.unvan || accountId || 'Bilinmeyen';
+                    };
+                    
+                    const debtorAccount = getAccountById(islem.islemCari);
+                    const lenderAccount = getAccountById(islem.kaynakCari);
+                    const creditorPaidOffAccount = getAccountById(islem.hedefCari);
+                    
+                    const debtorName = getAccountNameById(islem.islemCari);
+                    const lenderName = getAccountNameById(islem.kaynakCari);
+                    const creditorPaidOffName = getAccountNameById(islem.hedefCari);
+                    
+                    const formattedAmount = islem.tutar.toLocaleString('tr-TR', {
+                        style: 'currency',
+                        currency: 'TRY',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    
+                    // Show confirmation with balance impact information
+                    const confirmMessage = 
+                        `═══════════════════════════════════════════════\n` +
+                        `  BORÇ TRANSFERİ İŞLEMİ\n` +
+                        `═══════════════════════════════════════════════\n\n` +
+                        `Borç transferi kaydı oluşturulacaktır:\n\n` +
+                        `💰 Akış: ${lenderName} → ${debtorName} → ${creditorPaidOffName}\n` +
+                        `💵 Tutar: ${formattedAmount}\n\n` +
+                        `📊 BAKİYE ETKİLERİ:\n` +
+                        `  • ${lenderName}: ${formattedAmount} azalacak\n` +
+                        `  • ${creditorPaidOffName}: ${formattedAmount} artacak\n` +
+                        `  • ${debtorName}: Etkilenmeyecek (borçlu)\n\n` +
+                        `Bu işlem "İşlem Geçmişi"nde görünecektir.\n\n` +
+                        `Devam etmek istiyor musunuz?`;
+                    
+                    // Ask for confirmation
+                    const confirmed = confirm(confirmMessage);
+                    
+                    if (!confirmed) {
+                        return; // User cancelled
+                    }
+
+                    let newIslemId = null;
+                    try {
+                        console.log('[form:submit] Creating debt transfer with balance updates');
+                        
+                        await runTransaction(db, async (transaction) => {
+                            const islemRef = doc(collection(db, "islemler"));
+                            newIslemId = islemRef.id;
+                            islem.isDeleted = false;
+                            islem.kayitTarihi = serverTimestamp();
+
+                            // ═══════════════════════════════════════════════════════
+                            // DEBT TRANSFER = BALANCE-AFFECTING TRANSACTION
+                            // ═══════════════════════════════════════════════════════
+                            // Flow: Lender (New Creditor) → Debtor → Creditor Paid Off (Old Creditor)
+                            // 
+                            // Balance impacts:
+                            //   - kaynakCari (Lender/New Creditor): -amount (our position decreases)
+                            //   - hedefCari (Creditor Paid Off/Old Creditor): +amount (our position increases)
+                            //   - islemCari (Debtor): NO CHANGE (total liability unchanged)
+                            // ═══════════════════════════════════════════════════════
+                            
+                            // Update balances for both parties
+                            const lenderRef = doc(db, "cariler", islem.kaynakCari);
+                            const creditorPaidOffRef = doc(db, "cariler", islem.hedefCari);
+                            
+                            transaction.update(lenderRef, { bakiye: increment(-islem.tutar) });
+                            transaction.update(creditorPaidOffRef, { bakiye: increment(islem.tutar) });
+                            
+                            // Create the transaction record
+                            transaction.set(islemRef, islem);
+                        });
+                        console.log('[form:submit] Debt transfer created successfully with balance updates');
+                        
+                        // Upload invoices if needed
+                        if (invoiceUploads.some(item => item.status === 'pending' || item.status === 'error')) {
+                            const transactionPayload = { ...islem, id: newIslemId };
+                            await uploadInvoicesForTransaction({
+                                transactionId: newIslemId,
+                                accountId: resolveAccountIdForTransaction(transactionPayload),
+                                transaction: transactionPayload
+                            });
+                        }
+                        
+                        // Success message
+                        showToast(
+                            `✓ Borç transferi başarıyla kaydedildi!\n\n` +
+                            `${lenderName} → ${debtorName} → ${creditorPaidOffName}\n` +
+                            `Tutar: ${formattedAmount}\n\n` +
+                            `Bakiyeler güncellendi ve işlem geçmişine eklendi.`
+                        );
+                        
+                        closeTransactionModal();
+                    } catch (error) {
+                        logHomeError(error);
+                        showToast(error.message || "İşlem sırasında bir hata oluştu.", true);
+                    }
+                    return;
+                }
+                
+                // Standard two-party transactions (tahsilat, ödeme)
                 const islem = {
                     islemTipi: islemTipi,
                     kaynakCari: document.getElementById('kaynakCariSingle').value,
@@ -3892,6 +4751,17 @@
                     showToast(error.message || "İşlem sırasında bir hata oluştu.", true);
                 }
             }
+            } catch (error) {
+                logHomeError(error);
+                showToast(error.message || 'Beklenmeyen bir hata oluştu.', true);
+            } finally {
+                // Reset submission flag and button state
+                console.log('[form:submit] Resetting submission state in finally block');
+                isSubmittingTransaction = false;
+                formSubmitBtn.disabled = false;
+                formSubmitBtn.textContent = originalButtonText;
+                formSubmitBtn.style.pointerEvents = '';
+            }
         });
         
         function showCariDetay(cariId) {
@@ -3909,6 +4779,47 @@
                 homeView.setSelectedAccount(cari);
             }
 
+            // Calculate balance mismatch
+            const storedBalance = Number(cari.bakiye || 0);
+            let calculatedBalance = 0;
+            allIslemler.forEach(islem => {
+                // Only include transactions that affect balance
+                // Pending transfers (affectsBalance=false) should not be counted
+                const affectsBalance = islem.affectsBalance !== false; // Default to true
+                if (affectsBalance) {
+                    const netChange = getCariNetChange(islem, cariId);
+                    calculatedBalance += netChange;
+                }
+            });
+            const balanceDiff = Math.abs(storedBalance - calculatedBalance);
+            const hasMismatch = balanceDiff > 0.01;
+            
+            // Auto-fix balance mismatch silently (one-time reconciliation)
+            if (hasMismatch && !cari.balanceAutoFixed) {
+                console.log(`[Auto-Fix] Bakiye uyumsuzluğu tespit edildi: ${cari.unvan}. Otomatik düzeltiliyor...`);
+                console.log(`[Auto-Fix] Veritabanı: ${storedBalance}, Hesaplanan: ${calculatedBalance}, Fark: ${balanceDiff}`);
+                
+                // Silently update balance in background
+                const cariRef = doc(db, 'cariler', cariId);
+                updateDoc(cariRef, {
+                    bakiye: calculatedBalance,
+                    balanceAutoFixed: true,
+                    lastBalanceRecalculation: serverTimestamp(),
+                    autoFixReason: 'debt_transfer_backfill'
+                }).then(() => {
+                    console.log(`[Auto-Fix] ${cari.unvan} bakiyesi otomatik düzeltildi: ${storedBalance} → ${calculatedBalance}`);
+                    // Update local cache
+                    cari.bakiye = calculatedBalance;
+                    cari.balanceAutoFixed = true;
+                    // Refresh display
+                    if (useHomeView && typeof homeView.setSelectedAccount === 'function') {
+                        homeView.setSelectedAccount(cari);
+                    }
+                }).catch(error => {
+                    console.error('[Auto-Fix] Bakiye düzeltme hatası:', error);
+                });
+            }
+            
             // Update reset button and badge visibility
             if (resetAccountBtn && accountResetBadge) {
                 const userCanReset = canResetAccounts();
@@ -3927,6 +4838,13 @@
                 } else {
                     accountResetBadge.classList.add('hidden');
                 }
+            }
+            
+            // Update fix balance button visibility (for manual override if needed)
+            if (fixBalanceBtn) {
+                // Hide auto-fix button since we're doing it automatically
+                // Only show if user explicitly wants to re-fix
+                fixBalanceBtn.classList.add('hidden');
             }
 
             delete islemDetailView.dataset.islemId;
@@ -3988,6 +4906,13 @@
             }
         };
         window.__APP_NOTEBOOK_ROOT__ = document.getElementById('companyNotebookView');
+
+        // Migration View Navigation
+        if (navMigrationBtn) {
+            navMigrationBtn.addEventListener('click', () => {
+                showMigrationView();
+            });
+        }
 
     </script>
     <script type="module" src="src/app.js"></script>

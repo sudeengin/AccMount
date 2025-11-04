@@ -5,6 +5,14 @@ import {
     normalizeTags as normalizeTagsFromRepo
 } from "../../data/notes.repo.js";
 import { fetchRecentTransactions } from "../../data/transactions.repo.js";
+import { 
+    getTransactionDirection, 
+    getDirectionColorClass, 
+    getDirectionBadgeClass, 
+    ensureTransactionDirection,
+    getTransactionTypeLabel,
+    getTransactionTypeBadgeClass
+} from "../../utils/transaction-direction.js";
 
 let currentRoot = null;
 let currentDeps = {};
@@ -397,11 +405,26 @@ function toActivityItems({ generalNotes = [], accountNotes = [], transactions = 
         transactions.forEach(transaction => {
             const ts = getTransactionDate(transaction) || new Date(0);
             const amount = Number(transaction?.toplamTutar ?? transaction?.tutar ?? 0) || 0;
+            const type = String(transaction?.islemTipi || '').toLowerCase().trim();
+            const isDebtTransfer = type === 'borç transferi' || type === 'borc transferi' || type === 'debt_transfer';
+            
             const subtitleParts = [];
             const aciklama = (transaction?.aciklama || '').trim();
             if (aciklama) subtitleParts.push(aciklama);
             if (transaction?.islemTipi) subtitleParts.push(`Tür: ${transaction.islemTipi}`);
             if (transaction?.faturaNumarasi) subtitleParts.push(`Fatura: ${transaction.faturaNumarasi}`);
+            
+            // For debt transfers, add party information
+            // Flow: Lender → Debtor → Creditor Paid Off
+            if (isDebtTransfer) {
+                const debtor = getAccountName(transaction?.islemCari);
+                const lender = getAccountName(transaction?.kaynakCari);
+                const creditorPaidOff = getAccountName(transaction?.hedefCari);
+                if (debtor && lender && creditorPaidOff) {
+                    subtitleParts.push(`${lender} → ${debtor} → ${creditorPaidOff}`);
+                }
+            }
+            
             const subtitle = subtitleParts.join(' • ');
             const accountId = transaction?.islemCari || transaction?.kaynakCari || transaction?.hedefCari;
             let statusEntry = accountId ? accountStatusCache.get(accountId) : null;
@@ -429,7 +452,8 @@ function toActivityItems({ generalNotes = [], accountNotes = [], transactions = 
                 data: transaction,
                 tags: [],
                 status: 'open',
-                completedAt: null
+                completedAt: null,
+                isDebtTransfer
             });
         });
     } catch (error) {
@@ -578,9 +602,35 @@ function renderActivity() {
             case 'transaction':
             default: {
                 label.textContent = 'Transaction';
+                
+                // Use type-based labels instead of direction-based
+                const txData = item.data || {};
+                const typeLabel = getTransactionTypeLabel(txData);
+                const typeBadgeClass = getTransactionTypeBadgeClass(txData);
+                
                 const titleEl = document.createElement('p');
-                titleEl.className = 'text-sm font-semibold text-gray-900 dark:text-white';
-                titleEl.textContent = item.title || 'Transaction';
+                titleEl.className = 'text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2';
+                
+                const titleText = document.createElement('span');
+                titleText.textContent = item.title || 'Transaction';
+                titleEl.appendChild(titleText);
+                
+                // Add type badge
+                if (typeLabel) {
+                    const badge = document.createElement('span');
+                    badge.className = `inline-flex items-center ${typeBadgeClass}`;
+                    badge.textContent = typeLabel;
+                    titleEl.appendChild(badge);
+                }
+                
+                // Add auto-payment badge
+                if (txData.source === 'auto_from_expense') {
+                    const autoBadge = document.createElement('span');
+                    autoBadge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+                    autoBadge.textContent = '🤖 Otomatik';
+                    autoBadge.title = 'Gider kaydıyla birlikte otomatik oluşturuldu';
+                    titleEl.appendChild(autoBadge);
+                }
 
                 const amountEl = document.createElement('p');
                 amountEl.className = 'text-sm text-gray-700 dark:text-gray-200';

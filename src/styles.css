@@ -1,3 +1,89 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Design System - Unified Dark-Layered Theme */
+@layer base {
+  body {
+    @apply bg-page-bg text-neutral-text;
+  }
+}
+
+@layer components {
+  /* Card Components */
+  .card-base {
+    @apply bg-card-bg border border-card-border rounded-card p-8 shadow-card;
+    @apply transition-shadow duration-200;
+  }
+  
+  .card-hover {
+    @apply hover:shadow-card-hover;
+  }
+  
+  /* Control Components */
+  .control-input {
+    @apply bg-card-bg border border-card-border rounded-control px-4 py-2;
+    @apply text-neutral-text placeholder:text-neutral-text/50;
+    @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500;
+    @apply transition-all duration-200;
+  }
+  
+  .control-button {
+    @apply rounded-control px-4 py-2 font-medium;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  
+  .control-button-primary {
+    @apply control-button bg-indigo-600 text-white;
+    @apply hover:bg-indigo-500 focus:ring-indigo-500;
+  }
+  
+  .control-button-secondary {
+    @apply control-button bg-card-bg border border-card-border text-neutral-text;
+    @apply hover:bg-card-border focus:ring-card-border;
+  }
+  
+  /* Direction Badges */
+  .badge-income {
+    @apply bg-income/20 border border-income/30;
+    @apply px-2 py-0.5 rounded-full text-xs font-semibold;
+    color: #4ADE80;
+  }
+  
+  .badge-expense {
+    @apply bg-expense/20 border border-expense/30;
+    @apply px-2 py-0.5 rounded-full text-xs font-semibold;
+    color: #F87171;
+  }
+  
+  /* Financial Amount Colors - Use directly, not as @apply */
+  .amount-income {
+    color: #4ADE80;
+  }
+  
+  .amount-expense {
+    color: #F87171;
+  }
+  
+  .amount-neutral {
+    color: #94A3B8;
+  }
+  
+  /* Summary Cards */
+  .summary-card {
+    @apply card-base card-hover;
+  }
+  
+  .summary-card-income {
+    @apply summary-card border-income/30;
+  }
+  
+  .summary-card-expense {
+    @apply summary-card border-expense/30;
+  }
+  
+  .summary-card-balance {
+    @apply summary-card border-card-border;
+  }
+}

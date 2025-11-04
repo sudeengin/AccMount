@@ -279,54 +279,35 @@ export function getMigrationStatistics(analysisResults) {
 
 /**
  * Calculate balance correction needed for migration
+ * 
+ * GLOBAL SIGN STANDARD for Debt Transfers:
+ * - New Creditor (kaynakCari): Our payable INCREASES → delta = −amount
+ * - Old Creditor (hedefCari): Our payable DECREASES → delta = +amount
+ * - Debtor (islemCari): Total debt unchanged → delta = 0
+ * 
+ * This function is NO LONGER NEEDED for migration because:
+ * - Old legacy transactions never modified balances
+ * - New debt transfer format uses calculateDebtTransferImpact which follows global standard
+ * - Balance recalculation after migration will automatically apply correct signs
+ * 
+ * Kept for backward compatibility but returns empty map.
+ * 
  * @param {Object} oldTransaction - Original transaction
  * @param {Object} newTransaction - Proposed migrated transaction
  * @param {Function} getAccount - Function to get account by ID
  * @returns {Object} Balance corrections { accountId: delta }
+ * @deprecated Use full balance recalculation instead
  */
 export function calculateBalanceCorrections(oldTransaction, newTransaction, getAccount) {
     const corrections = new Map();
     
-    if (!oldTransaction || !newTransaction) return corrections;
+    // NOTE: This function is deprecated. 
+    // Migration should be followed by a full balance recalculation using
+    // calculateAccountBalance() which will apply the global sign standard correctly.
     
-    const amount = Math.abs(Number(newTransaction.toplamTutar || newTransaction.tutar || 0));
-    
-    // Old transaction effects (two-party)
-    // kaynakCari: -amount, hedefCari: +amount
-    const oldKaynak = oldTransaction.kaynakCari;
-    const oldHedef = oldTransaction.hedefCari;
-    
-    // New transaction effects (three-party debt transfer)
-    // islemCari (debtor): 0, kaynakCari (from creditor): -amount, hedefCari (to creditor): +amount
-    const newDebtor = newTransaction.islemCari;
-    const newFromCreditor = newTransaction.kaynakCari;
-    const newToCreditor = newTransaction.hedefCari;
-    
-    // Undo old effects
-    if (oldKaynak) {
-        corrections.set(oldKaynak, (corrections.get(oldKaynak) || 0) + amount); // Undo -amount
-    }
-    if (oldHedef) {
-        corrections.set(oldHedef, (corrections.get(oldHedef) || 0) - amount); // Undo +amount
-    }
-    
-    // Apply new effects (debtor gets no change)
-    if (newFromCreditor) {
-        corrections.set(newFromCreditor, (corrections.get(newFromCreditor) || 0) - amount); // Apply -amount
-    }
-    if (newToCreditor) {
-        corrections.set(newToCreditor, (corrections.get(newToCreditor) || 0) + amount); // Apply +amount
-    }
-    
-    // Remove zero corrections
-    const finalCorrections = new Map();
-    corrections.forEach((value, key) => {
-        if (value !== 0) {
-            finalCorrections.set(key, value);
-        }
-    });
-    
-    return finalCorrections;
+    // Return empty corrections to indicate no incremental adjustment needed
+    // (full recalc will handle everything)
+    return corrections;
 }
 
 /**

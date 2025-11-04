@@ -5,3 +5,23 @@ dist/
 *.swp
 *.swo
 *~
+
+# Data and sensitive files
+firebase-config.json
+.env
+.env.local
+
+# Debug and fix scripts that may contain sensitive data
+debug-*.html
+fix-*.html
+fix-*.js
+run-*.js
+
+# Data exports and backups
+*.csv
+data-backup/
+exports/
+
+# IDE
+.vscode/
+.idea/
