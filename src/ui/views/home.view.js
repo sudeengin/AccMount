@@ -544,14 +544,119 @@ function sortTransactions(transactions) {
 }
 
 function buildTransactionDescription(transaction) {
-    const parts = [];
-    if (transaction.faturaNumarasi) {
-        parts.push(`Fatura No: ${transaction.faturaNumarasi}`);
+    const txType = String(transaction.islemTipi || '').toLowerCase().trim();
+    const existingDesc = (transaction.aciklama || '').trim();
+    
+    // If description exists and is meaningful (>10 chars), keep it
+    if (existingDesc.length >= 10) {
+        // Add invoice number if it exists
+        if (transaction.faturaNumarasi) {
+            return `${existingDesc}<br><span class="text-xs text-gray-500 dark:text-gray-400">Fatura No: ${transaction.faturaNumarasi}</span>`;
+        }
+        return existingDesc;
     }
-    if (transaction.aciklama) {
-        parts.push(transaction.aciklama);
+    
+    // Auto-generate for tahsilat, ödeme, and transfer types
+    const shouldAutoGenerate = txType === 'tahsilat' || txType === 'ödeme' || txType === 'odeme' || txType === 'transfer';
+    
+    if (!shouldAutoGenerate) {
+        // Return existing description or invoice number if available
+        const parts = [];
+        if (transaction.faturaNumarasi) {
+            parts.push(`Fatura No: ${transaction.faturaNumarasi}`);
+        }
+        if (existingDesc) {
+            parts.push(existingDesc);
+        }
+        return parts.join('<br>') || '-';
     }
-    return parts.join('<br>');
+    
+    // Build contextual description
+    const sourceAccount = getAccountName(transaction.kaynakCari);
+    const targetAccount = getAccountName(transaction.hedefCari);
+    const amount = Math.abs(Number(transaction.toplamTutar || transaction.tutar || 0));
+    const invoiceNo = transaction.faturaNumarasi || transaction.faturaNo;
+    
+    const formattedAmount = formatCurrency(amount);
+    
+    let description = '';
+    
+    // Check if this is a debt transfer
+    const isDebtTransfer = (txType === 'transfer' && transaction.kaynakCari && transaction.hedefCari) ||
+                           txType === 'borç transferi' || 
+                           txType === 'borc transferi' || 
+                           txType === 'debt_transfer';
+    
+    if (txType === 'tahsilat') {
+        // Collection (Incoming payment)
+        if (sourceAccount) {
+            description = `${sourceAccount}'dan ${formattedAmount} tahsil edildi`;
+            if (invoiceNo) {
+                description += ` (Fatura: ${invoiceNo})`;
+            }
+        } else {
+            description = `${formattedAmount} tahsilat`;
+            if (invoiceNo) {
+                description += ` (Fatura: ${invoiceNo})`;
+            }
+        }
+    } else if (txType === 'ödeme' || txType === 'odeme') {
+        // Payment (Outgoing payment)
+        if (sourceAccount && targetAccount) {
+            description = `${sourceAccount}'tan ${targetAccount}'e ${formattedAmount} ödeme yapıldı`;
+        } else if (targetAccount) {
+            description = `${targetAccount}'e ${formattedAmount} ödeme yapıldı`;
+        } else if (sourceAccount) {
+            description = `${sourceAccount}'tan ${formattedAmount} ödeme`;
+        } else {
+            description = `${formattedAmount} ödeme`;
+        }
+        
+        // Add existing note if any
+        if (existingDesc) {
+            description += ` – ${existingDesc}`;
+        }
+    } else if (isDebtTransfer) {
+        // Debt transfer: use arrow notation with badge
+        if (sourceAccount && targetAccount) {
+            description = `${sourceAccount} → ${targetAccount} (${formattedAmount})`;
+            // Add existing note if any
+            if (existingDesc) {
+                description += ` – ${existingDesc}`;
+            }
+        } else {
+            description = `Borç Transferi (${formattedAmount})`;
+        }
+    } else if (txType === 'transfer') {
+        // Regular transfer
+        if (sourceAccount && targetAccount) {
+            description = `${sourceAccount} → ${targetAccount} (${formattedAmount})`;
+        } else {
+            description = `Transfer (${formattedAmount})`;
+        }
+        
+        // Add existing note if any
+        if (existingDesc) {
+            description += ` – ${existingDesc}`;
+        }
+    }
+    
+    // Fallback to arrow notation if description is still empty
+    if (!description && sourceAccount && targetAccount) {
+        description = `${sourceAccount} → ${targetAccount} (${formattedAmount})`;
+    }
+    
+    // Truncate if too long (max 120 chars for display)
+    let displayDesc = description || existingDesc || '-';
+    let fullDesc = displayDesc;
+    
+    if (displayDesc.length > 120) {
+        displayDesc = displayDesc.substring(0, 117) + '...';
+        // Return with title attribute for tooltip
+        return `<span title="${fullDesc.replace(/"/g, '&quot;')}">${displayDesc}</span>`;
+    }
+    
+    return displayDesc;
 }
 
 function renderTransactionList() {
@@ -625,7 +730,8 @@ function renderTransactionList() {
             const typeBadgeClass = getTransactionTypeBadgeClass(tx);
             const typeColorClass = getTransactionTypeColorClass(tx);
             
-            const amountSign = netChange > 0 ? '+' : (netChange < 0 ? '-' : '');
+            // Only show – sign for negative amounts (outflows), not + for positive (inflows)
+            const amountSign = netChange < 0 ? '–' : '';
             // Use standardized amount color classes
             let amountClass;
             if (isPending) {

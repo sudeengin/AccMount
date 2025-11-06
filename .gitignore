@@ -6,14 +6,26 @@ dist/
 *.swo
 *~
 
-# Data entries - keep local data private
+# IDE
+.vscode/
+.idea/
+
+# Data files - keep user data private
+data/
 *.db
 *.sqlite
-*.sqlite3
-data/
-*.json.local
-firebase-config.local.js
+*.csv
+exports/
+backups/
+
+# Firebase local data
+.firebase/
+firebase-debug.log
+
+# Environment and config
 .env
 .env.local
-*.backup
-backups/
+config.local.js
+
+# User-specific files
+*.local.*
