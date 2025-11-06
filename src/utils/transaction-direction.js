@@ -145,11 +145,11 @@ export function getTransactionTypeBadgeClass(transaction) {
         case 'odeme':
             return 'bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2 py-0.5 rounded-full text-xs font-semibold';
         case 'transfer':
-            return 'bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full text-xs font-semibold';
+            return 'bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full text-xs font-semibold';
         case 'borç transferi':
         case 'borc transferi':
         case 'debt_transfer':
-            return 'bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full text-xs font-semibold';
+            return 'bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full text-xs font-semibold';
         case 'administrative_reset':
             return 'bg-slate-500/20 text-slate-400 border border-slate-500/30 px-2 py-0.5 rounded-full text-xs font-semibold italic';
         default:

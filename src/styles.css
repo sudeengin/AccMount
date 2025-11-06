@@ -159,8 +159,9 @@
   
   /* Badge styling */
   .badge-transfer {
-    background: #7C63E5;
-    color: white;
+    background: rgba(139, 92, 246, 0.2);
+    color: #C4B5FD;
+    border: 1px solid rgba(139, 92, 246, 0.3);
     @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
   }
   

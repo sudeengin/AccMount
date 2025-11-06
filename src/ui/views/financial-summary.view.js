@@ -341,17 +341,6 @@ function renderTransactionTable() {
                                    txType === 'borc transferi' || 
                                    txType === 'debt_transfer';
             
-            // Debug logging for debt transfers
-            if (tx.kaynakCari && tx.hedefCari) {
-                console.log('[Financial Report] Transaction:', {
-                    type: tx.islemTipi,
-                    normalized: txType,
-                    hasSource: !!tx.kaynakCari,
-                    hasTarget: !!tx.hedefCari,
-                    isDebtTransfer
-                });
-            }
-            
             // Check if transaction affects balance
             const affectsBalance = tx.affectsBalance !== false; // Default to true if not specified
             const shouldDim = !state.filters.showOnlyAffectsBalance && !affectsBalance;
@@ -364,7 +353,6 @@ function renderTransactionTable() {
             if (isDebtTransfer) {
                 // Use inline styles with Tailwind classes as fallback
                 badgeClass = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap';
-                console.log('[Financial Report] Applied debt transfer badge to:', typeLabel);
             }
             
             // Determine amount color
