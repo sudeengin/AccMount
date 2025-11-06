@@ -25,8 +25,7 @@ export default function createHomeNavigation({
         dashboard: buttons.dashboard || null,
         financialSummary: buttons.financialSummary || null,
         cariler: buttons.cariler || null,
-        notebook: buttons.notebook || null,
-        migration: buttons.migration || null
+        notebook: buttons.notebook || null
     };
 
     const viewRefs = {
@@ -35,11 +34,10 @@ export default function createHomeNavigation({
         main: views.main || null,
         detail: views.detail || null,
         transactionDetail: views.transactionDetail || null,
-        notebook: views.notebook || null,
-        migration: views.migration || null
+        notebook: views.notebook || null
     };
 
-    const { onDashboard, onFinancialSummary, onNotebook, onMigration } = callbacks || {};
+    const { onDashboard, onFinancialSummary, onNotebook } = callbacks || {};
 
     function setActiveNav(key) {
         Object.entries(navButtons).forEach(([navKey, button]) => {
@@ -98,15 +96,6 @@ export default function createHomeNavigation({
         }
     }
 
-    function showMigration() {
-        setActiveNav("migration");
-        hideAllViews();
-        showView(viewRefs.migration);
-        if (typeof onMigration === "function") {
-            onMigration();
-        }
-    }
-
     return {
         setActiveNav,
         showDashboard,
@@ -114,7 +103,6 @@ export default function createHomeNavigation({
         showCarilerView,
         showDetailView,
         showTransactionDetail,
-        showCompanyNotebook,
-        showMigration
+        showCompanyNotebook
     };
 }

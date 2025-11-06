@@ -30,7 +30,6 @@
                 <button id="navFinancialSummaryBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Finansal Özet</button>
                 <button id="navCarilerBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Cariler</button>
                 <button id="navNotebookBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">Muhasebe Not Defteri</button>
-                <button id="navMigrationBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 transition">🔧 Admin: Migration</button>
             </div>
         </nav>
 
@@ -136,10 +135,25 @@
                     <p id="summaryIncome" class="text-xl sm:text-2xl md:text-3xl font-bold amount-income overflow-hidden text-ellipsis whitespace-nowrap" title="₺0,00">₺0,00</p>
                 </div>
 
-                <!-- Total Expense Card -->
+                <!-- Total Expense Card (includes transfers) -->
                 <div class="summary-card-expense">
                     <div class="flex items-center justify-between mb-4">
-                        <p id="summaryExpenseLabel" class="text-sm font-semibold uppercase tracking-wide text-expense">Toplam Gider</p>
+                        <div class="flex items-center gap-2">
+                            <p id="summaryExpenseLabel" class="text-sm font-semibold uppercase tracking-wide text-expense">Toplam Gider</p>
+                            <div class="relative inline-block">
+                                <svg class="w-4 h-4 text-gray-400 hover:text-purple-400 cursor-help transition-colors" 
+                                     fill="currentColor" viewBox="0 0 20 20"
+                                     onmouseenter="this.nextElementSibling.style.display='block'"
+                                     onmouseleave="this.nextElementSibling.style.display='none'">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                <div style="display: none;" class="absolute left-0 top-6 w-64 p-3 bg-gray-900 border border-purple-500/30 rounded-lg shadow-xl text-xs text-gray-200 z-50"
+                                     onmouseenter="this.style.display='block'"
+                                     onmouseleave="this.style.display='none'">
+                                    Borç transferleri gider olarak sayılır, ancak ödeme içermediği için nakit akışını etkilemez.
+                                </div>
+                            </div>
+                        </div>
                         <svg class="w-8 h-8 text-expense flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
                         </svg>
@@ -178,6 +192,22 @@
                             </select>
                         </div>
                     </div>
+                    
+                    <!-- Balance Affecting Filter -->
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="reportAffectsBalanceFilter" checked 
+                                       class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <span class="ml-2 text-sm font-medium text-neutral-text">
+                                    Sadece Bakiyeye Uygulananları Göster
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <p class="text-xs text-neutral-text mt-1 ml-6">
+                        ℹ️ Kapalı olduğunda, bakiyeye uygulanmamış işlemler de görüntülenir (soluk renklerle)
+                    </p>
                     
                     <!-- Action buttons -->
                     <div class="flex gap-2 justify-end">
@@ -236,17 +266,16 @@
                     <table class="w-full">
                         <thead class="bg-card-border/50">
                             <tr>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Tarih</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Yön</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Tip</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Açıklama</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Tutar</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Cari</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Tarih</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">İşlem</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Açıklama</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-neutral-text uppercase tracking-wider">Tutar</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-text uppercase tracking-wider">Cari</th>
                             </tr>
                         </thead>
                         <tbody id="reportTableBody">
                             <tr class="bg-card-bg">
-                                <td colspan="6" class="px-6 py-8 text-center text-neutral-text">
+                                <td colspan="5" class="px-6 py-8 text-center text-neutral-text">
                                     Yükleniyor...
                                 </td>
                             </tr>
@@ -412,16 +441,22 @@
                     </div>
                 </div>
                 
-                <!-- Pending Transfers Toggle -->
-                <div class="mb-4 flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                    <input type="checkbox" id="showPendingTransfersToggle" checked 
-                           class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="showPendingTransfersToggle" class="text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none">
-                        Bakiyeye uygulanmamış transferleri göster (Pending)
-                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                            Migration öncesi kayıtlar gri renkte gösterilir
-                        </span>
-                    </label>
+                <!-- Balance Filter Toggle -->
+                <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="affectsBalanceFilter" checked 
+                                       class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    Sadece Bakiyeye Uygulananları Göster
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-2 ml-6">
+                        ℹ️ Kapalı olduğunda, henüz bakiyeye uygulanmamış işlemler de görüntülenir (koyu gri arka plan ile)
+                    </p>
                 </div>
 
                 <!-- Tab Content Container -->
@@ -505,11 +540,6 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400">Yükleniyor...</p>
                 </div>
             </div>
-        </div>
-
-        <!-- Debt Transfer Migration View -->
-        <div id="migrationView" class="hidden">
-            <!-- Migration content will be rendered here by JavaScript -->
         </div>
 
         <!-- İşlem Detay Görünümü (Başlangıçta Gizli) -->
@@ -838,7 +868,6 @@
         import notebookView from "./src/ui/views/notebook.view.js";
         import activityView from "./src/ui/views/activity.view.js";
         import financialSummaryView from "./src/ui/views/financial-summary.view.js";
-        import migrationView from "./src/ui/views/migration.view.js";
 
         // --- FIREBASE KURULUMU ---
         // Firebase servisleri ayrı dosyada yönetiliyor
@@ -1026,8 +1055,6 @@
         const navFinancialSummaryBtn = document.getElementById('navFinancialSummaryBtn');
         const navCarilerBtn = document.getElementById('navCarilerBtn');
         const navNotebookBtn = document.getElementById('navNotebookBtn');
-        const navMigrationBtn = document.getElementById('navMigrationBtn');
-        const migrationViewEl = document.getElementById('migrationView');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
         const confirmationModal = document.getElementById('confirmationModal');
@@ -1127,7 +1154,7 @@
         }
 
         function legacySetActiveNav(activeBtn) {
-            [navDashboardBtn, navCarilerBtn, navNotebookBtn, navMigrationBtn].forEach(btn => {
+            [navDashboardBtn, navCarilerBtn, navNotebookBtn].forEach(btn => {
                 if (!btn) return;
                 const isActive = btn === activeBtn;
                 btn.classList.toggle('bg-indigo-600', isActive);
@@ -1144,7 +1171,6 @@
             if (detailView) detailView.classList.add('hidden');
             if (islemDetailView) islemDetailView.classList.add('hidden');
             if (companyNotebookView) companyNotebookView.classList.add('hidden');
-            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             populateDashboardOptions();
         }
 
@@ -1154,7 +1180,6 @@
             if (islemDetailView) islemDetailView.classList.add('hidden');
             if (detailView) detailView.classList.add('hidden');
             if (companyNotebookView) companyNotebookView.classList.add('hidden');
-            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             if (mainView) mainView.classList.remove('hidden');
         }
 
@@ -1164,45 +1189,13 @@
             if (mainView) mainView.classList.add('hidden');
             if (detailView) detailView.classList.add('hidden');
             if (islemDetailView) islemDetailView.classList.add('hidden');
-            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             if (companyNotebookView) {
                 companyNotebookView.classList.remove('hidden');
                 mountNotebookViews();
             }
         }
 
-        function showMigrationView() {
-            legacySetActiveNav(navMigrationBtn);
-            if (dashboardView) dashboardView.classList.add('hidden');
-            if (mainView) mainView.classList.add('hidden');
-            if (detailView) detailView.classList.add('hidden');
-            if (islemDetailView) islemDetailView.classList.add('hidden');
-            if (companyNotebookView) companyNotebookView.classList.add('hidden');
-            if (financialSummaryViewEl) financialSummaryViewEl.classList.add('hidden');
-            
-            if (migrationViewEl) {
-                migrationViewEl.classList.remove('hidden');
-                
-                // Mount migration view if not already mounted
-                // NOTE: Migration view gets ALL transactions (including those with migrationFlag)
-                // This allows admins to review and manage migration records
-                if (!migrationView.isMounted()) {
-                    migrationView.mount(migrationViewEl, {
-                        transactions: allIslemler, // ALL transactions, including migration records
-                        accounts: allCariler,
-                        getAccount: (id) => allCariler.find(c => c.id === id),
-                        onMigrate: handleMigration
-                    });
-                } else {
-                    // Update data
-                    migrationView.setData({
-                        transactions: allIslemler, // ALL transactions
-                        accounts: allCariler
-                    });
-                }
-            }
-        }
-
+        // Migration function kept for debugging purposes (not accessible from UI)
         async function handleMigration(selectedItems) {
             // Execute migration for selected items
             const batch = writeBatch(db);
@@ -1725,7 +1718,6 @@
             if (skipViewUpdate) return;
             if (dashboardView) dashboardView.classList.add('hidden');
             if (companyNotebookView) companyNotebookView.classList.add('hidden');
-            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             if (mainView) mainView.classList.add('hidden');
             if (islemDetailView) islemDetailView.classList.add('hidden');
             if (detailView) detailView.classList.remove('hidden');
@@ -1736,7 +1728,6 @@
             if (skipViewUpdate) return;
             if (dashboardView) dashboardView.classList.add('hidden');
             if (companyNotebookView) companyNotebookView.classList.add('hidden');
-            if (migrationViewEl) migrationViewEl.classList.add('hidden');
             if (mainView) mainView.classList.add('hidden');
             if (detailView) detailView.classList.add('hidden');
             if (islemDetailView) islemDetailView.classList.remove('hidden');
@@ -4907,12 +4898,40 @@
         };
         window.__APP_NOTEBOOK_ROOT__ = document.getElementById('companyNotebookView');
 
-        // Migration View Navigation
-        if (navMigrationBtn) {
-            navMigrationBtn.addEventListener('click', () => {
-                showMigrationView();
-            });
+        // Route protection: Redirect migration access attempts
+        function protectMigrationRoute() {
+            const hash = window.location.hash.toLowerCase();
+            const pathname = window.location.pathname.toLowerCase();
+            
+            if (hash.includes('migration') || pathname.includes('migration')) {
+                // Show alert
+                if (typeof showToast === 'function') {
+                    showToast('Migration module has been retired after full system update.', true);
+                } else {
+                    alert('Migration module has been retired after full system update.');
+                }
+                
+                // Redirect to dashboard
+                window.location.hash = '';
+                window.location.pathname = window.location.pathname.replace(/migration/gi, '');
+                
+                // Navigate to dashboard in the app
+                if (typeof window.__APP_HOME_CONFIG__?.deps?.showDashboard === 'function') {
+                    setTimeout(() => {
+                        window.__APP_HOME_CONFIG__.deps.showDashboard();
+                    }, 100);
+                }
+            }
         }
+        
+        // Check on load
+        protectMigrationRoute();
+        
+        // Monitor hash changes
+        window.addEventListener('hashchange', protectMigrationRoute);
+        
+        // Monitor history navigation
+        window.addEventListener('popstate', protectMigrationRoute);
 
     </script>
     <script type="module" src="src/app.js"></script>

@@ -13,9 +13,13 @@ import {
     getDateRangeLabel,
     formatCurrency as formatCurrencyUtil,
     DATE_RANGE_PRESETS,
-    getTransactionDate as getTransactionDateUtil,
     filterTransactionsByDateRange
 } from '../../utils/financial-summary.js';
+import {
+    formatTransactionDate,
+    getTransactionDate as getTransactionDateUtil,
+    sortTransactionsByDateDesc
+} from '../../utils/date-utils.js';
 import { 
     getTransactionDirection, 
     getDirectionLabel,
@@ -42,6 +46,7 @@ const state = {
     filters: {
         accountId: '',
         transactionType: '',
+        showOnlyAffectsBalance: true // Filter to show only balance-affecting transactions by default
     },
     summary: null,
     reportMode: 'income' // 'income' or 'cashflow'
@@ -50,6 +55,7 @@ const state = {
 // DOM Elements
 let summaryIncomeEl = null;
 let summaryExpenseEl = null;
+// summaryTransfersEl removed - transfers now included in expenses
 let summaryBalanceEl = null;
 let summaryIncomeLabelEl = null;
 let summaryExpenseLabelEl = null;
@@ -69,6 +75,7 @@ let topExpenseAccountsEl = null;
 let topIncomeSourcesEl = null;
 let transactionCountEl = null;
 let reportModeToggleEl = null;
+let reportAffectsBalanceFilterEl = null;
 
 function logReportError(error) {
     console.warn('[report:error]', error);
@@ -192,6 +199,11 @@ function getFilteredTransactions() {
         );
     }
     
+    // STEP 5: Apply affectsBalance filter
+    if (state.filters.showOnlyAffectsBalance) {
+        filtered = filtered.filter(tx => tx.affectsBalance !== false); // Default to true if not specified
+    }
+    
     return filtered;
 }
 
@@ -256,8 +268,11 @@ function renderSummaryCards() {
     if (summaryExpenseEl) {
         const expenseText = formatCurrency(state.summary.totalExpense);
         summaryExpenseEl.textContent = expenseText;
+        // Note: totalExpense now includes debt transfers
         summaryExpenseEl.setAttribute('title', expenseText); // Add tooltip for truncated values
     }
+    
+    // summaryTransfersEl removed - transfers now included in totalExpense
     
     if (summaryBalanceEl) {
         const balance = state.summary.netBalance;
@@ -302,25 +317,14 @@ function renderTransactionTable() {
         
         const filtered = getFilteredTransactions();
         
-        // Sort by date descending
-        const sorted = [...filtered].sort((a, b) => {
-            const dateA = getTransactionDate(a);
-            const dateB = getTransactionDate(b);
-            const timeA = dateA ? dateA.getTime() : 0;
-            const timeB = dateB ? dateB.getTime() : 0;
-            if (timeA === timeB) {
-                const recordA = a.kayitTarihi?.seconds || 0;
-                const recordB = b.kayitTarihi?.seconds || 0;
-                return recordB - recordA;
-            }
-            return timeB - timeA;
-        });
+        // Sort by date descending using shared utility
+        const sorted = sortTransactionsByDateDesc(filtered);
         
         if (sorted.length === 0) {
             const emptyRow = document.createElement('tr');
             emptyRow.className = 'bg-card-bg';
             emptyRow.innerHTML = `
-                <td colspan="6" class="px-6 py-8 text-center text-neutral-text">
+                <td colspan="5" class="px-6 py-8 text-center text-neutral-text">
                     Seçilen kriterlere uygun işlem bulunamadı.
                 </td>
             `;
@@ -330,45 +334,113 @@ function renderTransactionTable() {
         
         // Render transaction rows
         sorted.forEach((tx, index) => {
-            // Use type-based labels and colors instead of direction-based
-            const typeLabel = getTransactionTypeLabel(tx);
-            const typeBadgeClass = getTransactionTypeBadgeClass(tx);
-            const typeColorClass = getTransactionTypeColorClass(tx);
+            // Check if this is a debt transfer (comprehensive check matching home.view.js)
+            const txType = String(tx.islemTipi || '').toLowerCase().trim();
+            const isDebtTransfer = (txType === 'transfer' && tx.kaynakCari && tx.hedefCari) ||
+                                   txType === 'borç transferi' || 
+                                   txType === 'borc transferi' || 
+                                   txType === 'debt_transfer';
             
-            const date = getTransactionDate(tx);
-            const dateStr = date ? date.toLocaleDateString('tr-TR') : '-';
+            // Debug logging for debt transfers
+            if (tx.kaynakCari && tx.hedefCari) {
+                console.log('[Financial Report] Transaction:', {
+                    type: tx.islemTipi,
+                    normalized: txType,
+                    hasSource: !!tx.kaynakCari,
+                    hasTarget: !!tx.hedefCari,
+                    isDebtTransfer
+                });
+            }
+            
+            // Check if transaction affects balance
+            const affectsBalance = tx.affectsBalance !== false; // Default to true if not specified
+            const shouldDim = !state.filters.showOnlyAffectsBalance && !affectsBalance;
+            
+            // Get transaction type label and badge
+            const typeLabel = getTransactionTypeLabel(tx);
+            let badgeClass = getTransactionTypeBadgeClass(tx);
+            
+            // Use purple badge styling for debt transfers
+            if (isDebtTransfer) {
+                // Use inline styles with Tailwind classes as fallback
+                badgeClass = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap';
+                console.log('[Financial Report] Applied debt transfer badge to:', typeLabel);
+            }
+            
+            // Determine amount color
+            let amountClass;
+            if (isDebtTransfer) {
+                // Neutral white for debt transfers
+                amountClass = 'text-[#E8E9EB]';
+            } else {
+                // Use standardized colors for other transactions
+                const txWithDirection = ensureTransactionDirection(tx);
+                const direction = txWithDirection.direction || 0;
+                if (direction === +1) {
+                    amountClass = 'amount-positive';
+                } else if (direction === -1) {
+                    amountClass = 'amount-negative';
+                } else {
+                    amountClass = 'text-gray-500';
+                }
+            }
+            
+            // Get formatted date using shared utility
+            const dateStr = formatTransactionDate(tx);
+            
+            // Get amount
             const amount = Math.abs(Number(tx.toplamTutar || tx.tutar || 0));
+            
+            // Get description - special handling for debt transfers
+            let description;
+            if (isDebtTransfer && tx.kaynakCari && tx.hedefCari) {
+                const sourceAccount = getAccountName(tx.kaynakCari);
+                const targetAccount = getAccountName(tx.hedefCari);
+                description = `${sourceAccount} → ${targetAccount}`;
+            } else {
+                description = tx.aciklama || '-';
+            }
+            
+            // Get account name
             const accountName = getAccountName(tx.islemCari || tx.kaynakCari || tx.hedefCari);
             
+            // Create row with alternating dark tones and optional dimming
             const row = document.createElement('tr');
-            row.className = index % 2 === 0 ? 'bg-card-bg' : 'bg-[#181E28]';
+            let rowClass = index % 2 === 0 ? 'bg-[#151A22]' : 'bg-[#1A1F2A]';
+            if (shouldDim) {
+                rowClass += ' opacity-50';
+            }
+            row.className = rowClass;
             row.innerHTML = `
-                <td class="px-6 py-4 text-sm text-neutral-text">${dateStr}</td>
-                <td class="px-6 py-4 text-sm">
-                    <span class="${typeBadgeClass}">${typeLabel}</span>
+                <td class="px-4 py-3 text-sm text-[#E8E9EB] whitespace-nowrap">${dateStr}</td>
+                <td class="px-4 py-3 text-sm whitespace-nowrap">
+                    <span class="${badgeClass}" ${isDebtTransfer ? 'style="background: rgba(139, 92, 246, 0.2); color: #C4B5FD; border: 1px solid rgba(139, 92, 246, 0.3);"' : ''}>${typeLabel}</span>
                 </td>
-                <td class="px-6 py-4 text-sm text-neutral-text">${tx.islemTipi || '-'}</td>
-                <td class="px-6 py-4 text-sm text-neutral-text">${tx.aciklama || '-'}</td>
-                <td class="px-6 py-4 text-sm font-semibold ${typeColorClass}">${formatCurrency(amount)}</td>
-                <td class="px-6 py-4 text-sm text-neutral-text">${accountName}</td>
+                <td class="px-4 py-3 text-sm text-[#E8E9EB]">${description}</td>
+                <td class="px-4 py-3 text-sm font-bold ${amountClass} text-right whitespace-nowrap">${formatCurrency(amount)}</td>
+                <td class="px-4 py-3 text-sm text-[#E8E9EB] whitespace-nowrap">${accountName}</td>
             `;
             reportTableBodyEl.appendChild(row);
         });
         
         // Render summary row
         if (reportSummaryRowEl && state.summary) {
+            const hasTransfers = state.summary.totalTransfers > 0;
             reportSummaryRowEl.innerHTML = `
-                <td colspan="4" class="px-6 py-4 text-sm font-bold text-white text-right">Toplam:</td>
-                <td class="px-6 py-4 text-sm font-bold">
-                    <div class="flex flex-col gap-1">
-                        <div class="amount-income">Gelir: ${formatCurrency(state.summary.totalIncome)}</div>
-                        <div class="amount-expense">Gider: ${formatCurrency(state.summary.totalExpense)}</div>
-                        <div class="${state.summary.netBalance >= 0 ? 'amount-income' : 'amount-expense'}">
+                <td colspan="3" class="px-4 py-3 text-sm font-bold transaction-title text-right">Toplam:</td>
+                <td class="px-4 py-3 text-sm font-bold text-right">
+                    <div class="flex flex-col gap-1 items-end">
+                        <div class="amount-positive">Gelir: ${formatCurrency(state.summary.totalIncome)}</div>
+                        <div class="amount-negative">
+                            Gider: ${formatCurrency(state.summary.totalExpense)}
+                            ${hasTransfers ? `<span class="text-purple-400 text-xs ml-2" title="Borç transferleri dahil (${formatCurrency(state.summary.totalTransfers)})">↔</span>` : ''}
+                        </div>
+                        <div class="${state.summary.netBalance >= 0 ? 'amount-positive' : 'amount-negative'}">
                             Net: ${formatCurrency(state.summary.netBalance)}
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4 text-sm text-neutral-text">${state.summary.totalCount} işlem</td>
+                <td class="px-4 py-3 text-sm transaction-subtitle">${state.summary.totalCount} işlem</td>
             `;
         }
     } catch (error) {
@@ -500,32 +572,41 @@ function handleExportCSV() {
     
     // Prepare data for CSV
     const csvData = filtered.map(tx => {
-        const date = getTransactionDate(tx);
         const amount = Math.abs(Number(tx.toplamTutar || tx.tutar || 0));
         const typeLabel = getTransactionTypeLabel(tx);
         
+        // Special handling for debt transfers (comprehensive check)
+        const txType = String(tx.islemTipi || '').toLowerCase().trim();
+        const isDebtTransfer = (txType === 'transfer' && tx.kaynakCari && tx.hedefCari) ||
+                               txType === 'borç transferi' || 
+                               txType === 'borc transferi' || 
+                               txType === 'debt_transfer';
+        
+        let description = tx.aciklama || '';
+        if (isDebtTransfer && tx.kaynakCari && tx.hedefCari) {
+            const sourceAccount = getAccountName(tx.kaynakCari);
+            const targetAccount = getAccountName(tx.hedefCari);
+            description = `${sourceAccount} → ${targetAccount}`;
+        }
+        
         return {
-            tarih: date ? date.toLocaleDateString('tr-TR') : '',
-            yon: typeLabel,  // Use type label instead of direction label
-            islemTipi: tx.islemTipi || '',
-            aciklama: tx.aciklama || '',
+            tarih: formatTransactionDate(tx),  // Use shared date utility
+            islem: typeLabel,  // Transaction type label (matches table column "İşlem")
+            aciklama: description,
             tutar: amount,
-            cari: getAccountName(tx.islemCari || tx.kaynakCari || tx.hedefCari),
-            faturaNumarasi: tx.faturaNumarasi || ''
+            cari: getAccountName(tx.islemCari || tx.kaynakCari || tx.hedefCari)
         };
     });
     
     const fieldMapping = {
         'tarih': 'Tarih',
-        'yon': 'Yön',
-        'islemTipi': 'İşlem Tipi',
+        'islem': 'İşlem',
         'aciklama': 'Açıklama',
         'tutar': 'Tutar',
-        'cari': 'Cari',
-        'faturaNumarasi': 'Fatura No'
+        'cari': 'Cari'
     };
     
-    const orderedFields = ['tarih', 'yon', 'islemTipi', 'aciklama', 'tutar', 'cari', 'faturaNumarasi'];
+    const orderedFields = ['tarih', 'islem', 'aciklama', 'tutar', 'cari'];
     
     const csvContent = convertToCSV(csvData, orderedFields, fieldMapping);
     const filename = `financial_report_${new Date().toISOString().split('T')[0]}.csv`;
@@ -590,6 +671,12 @@ function handleTypeFilterChange(event) {
     renderTransactionTable();
 }
 
+function handleAffectsBalanceFilterChange(event) {
+    state.filters.showOnlyAffectsBalance = event.target.checked;
+    updateSummary();
+    renderTransactionTable();
+}
+
 function handleReportModeChange(event) {
     const oldMode = state.reportMode;
     state.reportMode = event.target.value;
@@ -619,10 +706,12 @@ function handleResetFilters() {
     state.customEndDate = null;
     state.filters.accountId = '';
     state.filters.transactionType = '';
+    state.filters.showOnlyAffectsBalance = true;
     
     if (dateRangeSelectEl) dateRangeSelectEl.value = DATE_RANGE_PRESETS.ALL_TIME;
     if (accountFilterEl) accountFilterEl.value = '';
     if (typeFilterEl) typeFilterEl.value = '';
+    if (reportAffectsBalanceFilterEl) reportAffectsBalanceFilterEl.checked = true;
     if (customStartDateEl) {
         customStartDateEl.value = '';
         customStartDateEl.classList.add('hidden');
@@ -686,6 +775,7 @@ function mount(container, deps = {}) {
     // Get DOM elements
     summaryIncomeEl = container.querySelector('#summaryIncome');
     summaryExpenseEl = container.querySelector('#summaryExpense');
+    // summaryTransfersEl removed - transfers now included in expenses
     summaryBalanceEl = container.querySelector('#summaryBalance');
     summaryIncomeLabelEl = container.querySelector('#summaryIncomeLabel');
     summaryExpenseLabelEl = container.querySelector('#summaryExpenseLabel');
@@ -705,6 +795,7 @@ function mount(container, deps = {}) {
     topExpenseAccountsEl = container.querySelector('#topExpenseAccounts');
     topIncomeSourcesEl = container.querySelector('#topIncomeSources');
     transactionCountEl = container.querySelector('#transactionCount');
+    reportAffectsBalanceFilterEl = container.querySelector('#reportAffectsBalanceFilter');
     
     // Attach event listeners
     if (reportModeToggleEl) {
@@ -724,6 +815,9 @@ function mount(container, deps = {}) {
     }
     if (typeFilterEl) {
         typeFilterEl.addEventListener('change', handleTypeFilterChange);
+    }
+    if (reportAffectsBalanceFilterEl) {
+        reportAffectsBalanceFilterEl.addEventListener('change', handleAffectsBalanceFilterChange);
     }
     if (exportCsvBtnEl) {
         exportCsvBtnEl.addEventListener('click', handleExportCSV);
@@ -761,6 +855,9 @@ function unmount() {
     }
     if (typeFilterEl) {
         typeFilterEl.removeEventListener('change', handleTypeFilterChange);
+    }
+    if (reportAffectsBalanceFilterEl) {
+        reportAffectsBalanceFilterEl.removeEventListener('change', handleAffectsBalanceFilterChange);
     }
     if (exportCsvBtnEl) {
         exportCsvBtnEl.removeEventListener('click', handleExportCSV);

@@ -83,7 +83,97 @@
     @apply summary-card border-expense/30;
   }
   
+  .summary-card-transfer {
+    @apply summary-card border-purple-500/30;
+  }
+  
   .summary-card-balance {
     @apply summary-card border-card-border;
+  }
+  
+  /* Transaction Card Components - Standardized Design System */
+  
+  /* Base transaction card */
+  .transaction-card {
+    background: #151A22;
+    border: 1px solid #2A3340;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .transaction-card:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    transform: translateY(-2px);
+  }
+  
+  /* Muted transaction card (affectsBalance=false) */
+  .transaction-card-muted {
+    background: #11131A;
+    border: 1px solid #6A6E81;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.85;
+  }
+  
+  .transaction-card-muted:hover {
+    opacity: 1;
+  }
+  
+  /* Amount colors */
+  .amount-positive {
+    color: #27C46B;
+  }
+  
+  .amount-negative {
+    color: #E95252;
+  }
+  
+  .amount-muted {
+    color: #9AA0A6;
+  }
+  
+  /* Typography standardization */
+  .transaction-title {
+    @apply text-base font-semibold text-white;
+  }
+  
+  .transaction-title-muted {
+    @apply text-base font-semibold;
+    color: #9AA0A6;
+  }
+  
+  .transaction-subtitle {
+    @apply text-sm text-gray-400;
+  }
+  
+  .transaction-subtitle-muted {
+    @apply text-sm;
+    color: #9AA0A6;
+  }
+  
+  /* Badge styling */
+  .badge-transfer {
+    background: #7C63E5;
+    color: white;
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-transfer-muted {
+    background: #6A6E81;
+    color: #9AA0A6;
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-warning {
+    background: rgba(251, 191, 36, 0.2);
+    color: #FCD34D;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
   }
 }

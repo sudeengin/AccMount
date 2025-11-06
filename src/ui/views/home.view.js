@@ -31,6 +31,10 @@ import {
     getLogTypeLabel,
     getLogDescription
 } from "../../utils/transaction-log.js";
+import {
+    formatTransactionDate,
+    sortTransactionsByDateDesc
+} from "../../utils/date-utils.js";
 
 let currentRoot = null;
 let currentDeps = {};
@@ -57,7 +61,7 @@ let filterTypeEl = null;
 let filterStartEl = null;
 let filterEndEl = null;
 let filterResetBtnEl = null;
-let showPendingTransfersToggleEl = null;
+let affectsBalanceFilterEl = null;
 let detailBackBtnEl = null;
 let transactionBackBtnEl = null;
 let transactionEditBtnEl = null;
@@ -74,7 +78,7 @@ const defaultTransactionFilters = () => ({
     type: "",
     start: null,
     end: null,
-    showPendingTransfers: true // Show pending transfers by default
+    showOnlyAffectsBalance: true // Filter to show only balance-affecting transactions by default
 });
 
 let accountNotesLoadToken = 0;
@@ -535,18 +539,8 @@ function applyTransactionFilters(transactions) {
 }
 
 function sortTransactions(transactions) {
-    return [...transactions].sort((a, b) => {
-        const dateA = getTransactionDate(a);
-        const dateB = getTransactionDate(b);
-        const timeA = dateA ? dateA.getTime() : 0;
-        const timeB = dateB ? dateB.getTime() : 0;
-        if (timeA === timeB) {
-            const recordA = a.kayitTarihi?.seconds || 0;
-            const recordB = b.kayitTarihi?.seconds || 0;
-            return recordB - recordA;
-        }
-        return timeB - timeA;
-    });
+    // Use shared date utility for consistent sorting
+    return sortTransactionsByDateDesc(transactions);
 }
 
 function buildTransactionDescription(transaction) {
@@ -600,23 +594,18 @@ function renderTransactionList() {
 
         const fragment = document.createDocumentFragment();
         
-        // Filter pending transfers if showPendingTransfers is false
-        const visibleTransactions = state.transactionFilters.showPendingTransfers 
-            ? sorted 
-            : sorted.filter(tx => {
-                const txType = String(tx.islemTipi || '').toLowerCase().trim();
-                const isDebtTransfer = (txType === 'transfer' && tx.kaynakCari && tx.hedefCari) ||
-                                       txType === 'borç transferi' || 
-                                       txType === 'borc transferi' || 
-                                       txType === 'debt_transfer';
-                const affectsBalance = tx.affectsBalance !== false;
-                const isPending = isDebtTransfer && !affectsBalance;
-                return !isPending; // Exclude pending transfers
-            });
+        // Apply affectsBalance filter if enabled
+        const visibleTransactions = state.transactionFilters.showOnlyAffectsBalance
+            ? sorted.filter(tx => {
+                // Only show transactions that affect balance (affectsBalance !== false)
+                const affectsBalance = tx.affectsBalance !== false; // Default to true
+                return affectsBalance;
+            })
+            : sorted; // Show all transactions including non-balance-affecting ones
 
         visibleTransactions.forEach(tx => {
-            const date = getTransactionDate(tx);
-            const tarih = date ? date.toLocaleDateString('tr-TR') : 'Bilinmiyor';
+            // Use shared date utility for consistent formatting
+            const tarih = formatTransactionDate(tx);
             const title = getTransactionTitle(tx, accountId);
             const netChange = getTransactionNetChange(tx, accountId);
             
@@ -637,8 +626,17 @@ function renderTransactionList() {
             const typeColorClass = getTransactionTypeColorClass(tx);
             
             const amountSign = netChange > 0 ? '+' : (netChange < 0 ? '-' : '');
-            const amountClass = isPending ? 'text-gray-400 dark:text-gray-500' : 
-                               (netChange > 0 ? 'text-green-500' : (netChange < 0 ? 'text-red-500' : 'text-gray-500'));
+            // Use standardized amount color classes
+            let amountClass;
+            if (isPending) {
+                amountClass = 'amount-muted';
+            } else if (netChange > 0) {
+                amountClass = 'amount-positive';
+            } else if (netChange < 0) {
+                amountClass = 'amount-negative';
+            } else {
+                amountClass = 'text-gray-500';
+            }
             const effectiveAmount = Math.abs(netChange) > 0 ? Math.abs(netChange) : Math.abs(Number(tx.toplamTutar || tx.tutar || 0));
             const formattedAmount = formatCurrency(effectiveAmount);
             let description = buildTransactionDescription(tx);
@@ -653,49 +651,52 @@ function renderTransactionList() {
             }
 
             const item = document.createElement('div');
-            // Apply muted styling for pending transfers
-            const baseClasses = isPending 
-                ? 'islem-item cursor-pointer bg-gray-900/30 dark:bg-gray-900/30 border border-gray-600/20 dark:border-gray-600/20 p-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex justify-between items-center opacity-75'
-                : 'islem-item cursor-pointer bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex justify-between items-center';
-            item.className = baseClasses;
+            // Apply standardized transaction card styling
+            const cardClass = isPending ? 'transaction-card-muted' : 'transaction-card';
+            item.className = `islem-item ${cardClass} flex justify-between items-center`;
             item.dataset.id = tx.id;
             
-            // Build type badge HTML with proper type-specific styling
+            // Build type badge HTML with standardized styling
             let badgeHTML = '';
             if (isPending) {
-                // Pending transfer badge (muted gray)
+                // Pending transfer badge with standardized classes
                 badgeHTML = `
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-700/40 text-gray-400 border border-gray-600/20 ml-2" title="Bu transfer henüz bakiyeye uygulanmadı">
-                        Transfer (Pending)
+                    <span class="badge-transfer-muted ml-2" title="Bu transfer bakiyeye dahil değil (affectsBalance=false)">
+                        Transfer
                     </span>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 ml-2" title="Bakiyeye dahil değil">
-                        ⚠️ Bakiyeye Uygulanmadı
+                    <span class="badge-warning ml-2" title="Bakiyeye dahil değil">
+                        ⚠️ Bakiyeye Dahil Değil
                     </span>
                 `;
             } else if (typeLabel) {
-                badgeHTML = `<span class="inline-flex items-center ${typeBadgeClass} ml-2">${typeLabel}</span>`;
+                // Check if this is a transfer type for purple badge
+                const txType = String(tx.islemTipi || '').toLowerCase().trim();
+                const isTransferType = txType === 'transfer' || txType === 'borç transferi' || txType === 'borc transferi';
+                const badgeClass = isTransferType ? 'badge-transfer' : typeBadgeClass;
+                badgeHTML = `<span class="${badgeClass} ml-2">${typeLabel}</span>`;
             }
             
             // Add auto-payment badge
             const autoBadgeHTML = (tx.source === 'auto_from_expense') ?
                 `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 ml-2" title="Gider kaydıyla birlikte otomatik oluşturuldu">🤖 Otomatik</span>` : '';
             
-            const titleColorClass = isPending ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white';
-            const descriptionColorClass = isPending ? 'text-gray-500 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400';
+            // Use standardized typography classes
+            const titleClass = isPending ? 'transaction-title-muted' : 'transaction-title';
+            const subtitleClass = isPending ? 'transaction-subtitle-muted' : 'transaction-subtitle';
             
             item.innerHTML = `
                 <div class="flex-grow">
-                    <p class="text-base font-semibold ${titleColorClass} flex items-center flex-wrap">
+                    <p class="${titleClass} flex items-center flex-wrap">
                         <span>${title}</span>
                         ${badgeHTML}
                         ${autoBadgeHTML}
                     </p>
-                    <p class="text-sm ${descriptionColorClass} mt-1">${description}</p>
+                    <p class="${subtitleClass} mt-1">${description}</p>
                 </div>
                 <div class="text-right ml-4 flex-shrink-0 flex items-center gap-2">
                     <div>
                         <p class="font-bold text-lg ${amountClass}">${isPending ? '' : amountSign}${formattedAmount}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${tarih}</p>
+                        <p class="${subtitleClass} mt-0.5">${tarih}</p>
                     </div>
                     <div class="flex flex-col gap-1">
                         <button data-id="${tx.id}" class="edit-islem-btn p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
@@ -798,8 +799,8 @@ function renderLogList(logs = [], accountId = null) {
     const fragment = document.createDocumentFragment();
     
     sortedLogs.forEach(log => {
-        const date = getTransactionDate(log);
-        const tarih = date ? date.toLocaleDateString('tr-TR') : 'Bilinmiyor';
+        // Use shared date utility for consistent formatting
+        const tarih = formatTransactionDate(log);
         const typeLabel = getLogTypeLabel(log);
         const description = getLogDescription(log, (id) => {
             const account = state.accounts.find(a => a.id === id);
@@ -1626,8 +1627,8 @@ function handleFilterReset(event) {
     resetTransactionFilters();
 }
 
-function handlePendingTransfersToggle(event) {
-    state.transactionFilters.showPendingTransfers = event.target.checked;
+function handleAffectsBalanceFilterChange(event) {
+    state.transactionFilters.showOnlyAffectsBalance = event.target.checked;
     renderTransactionList();
 }
 
@@ -1781,8 +1782,8 @@ function attachEventListeners() {
     if (filterResetBtnEl) {
         filterResetBtnEl.addEventListener('click', handleFilterReset);
     }
-    if (showPendingTransfersToggleEl) {
-        showPendingTransfersToggleEl.addEventListener('change', handlePendingTransfersToggle);
+    if (affectsBalanceFilterEl) {
+        affectsBalanceFilterEl.addEventListener('change', handleAffectsBalanceFilterChange);
     }
     if (accountNotesSaveBtnEl) {
         accountNotesSaveBtnEl.addEventListener('click', handleAccountNoteSave);
@@ -1848,6 +1849,9 @@ function detachEventListeners() {
     if (filterResetBtnEl) {
         filterResetBtnEl.removeEventListener('click', handleFilterReset);
     }
+    if (affectsBalanceFilterEl) {
+        affectsBalanceFilterEl.removeEventListener('change', handleAffectsBalanceFilterChange);
+    }
     if (accountNotesSaveBtnEl) {
         accountNotesSaveBtnEl.removeEventListener('click', handleAccountNoteSave);
     }
@@ -1890,7 +1894,7 @@ function mount(container, deps = {}) {
     filterStartEl = container.querySelector('#detailIslemStart');
     filterEndEl = container.querySelector('#detailIslemEnd');
     filterResetBtnEl = container.querySelector('#detailResetFilters');
-    showPendingTransfersToggleEl = container.querySelector('#showPendingTransfersToggle');
+    affectsBalanceFilterEl = container.querySelector('#affectsBalanceFilter');
     detailBackBtnEl = container.querySelector('#backToListBtn');
     transactionBackBtnEl = container.querySelector('#islemDetailBackBtn');
     transactionEditBtnEl = container.querySelector('#islemDetailEditBtn');
@@ -1910,7 +1914,7 @@ function mount(container, deps = {}) {
     if (filterTypeEl) filterTypeEl.value = state.transactionFilters.type || '';
     if (filterStartEl) filterStartEl.value = formatDateForInput(state.transactionFilters.start);
     if (filterEndEl) filterEndEl.value = formatDateForInput(state.transactionFilters.end);
-    if (showPendingTransfersToggleEl) showPendingTransfersToggleEl.checked = state.transactionFilters.showPendingTransfers !== false;
+    if (affectsBalanceFilterEl) affectsBalanceFilterEl.checked = state.transactionFilters.showOnlyAffectsBalance !== false;
 
     attachEventListeners();
     if (currentRoot) currentRoot.classList.remove('hidden');
@@ -2011,7 +2015,7 @@ function resetTransactionFilters(options = {}) {
     if (filterTypeEl) filterTypeEl.value = '';
     if (filterStartEl) filterStartEl.value = '';
     if (filterEndEl) filterEndEl.value = '';
-    if (showPendingTransfersToggleEl) showPendingTransfersToggleEl.checked = true;
+    if (affectsBalanceFilterEl) affectsBalanceFilterEl.checked = true;
     if (!options.silent) {
         renderTransactionList();
     }

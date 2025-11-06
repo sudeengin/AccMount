@@ -1,8 +1,11 @@
 /**
- * Migration View
+ * Migration View (ARCHIVED - READ ONLY)
  * 
- * Admin interface for reviewing and migrating old debt transfer transactions
- * to the new three-party model, and recovering hidden debt transfers.
+ * This module has been archived and is now read-only.
+ * All debt transfers are handled automatically in the new system.
+ * 
+ * This view allows administrators to view historical migration records only.
+ * All migration actions have been disabled.
  */
 
 import { 
@@ -94,7 +97,7 @@ function renderMigrationList() {
     }
     
     if (!state.analysisResults.length) {
-        listEl.innerHTML = '<div class="text-center py-8 text-gray-500">Migrasyon gerektiren işlem bulunamadı.</div>';
+        listEl.innerHTML = '<div class="text-center py-8 text-gray-500">📦 Görüntülenecek geçmiş migration kaydı bulunamadı.</div>';
         return;
     }
     
@@ -139,15 +142,10 @@ function renderMigrationList() {
         
         return `
             <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : 'bg-white dark:bg-gray-800'}">
-                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-start justify-between mb-3">
                     <div class="flex items-center gap-3">
-                        <input 
-                            type="checkbox" 
-                            class="migration-checkbox w-4 h-4" 
-                            data-transaction-id="${transaction.id}"
-                            ${isSelected ? 'checked' : ''}
-                            ${status !== MIGRATION_STATUS.READY && status !== MIGRATION_STATUS.NEEDS_REVIEW ? 'disabled' : ''}
-                        />
+                        <!-- ARCHIVED: Checkbox removed in read-only mode -->
+                        <div class="w-4 h-4"></div>
                         <div>
                             <div class="flex items-center gap-2 mb-1">
                                 ${statusBadge}
@@ -216,25 +214,17 @@ function renderMigrationList() {
     
     listEl.innerHTML = html;
     
-    // Attach checkbox listeners
-    listEl.querySelectorAll('.migration-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', handleCheckboxChange);
-    });
+    // ARCHIVED: Checkbox listeners removed (module is read-only)
 }
 
 /**
- * Handle checkbox change
+ * Handle checkbox change (ARCHIVED - DISABLED)
  */
 function handleCheckboxChange(event) {
-    const transactionId = event.target.dataset.transactionId;
-    
-    if (event.target.checked) {
-        state.selectedForMigration.add(transactionId);
-    } else {
-        state.selectedForMigration.delete(transactionId);
-    }
-    
-    updateActionButtons();
+    // Module archived - checkboxes are disabled
+    event.preventDefault();
+    alert('⚠️ Bu modül arşivlenmiştir.\n\nSeçim işlemleri devre dışı bırakılmıştır.');
+    return;
 }
 
 /**
@@ -263,221 +253,43 @@ function updateActionButtons() {
 }
 
 /**
- * Select all ready transactions
+ * Select all ready transactions (ARCHIVED - READ ONLY)
  */
 function selectAllReady() {
-    state.selectedForMigration.clear();
-    
-    state.analysisResults.forEach(item => {
-        if (item.analysis.status === MIGRATION_STATUS.READY) {
-            state.selectedForMigration.add(item.transaction.id);
-        }
-    });
-    
-    renderMigrationList();
-    updateActionButtons();
+    alert('⚠️ Bu modül arşivlenmiştir.\n\nSeçim işlemleri devre dışı bırakılmıştır.\nBu sayfa yalnızca geçmiş kayıtları görüntülemek içindir.');
+    return;
 }
 
 /**
- * Clear selection
+ * Clear selection (ARCHIVED - READ ONLY)
  */
 function clearSelection() {
-    state.selectedForMigration.clear();
-    renderMigrationList();
-    updateActionButtons();
+    alert('⚠️ Bu modül arşivlenmiştir.\n\nSeçim işlemleri devre dışı bırakılmıştır.\nBu sayfa yalnızca geçmiş kayıtları görüntülemek içindir.');
+    return;
 }
 
 /**
- * Analyze transactions
+ * Analyze transactions (ARCHIVED - READ ONLY)
  */
 async function analyzeTransactions() {
-    if (!currentDeps.getAccount) {
-        state.error = 'getAccount function not provided';
-        return;
-    }
-    
-    state.loading = true;
-    state.error = null;
-    renderMigrationList();
-    
-    try {
-        // Batch analyze
-        state.analysisResults = batchAnalyze(
-            state.transactions,
-            currentDeps.getAccount,
-            state.accounts
-        );
-        
-        // Get statistics
-        state.stats = getMigrationStatistics(state.analysisResults);
-        
-        state.loading = false;
-        renderStats();
-        renderMigrationList();
-        updateActionButtons();
-        
-    } catch (error) {
-        logError(error);
-        state.error = 'Analiz sırasında bir hata oluştu.';
-        state.loading = false;
-        renderMigrationList();
-    }
+    alert('⚠️ Bu modül arşivlenmiştir.\n\nMigration işlemleri devre dışı bırakılmıştır.\nTüm borç transferleri yeni sistemde otomatik olarak işlenmektedir.');
+    return;
 }
 
 /**
- * Show preview of what will change
+ * Show preview of what will change (ARCHIVED - READ ONLY)
  */
 function showPreview() {
-    const selected = state.analysisResults.filter(item => 
-        state.selectedForMigration.has(item.transaction.id)
-    );
-    
-    if (!selected.length) {
-        alert('Lütfen önizlemek için işlemleri seçin.');
-        return;
-    }
-    
-    // Calculate balance changes - SINGLE-SIDED ownership transfer
-    const balanceChanges = new Map();
-    const accountNames = new Map();
-    
-    selected.forEach(item => {
-        const { transaction, analysis } = item;
-        const { proposed } = analysis;
-        
-        if (!proposed) return;
-        
-        const amount = Math.abs(Number(proposed.toplamTutar || proposed.tutar || 0));
-        
-        // Store account names for display
-        const storeAccountName = (accountId) => {
-            if (accountId && !accountNames.has(accountId)) {
-                const acc = state.accounts.find(a => a.id === accountId);
-                accountNames.set(accountId, acc?.unvan || accountId);
-            }
-        };
-        
-        // For debt transfer migration: Only calculate NET ownership change
-        // Old creditor (kaynakCari in proposed) loses the debt
-        // New creditor (hedefCari in proposed) gains the debt
-        // Debtor (islemCari) is unchanged
-        
-        if (proposed.kaynakCari) {
-            // Old creditor's balance DECREASES (they no longer own this debt)
-            balanceChanges.set(proposed.kaynakCari, (balanceChanges.get(proposed.kaynakCari) || 0) - amount);
-            storeAccountName(proposed.kaynakCari);
-        }
-        
-        if (proposed.hedefCari) {
-            // New creditor's balance INCREASES (they now own this debt)
-            balanceChanges.set(proposed.hedefCari, (balanceChanges.get(proposed.hedefCari) || 0) + amount);
-            storeAccountName(proposed.hedefCari);
-        }
-        
-        // Debtor (islemCari) is not included - their total liability remains unchanged
-        if (proposed.islemCari) {
-            storeAccountName(proposed.islemCari);
-        }
-    });
-    
-    // Build preview message
-    let previewMsg = `ÖNIZLEME - ${selected.length} İşlem Migrate Edilecek\n\n`;
-    previewMsg += `BAKIYE DEĞİŞİKLİKLERİ:\n`;
-    previewMsg += `═══════════════════════\n\n`;
-    
-    const sortedChanges = Array.from(balanceChanges.entries())
-        .filter(([_, delta]) => Math.abs(delta) > 0.01)
-        .sort((a, b) => accountNames.get(a[0]).localeCompare(accountNames.get(b[0])));
-    
-    if (sortedChanges.length === 0) {
-        previewMsg += `✅ Hiçbir hesapta net bakiye değişikliği olmayacak\n`;
-    } else {
-        sortedChanges.forEach(([accountId, delta]) => {
-            const name = accountNames.get(accountId);
-            const sign = delta > 0 ? '+' : '';
-            const formatted = delta.toLocaleString('tr-TR', {
-                style: 'currency',
-                currency: 'TRY'
-            });
-            previewMsg += `${name}: ${sign}${formatted}\n`;
-        });
-        
-        // Calculate and show net system-wide change
-        const netChange = sortedChanges.reduce((sum, [_, delta]) => sum + delta, 0);
-        previewMsg += `\n`;
-        previewMsg += `─────────────────────────\n`;
-        previewMsg += `Sistem Geneli Net Değişim: ${netChange.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}\n`;
-    }
-    
-    previewMsg += `\n═══════════════════════\n`;
-    previewMsg += `\n💡 ÖNEMLI BİLGİ:\n`;
-    previewMsg += `Bu değişiklik yalnızca borç sahipliğini yeniden tanımlar.\n`;
-    previewMsg += `Nakit hareketi yaratmaz. Sistem geneli net değişim ₺0 olmalıdır.\n`;
-    previewMsg += `\n⚠️ BU SADECE BİR ÖNİZLEMEDİR\n`;
-    previewMsg += `Gerçek değişiklik yapmak için "Migrate Et" butonunu kullanın.\n`;
-    
-    alert(previewMsg);
+    alert('⚠️ Bu modül arşivlenmiştir.\n\nÖnizleme işlemi devre dışı bırakılmıştır.\nTüm borç transferleri yeni sistemde otomatik olarak işlenmektedir.');
+    return;
 }
 
 /**
- * Execute migration for selected transactions
+ * Execute migration for selected transactions (ARCHIVED - READ ONLY)
  */
 async function executeMigration() {
-    if (!currentDeps.onMigrate || typeof currentDeps.onMigrate !== 'function') {
-        alert('Migration function not available');
-        return;
-    }
-    
-    const selected = state.analysisResults.filter(item => 
-        state.selectedForMigration.has(item.transaction.id)
-    );
-    
-    if (!selected.length) {
-        alert('Lütfen migrate edilecek işlemleri seçin.');
-        return;
-    }
-    
-    // Validate consistency
-    const validation = validateMigrationConsistency(
-        state.transactions,
-        selected,
-        currentDeps.getAccount
-    );
-    
-    if (!validation.valid) {
-        const proceed = confirm(
-            `UYARI: Migrasyon tutarsızlıkları tespit edildi:\n\n${validation.errors.join('\n')}\n\nDevam etmek istediğinizden emin misiniz?`
-        );
-        
-        if (!proceed) return;
-    }
-    
-    // Show final confirmation with summary
-    const confirmMsg = `⚠️ VERİ DEĞİŞİKLİĞİ UYARISI ⚠️\n\n` +
-                      `${selected.length} işlemi migrate etmek üzeresiniz.\n\n` +
-                      `Bu işlem:\n` +
-                      `✓ Eski iki taraflı yapıyı üç taraflı yapıya dönüştürür\n` +
-                      `✓ Bakiye düzeltmeleri yapar\n` +
-                      `✓ Gelir/gider toplamlarını KORUR (değiştirmez)\n\n` +
-                      `⚠️ BU İŞLEM GERİ ALINAMAZ!\n\n` +
-                      `Önce "Önizleme" butonuna basarak değişiklikleri kontrol ettiniz mi?\n\n` +
-                      `Devam etmek istiyor musunuz?`;
-    
-    if (!confirm(confirmMsg)) return;
-    
-    try {
-        await currentDeps.onMigrate(selected);
-        alert(`${selected.length} işlem başarıyla migrate edildi!\n\nSayfa otomatik olarak yenilenecek.`);
-        
-        // Reload page to get fresh data from Firestore
-        setTimeout(() => {
-            window.location.reload();
-        }, 1500);
-        
-    } catch (error) {
-        logError(error);
-        alert(`Migration hatası: ${error.message}`);
-    }
+    alert('⚠️ Bu modül arşivlenmiştir.\n\nMigration işlemleri devre dışı bırakılmıştır.\nTüm borç transferleri yeni sistemde otomatik olarak işlenmektedir.');
+    return;
 }
 
 function renderTabs() {
@@ -496,7 +308,7 @@ function renderTabs() {
                     id="migrationTab" 
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${migrationClass}"
                 >
-                    🔄 Migrasyon (Eski→Yeni)
+                    📦 Migrasyon Arşivi (Salt-Okunur)
                 </button>
                 <button 
                     id="recoveryTab" 
@@ -525,10 +337,29 @@ function mount(container, deps = {}) {
     // Render initial HTML with tabs
     container.innerHTML = `
         <div class="p-6">
+            <!-- Archive Banner -->
+            <div class="mb-6 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-600 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"/>
+                        <path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-blue-800 dark:text-blue-200 mb-2">📦 Arşivlenmiş Modül</h3>
+                        <p class="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                            Bu modül artık arşivlenmiştir. Tüm borç transferleri yeni sistemde otomatik olarak işlenmektedir.
+                        </p>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                            Bu sayfa yalnızca geçmiş migration kayıtlarını görüntülemek için kullanılabilir. Migration işlemleri devre dışı bırakılmıştır.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
             <div class="mb-6">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Borç Transferi Yönetimi</h2>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Eski transferleri migrate edin veya gizli borç transferlerini kurtarın.
+                    Geçmiş migration kayıtlarını görüntüleyin.
                 </p>
             </div>
             
@@ -536,51 +367,43 @@ function mount(container, deps = {}) {
             
             <div id="migrationContent" class="${state.activeTab === 'migration' ? '' : 'hidden'}">
             <div class="mb-6">
-                <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Migrasyon (Eski→Yeni)</h3>
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Migrasyon Kayıtları (Salt-Okunur)</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Eski iki taraflı "transfer" işlemlerini yeni üç taraflı borç transferi modeline dönüştürün.
+                    Geçmiş migration kayıtlarını görüntüleyin. Bu modül artık aktif değildir.
                 </p>
             </div>
             
             <div id="migrationStats"></div>
             
-            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+            <div class="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6">
                 <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                     </svg>
                     <div class="flex-1">
-                        <h3 class="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-1">Önemli Bilgiler</h3>
-                        <ul class="text-xs text-yellow-700 dark:text-yellow-300 list-disc list-inside space-y-1">
-                            <li>Bu işlem geri alınamaz - önceki verilerin yedeğini aldığınızdan emin olun</li>
-                            <li>Gelir/Gider ve nakit akışı toplamları değişmeyecektir</li>
-                            <li>Bakiyeler üç taraflı modele göre yeniden hesaplanacaktır</li>
-                            <li>İnceleme gerektiren kayıtları manuel olarak kontrol edin</li>
+                        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Arşiv Görünümü</h3>
+                        <ul class="text-xs text-gray-700 dark:text-gray-300 list-disc list-inside space-y-1">
+                            <li>Bu modül salt-okunur moddadır</li>
+                            <li>Yalnızca geçmiş migration kayıtlarını görüntüleyebilirsiniz</li>
+                            <li>Tüm migration işlemleri yeni sistemde otomatik olarak yapılmaktadır</li>
+                            <li>Firestore verisi değiştirilmeyecektir</li>
                         </ul>
                     </div>
                 </div>
             </div>
             
-            <div class="flex gap-3 mb-6">
-                <button id="analyzeBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
-                    🔍 Analiz Et
-                </button>
-                <button id="selectAllReadyBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition" disabled>
-                    Hazır Olanları Seç (0)
-                </button>
-                <button id="clearSelectionBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
-                    Seçimi Temizle
-                </button>
-                <button id="previewBtn" class="px-4 py-2 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition" disabled>
-                    👁️ Önizleme
-                </button>
-                <button id="migrateBatchBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition" disabled>
-                    Seçilenleri Migrate Et (0)
-                </button>
+            <!-- ARCHIVED: Migration buttons disabled -->
+            <div class="mb-6 p-4 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg">
+                <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
+                    ℹ️ Migration işlemleri devre dışı bırakılmıştır. Bu sayfa yalnızca görüntüleme içindir.
+                </p>
             </div>
             
             <div id="migrationList" class="space-y-4">
-                <div class="text-center py-8 text-gray-500">Analiz etmek için "Analiz Et" butonuna tıklayın.</div>
+                <div class="text-center py-8 text-gray-500">
+                    📦 Bu modül arşivlenmiştir.<br>
+                    Geçmiş migration kayıtlarını görüntülemek için veri yüklenecektir.
+                </div>
             </div>
             </div>
             
@@ -608,18 +431,8 @@ function mount(container, deps = {}) {
         });
     }
     
-    // Attach event listeners for migration tab
-    const analyzeBtn = container.querySelector('#analyzeBtn');
-    const selectAllReadyBtn = container.querySelector('#selectAllReadyBtn');
-    const clearSelectionBtn = container.querySelector('#clearSelectionBtn');
-    const previewBtn = container.querySelector('#previewBtn');
-    const migrateBatchBtn = container.querySelector('#migrateBatchBtn');
-    
-    if (analyzeBtn) analyzeBtn.addEventListener('click', analyzeTransactions);
-    if (selectAllReadyBtn) selectAllReadyBtn.addEventListener('click', selectAllReady);
-    if (clearSelectionBtn) clearSelectionBtn.addEventListener('click', clearSelection);
-    if (previewBtn) previewBtn.addEventListener('click', showPreview);
-    if (migrateBatchBtn) migrateBatchBtn.addEventListener('click', executeMigration);
+    // ARCHIVED: Event listeners for migration buttons removed (module is read-only)
+    // No interactive buttons in archived mode
     
     // Load data if available
     if (deps.transactions && deps.accounts) {

@@ -5,13 +5,17 @@
  * to calculate income, expenses, and net balance over date ranges.
  * 
  * Supports two calculation modes:
- * - income: Excludes internal account transfers (profit/loss focus)
- * - cashflow: Includes all transactions including internal transfers (cash position focus)
+ * - income: Debt transfers classified as expenses (profit/loss focus)
+ * - cashflow: Debt transfers excluded (cash position focus - no cash movement)
+ * 
+ * IMPORTANT: Debt transfers (borç transferleri) are treated as expenses in income mode
+ * because they represent obligations/liabilities, even though they don't involve cash movement.
  */
 
 import { ensureTransactionDirection } from './transaction-direction.js';
 import { transactionInvolvesInternalAccount } from './account-type.js';
 import { isDebtTransfer } from './debt-transfer.js';
+import { getTransactionDate as getTransactionDateUtil } from './date-utils.js';
 
 /**
  * Date range presets
@@ -66,36 +70,12 @@ export function getDateRangeForPreset(preset) {
 }
 
 /**
- * Parse transaction date from various formats
+ * Get transaction date - delegates to shared date utility
  * @param {Object} transaction - Transaction object
  * @returns {Date|null} Parsed date
  */
 export function getTransactionDate(transaction) {
-    const value = transaction?.tarih || transaction?.kayitTarihi;
-    if (!value) return null;
-    
-    // Handle Firestore Timestamp
-    if (typeof value.toDate === 'function') {
-        return value.toDate();
-    }
-    
-    // Handle timestamp with seconds
-    if (value.seconds) {
-        return new Date(value.seconds * 1000);
-    }
-    
-    // Handle Date object
-    if (value instanceof Date) {
-        return value;
-    }
-    
-    // Handle string
-    if (typeof value === 'string') {
-        const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-    }
-    
-    return null;
+    return getTransactionDateUtil(transaction);
 }
 
 /**
@@ -195,17 +175,19 @@ export function calculateFinancialSummary(transactions, options = {}) {
         if (mode === 'income') {
             // Income mode: Only count actual revenue and expenses (profit/loss)
             // Exclude internal account transfers from revenue/expense calculations
-            // Exclude debt transfers (liability reassignments) from P&L
+            // Debt transfers are NOW CLASSIFIED AS EXPENSES (but don't affect cash flow)
             // gelir = revenue (income)
             // tahsilat = cash collection (NOT counted as new income)
             // gider = expense
             // ödeme/transfer = cash out (counted as expense)
-            // borç transferi = debt transfer (NOT counted as income or expense)
+            // borç transferi = debt transfer (COUNTED AS EXPENSE, but no cash flow)
             
             if (isDebtTransferTx) {
-                // Debt transfers are liability reassignments, not P&L transactions
-                // Track separately but don't add to income or expense
-                summary.totalTransfers += amount;
+                // NEW: Debt transfers are now classified as expenses
+                // They represent obligations/liabilities, even though no cash moves
+                summary.totalExpense += amount;
+                summary.expenseCount++;
+                summary.totalTransfers += amount; // Still track separately for reference
             } else if (type === 'gelir') {
                 // Only count revenue if it doesn't involve internal accounts
                 // (internal transfers between bank accounts shouldn't count as revenue)
@@ -240,32 +222,28 @@ export function calculateFinancialSummary(transactions, options = {}) {
                 summary.totalTransfers += amount;
             }
         } else {
-            // Cashflow mode: Count all cash movements including internal transfers
+            // Cashflow mode: ONLY count actual cash movements (tahsilat + ödeme)
+            // Excludes: gelir, gider (accrual basis), transfers, and debt transfers
             // This mode shows actual cash position changes
-            // Debt transfers still excluded as they don't involve cash movement
-            const direction = tx.direction || 0;
             
             if (isDebtTransferTx) {
                 // Debt transfers don't involve cash movement, just liability reassignment
                 summary.totalTransfers += amount;
-            } else {
-                if (direction === +1) {
-                    summary.totalIncome += amount;
-                    summary.incomeCount++;
-                } else if (direction === -1) {
-                    summary.totalExpense += amount;
-                    summary.expenseCount++;
-                }
-            }
-            
-            // Still track by type
-            if (type === 'gelir') {
-                summary.totalInvoiced += amount;
             } else if (type === 'tahsilat') {
+                // Cash collection (cash in)
+                summary.totalIncome += amount;
+                summary.incomeCount++;
                 summary.totalCollections += amount;
             } else if (type === 'ödeme' || type === 'odeme') {
+                // Cash payment (cash out)
+                summary.totalExpense += amount;
+                summary.expenseCount++;
                 summary.totalPayments += amount;
+            } else if (type === 'gelir') {
+                // Track but don't count (accrual, not cash)
+                summary.totalInvoiced += amount;
             } else if (type === 'transfer' || type === 'borç transferi' || type === 'borc transferi') {
+                // Track but don't count (no cash movement)
                 summary.totalTransfers += amount;
             }
         }

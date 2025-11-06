@@ -6,26 +6,16 @@ dist/
 *.swo
 *~
 
-# IDE settings
-.vscode/
-.idea/
-
-# Data files and local storage
-data/
-*.db
-*.sqlite
-*.sqlite3
-
-# Firebase local data
-.firebase/
-firebase-debug.log
-firestore-debug.log
-
-# Environment files
+# Data entries and sensitive information
 .env
 .env.local
-.env.*.local
-
-# Temporary files
-*.tmp
-*.cache
+*.env
+firebase-config.js
+*-credentials.json
+data-backup/
+exports/
+*.csv
+.firebase/
+.firebaserc
+firebase-debug.log
+firestore-debug.log

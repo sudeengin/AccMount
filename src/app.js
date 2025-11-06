@@ -18,7 +18,6 @@ const navDashboardBtn = document.getElementById("navDashboardBtn");
 const navFinancialSummaryBtn = document.getElementById("navFinancialSummaryBtn");
 const navCarilerBtn = document.getElementById("navCarilerBtn");
 const navNotebookBtn = document.getElementById("navNotebookBtn");
-const navMigrationBtn = document.getElementById("navMigrationBtn");
 
 function isHomeViewEnabled() {
     const config = getHomeConfig();
@@ -86,12 +85,6 @@ function showFinancialSummary() {
     }
 }
 
-function showMigration() {
-    ensureHomeMounted();
-    if (typeof homeDeps?.showMigration === "function") {
-        homeDeps.showMigration();
-    }
-}
 
 if (navDashboardBtn) {
     navDashboardBtn.addEventListener("click", (event) => {
@@ -121,12 +114,6 @@ if (navNotebookBtn) {
     });
 }
 
-if (navMigrationBtn) {
-    navMigrationBtn.addEventListener("click", (event) => {
-        event.preventDefault();
-        showMigration();
-    });
-}
 
 // Initial mount
 showHomeDashboard();
