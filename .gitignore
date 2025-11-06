@@ -6,16 +6,14 @@ dist/
 *.swo
 *~
 
-# Data entries and sensitive information
+# Data entries - keep local data private
+*.db
+*.sqlite
+*.sqlite3
+data/
+*.json.local
+firebase-config.local.js
 .env
 .env.local
-*.env
-firebase-config.js
-*-credentials.json
-data-backup/
-exports/
-*.csv
-.firebase/
-.firebaserc
-firebase-debug.log
-firestore-debug.log
+*.backup
+backups/
