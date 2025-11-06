@@ -6,22 +6,26 @@ dist/
 *.swo
 *~
 
-# Data and sensitive files
-firebase-config.json
-.env
-.env.local
-
-# Debug and fix scripts that may contain sensitive data
-debug-*.html
-fix-*.html
-fix-*.js
-run-*.js
-
-# Data exports and backups
-*.csv
-data-backup/
-exports/
-
-# IDE
+# IDE settings
 .vscode/
 .idea/
+
+# Data files and local storage
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Firebase local data
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.cache

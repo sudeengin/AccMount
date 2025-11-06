@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Borç Transferi Debug</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        .info { background: #264f78; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #0e6027; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .error { background: #5a1d1d; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .warning { background: #5a4d1d; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        button { background: #0e639c; color: white; border: none; padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #1177bb; }
+        pre { background: #2d2d30; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #3e3e42; padding: 8px; text-align: left; }
+        th { background: #2d2d30; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Borç Transferi Debug Tool</h1>
+    
+    <div class="info">
+        <strong>Bu araç borç transferi kayıtlarını kontrol eder ve sorunları tespit eder.</strong>
+    </div>
+
+    <button onclick="checkDatabase()">1. Veritabanını Kontrol Et</button>
+    <button onclick="checkInMemory()">2. Bellekteki Verileri Kontrol Et</button>
+    <button onclick="checkFilters()">3. Filtreleri Test Et</button>
+    <button onclick="fixAll()">4. Hepsini Düzelt</button>
+
+    <div id="output"></div>
+
+    <script type="module">
+        import { getDocs, collection } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { db } from './src/services/firebase.js';
+
+        const output = document.getElementById('output');
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = message;
+            output.appendChild(div);
+        }
+
+        function clear() {
+            output.innerHTML = '';
+        }
+
+        window.checkDatabase = async function() {
+            clear();
+            log('🔍 Veritabanı sorgulanıyor...', 'info');
+            
+            try {
+                const snapshot = await getDocs(collection(db, 'islemler'));
+                
+                const allTransactions = [];
+                const debtTransfers = [];
+                const deletedDebtTransfers = [];
+                const migrationFlaggedDebtTransfers = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const transaction = { id: doc.id, ...data };
+                    allTransactions.push(transaction);
+                    
+                    const type = String(data.islemTipi || '').toLowerCase().trim();
+                    const isDebtTransfer = type === 'borç transferi' || 
+                                          type === 'borc transferi' || 
+                                          type === 'debt_transfer';
+                    
+                    if (isDebtTransfer) {
+                        debtTransfers.push(transaction);
+                        
+                        if (data.isDeleted === true) {
+                            deletedDebtTransfers.push(transaction);
+                        }
+                        
+                        if (data.migrationFlag === true || data.needsReview === true) {
+                            migrationFlaggedDebtTransfers.push(transaction);
+                        }
+                    }
+                });
+                
+                log(`<strong>✅ Sonuçlar:</strong><br>
+                    📊 Toplam İşlem: ${allTransactions.length}<br>
+                    💜 Borç Transferi: ${debtTransfers.length}<br>
+                    🗑️ Silinmiş Borç Transferi: ${deletedDebtTransfers.length}<br>
+                    🔖 Migration Flag'li: ${migrationFlaggedDebtTransfers.length}`, 
+                    debtTransfers.length > 0 ? 'success' : 'warning'
+                );
+                
+                if (debtTransfers.length > 0) {
+                    log('<strong>İlk 5 Borç Transferi:</strong>', 'info');
+                    const table = document.createElement('table');
+                    table.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tip</th>
+                                <th>Tutar</th>
+                                <th>isDeleted</th>
+                                <th>migrationFlag</th>
+                                <th>needsReview</th>
+                                <th>isLog</th>
+                                <th>affectsBalance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${debtTransfers.slice(0, 5).map(tx => `
+                                <tr>
+                                    <td>${tx.id.substring(0, 8)}...</td>
+                                    <td>${tx.islemTipi}</td>
+                                    <td>${tx.toplamTutar || tx.tutar || 0}</td>
+                                    <td>${tx.isDeleted || false}</td>
+                                    <td>${tx.migrationFlag || false}</td>
+                                    <td>${tx.needsReview || false}</td>
+                                    <td>${tx.isLog || false}</td>
+                                    <td>${tx.affectsBalance !== false}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    `;
+                    output.appendChild(table);
+                    
+                    if (migrationFlaggedDebtTransfers.length > 0) {
+                        log(`⚠️ SORUN: ${migrationFlaggedDebtTransfers.length} borç transferi migration flag'li!<br>
+                            Bu kayıtlar görünmüyor olabilir.`, 'warning');
+                    }
+                    
+                    if (deletedDebtTransfers.length > 0) {
+                        log(`⚠️ SORUN: ${deletedDebtTransfers.length} borç transferi silinmiş olarak işaretli!`, 'error');
+                    }
+                } else {
+                    log('❌ VERİTABANINDA HİÇ BORÇ TRANSFERİ KAYDI YOK!', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Hata: ${error.message}`, 'error');
+                console.error(error);
+            }
+        };
+
+        window.checkInMemory = function() {
+            clear();
+            log('🔍 Bellekteki veriler kontrol ediliyor...', 'info');
+            
+            // index.html'deki global değişkenlere erişim
+            if (typeof window.allIslemler !== 'undefined') {
+                const all = window.allIslemler || [];
+                const debtTransfers = all.filter(tx => {
+                    const type = String(tx.islemTipi || '').toLowerCase().trim();
+                    return type === 'borç transferi' || type === 'borc transferi' || type === 'debt_transfer';
+                });
+                
+                log(`<strong>Bellekteki Veriler:</strong><br>
+                    📊 Toplam: ${all.length}<br>
+                    💜 Borç Transferi: ${debtTransfers.length}`, 
+                    debtTransfers.length > 0 ? 'success' : 'error'
+                );
+                
+                if (debtTransfers.length > 0) {
+                    log('<pre>' + JSON.stringify(debtTransfers[0], null, 2) + '</pre>', 'info');
+                }
+            } else {
+                log('❌ window.allIslemler bulunamadı! index.html yüklü değil.', 'error');
+            }
+        };
+
+        window.checkFilters = async function() {
+            clear();
+            log('🔍 Filtreler test ediliyor...', 'info');
+            
+            try {
+                // Test transaction
+                const testTx = {
+                    id: 'test-123',
+                    islemTipi: 'borç transferi',
+                    toplamTutar: 1000,
+                    migrationFlag: true,
+                    needsReview: false,
+                    isDeleted: false,
+                    isLog: false
+                };
+                
+                // Test filters
+                const type = String(testTx.islemTipi || '').toLowerCase().trim();
+                const isDebtTransfer = type === 'borç transferi' || 
+                                      type === 'borc transferi' || 
+                                      type === 'debt_transfer';
+                
+                const isMigrationRecord = (testTx.migrationFlag === true || testTx.needsReview === true) && !isDebtTransfer;
+                const shouldBeVisible = !testTx.isDeleted && !isMigrationRecord;
+                
+                log(`<strong>Test Sonuçları:</strong><br>
+                    Test İşlem: Borç Transferi (migrationFlag: true)<br><br>
+                    ✓ isDebtTransfer: ${isDebtTransfer}<br>
+                    ✓ isMigrationRecord: ${isMigrationRecord}<br>
+                    ✓ shouldBeVisible: ${shouldBeVisible}<br><br>
+                    ${shouldBeVisible ? '✅ GÖRÜNMELİ' : '❌ GÖRÜNMEMELİ'}`,
+                    shouldBeVisible ? 'success' : 'error'
+                );
+                
+            } catch (error) {
+                log(`❌ Hata: ${error.message}`, 'error');
+            }
+        };
+
+        window.fixAll = async function() {
+            clear();
+            
+            if (!confirm('⚠️ TÜM BORÇ TRANSFERLERİ DÜZELTİLECEK!\n\nDevam etmek istediğinize emin misiniz?')) {
+                return;
+            }
+            
+            log('🔧 Düzeltme başlatılıyor...', 'info');
+            
+            try {
+                if (typeof window.adminUtils !== 'undefined') {
+                    log('Admin utilities kullanılıyor...', 'info');
+                    const result = await window.adminUtils.fixDebtTransferVisibility(false);
+                    
+                    log(`<strong>✅ Tamamlandı!</strong><br>
+                        Toplam: ${result.transactions.total}<br>
+                        Düzeltildi: ${result.transactions.fixed}<br>
+                        Zaten doğru: ${result.transactions.alreadyCorrect}`, 
+                        'success'
+                    );
+                    
+                    log('<strong>Şimdi sayfayı yenileyin!</strong>', 'warning');
+                } else {
+                    log('❌ window.adminUtils bulunamadı! Ana uygulamayı açın.', 'error');
+                }
+            } catch (error) {
+                log(`❌ Hata: ${error.message}`, 'error');
+                console.error(error);
+            }
+        };
+        
+        // Otomatik başlat
+        log('Hazır! Yukarıdaki butonları kullanarak kontrol edin.', 'info');
+    </script>
+</body>
+</html>
+

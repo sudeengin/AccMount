@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borç Transferi Düzeltme</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+        }
+        .step h3 {
+            margin-top: 0;
+        }
+        #status {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Borç Transferi Görünürlük Düzeltmesi</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Önemli:</strong> Bu sayfa tüm borç transferi kayıtlarını düzeltir ve İşlem Geçmişi'nde görünmelerini sağlar.
+        </div>
+
+        <div class="step">
+            <h3>Adım 1: Önizleme</h3>
+            <p>Hangi kayıtların etkileneceğini görmek için önce önizleme yapın:</p>
+            <button id="btnPreview">🔍 Önizleme Yap</button>
+        </div>
+
+        <div class="step">
+            <h3>Adım 2: Düzeltme</h3>
+            <p>Önizleme sonuçlarından memnunsanız, düzeltmeyi uygulayın:</p>
+            <button id="btnApply" class="btn-danger" disabled>✅ Düzeltmeyi Uygula</button>
+        </div>
+
+        <div class="step">
+            <h3>Adım 3: Doğrulama</h3>
+            <p>Bakiyelerin doğru olduğunu kontrol edin:</p>
+            <button id="btnVerify" class="btn-success" disabled>🔎 Bakiyeleri Kontrol Et</button>
+        </div>
+
+        <div id="status"></div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <small style="color: #666;">
+                <strong>Manuel Kullanım:</strong> Bu işlemleri tarayıcı konsolundan da yapabilirsiniz:
+                <pre>await window.adminUtils.fixDebtTransferVisibility() // Önizleme
+await window.adminUtils.fixDebtTransferVisibility(false) // Uygulama
+await window.adminUtils.verifyBalances() // Doğrulama</pre>
+            </small>
+        </div>
+    </div>
+
+    <script type="module">
+        import adminUtils from './src/utils/admin-console.js';
+
+        const btnPreview = document.getElementById('btnPreview');
+        const btnApply = document.getElementById('btnApply');
+        const btnVerify = document.getElementById('btnVerify');
+        const statusDiv = document.getElementById('status');
+
+        let previewSummary = null;
+
+        function showStatus(message, type = 'info') {
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'warning';
+            statusDiv.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+
+        function showLoading(message) {
+            statusDiv.innerHTML = `
+                <div class="warning">
+                    <strong>⏳ İşlem devam ediyor...</strong><br>
+                    ${message}
+                </div>
+            `;
+        }
+
+        function formatSummary(summary, isDryRun) {
+            const tx = summary.transactions || {};
+            let html = `
+                <div class="success">
+                    <h3>${isDryRun ? '🔍 Önizleme Sonuçları' : '✅ Düzeltme Tamamlandı'}</h3>
+                    <p><strong>Toplam Borç Transferi:</strong> ${tx.total || 0}</p>
+                    <p><strong>${isDryRun ? 'Düzeltilecek' : 'Düzeltildi'}:</strong> ${tx.fixed || 0}</p>
+                    <p><strong>Zaten Doğru:</strong> ${tx.alreadyCorrect || 0}</p>
+                    <p><strong>Süre:</strong> ${summary.duration}</p>
+            `;
+
+            if (tx.changes && tx.changes.length > 0) {
+                html += `
+                    <hr style="margin: 15px 0;">
+                    <p><strong>Değişiklikler (ilk 5):</strong></p>
+                    <ul>
+                `;
+                tx.changes.slice(0, 5).forEach(change => {
+                    html += `<li>${change.id}: ${change.updates.join(', ')}</li>`;
+                });
+                if (tx.changes.length > 5) {
+                    html += `<li><em>... ve ${tx.changes.length - 5} tane daha</em></li>`;
+                }
+                html += `</ul>`;
+            }
+
+            if (summary.balances && summary.balances.length > 0) {
+                html += `
+                    <hr style="margin: 15px 0;">
+                    <p><strong>⚠️ Bakiye Uyumsuzlukları:</strong> ${summary.balances.length} hesap</p>
+                `;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        btnPreview.addEventListener('click', async () => {
+            try {
+                btnPreview.disabled = true;
+                showLoading('Borç transferi kayıtları analiz ediliyor...');
+
+                previewSummary = await adminUtils.fixDebtTransferVisibility(true);
+                
+                statusDiv.innerHTML = formatSummary(previewSummary, true);
+                
+                if (previewSummary.transactions && previewSummary.transactions.fixed > 0) {
+                    btnApply.disabled = false;
+                }
+                btnVerify.disabled = false;
+            } catch (error) {
+                showStatus(`<strong>Hata:</strong> ${error.message}`, 'error');
+            } finally {
+                btnPreview.disabled = false;
+            }
+        });
+
+        btnApply.addEventListener('click', async () => {
+            const confirmed = confirm(
+                '⚠️ DİKKAT!\n\n' +
+                'Bu işlem veritabanındaki borç transferi kayıtlarını güncelleyecek.\n\n' +
+                'Devam etmek istediğinize emin misiniz?'
+            );
+
+            if (!confirmed) return;
+
+            try {
+                btnApply.disabled = true;
+                btnPreview.disabled = true;
+                showLoading('Düzeltmeler uygulanıyor... (Bu birkaç dakika sürebilir)');
+
+                const summary = await adminUtils.fixDebtTransferVisibility(false);
+                
+                statusDiv.innerHTML = formatSummary(summary, false);
+
+                if (summary.transactions && summary.transactions.fixed > 0) {
+                    statusDiv.innerHTML += `
+                        <div class="success" style="margin-top: 20px;">
+                            <strong>🎉 Başarılı!</strong><br>
+                            Artık tüm borç transferleri İşlem Geçmişi'nde görünecek.<br><br>
+                            <button onclick="location.reload()" class="btn-success">🔄 Sayfayı Yenile</button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                showStatus(`<strong>Hata:</strong> ${error.message}`, 'error');
+            } finally {
+                btnApply.disabled = false;
+                btnPreview.disabled = false;
+            }
+        });
+
+        btnVerify.addEventListener('click', async () => {
+            try {
+                btnVerify.disabled = true;
+                showLoading('Hesap bakiyeleri kontrol ediliyor...');
+
+                const mismatches = await adminUtils.verifyBalances();
+                
+                if (mismatches.length === 0) {
+                    showStatus('<strong>🎉 Mükemmel!</strong><br>Tüm bakiyeler doğru. Hiçbir uyumsuzluk bulunamadı.', 'success');
+                } else {
+                    let html = `
+                        <div class="warning">
+                            <strong>⚠️ Bakiye Uyumsuzlukları:</strong> ${mismatches.length} hesap<br><br>
+                            <ul>
+                    `;
+                    mismatches.forEach(m => {
+                        html += `
+                            <li>
+                                <strong>${m.accountName}</strong><br>
+                                Veritabanı: ₺${m.storedBalance.toLocaleString('tr-TR')}<br>
+                                Hesaplanan: ₺${m.calculatedBalance.toLocaleString('tr-TR')}<br>
+                                Fark: ₺${m.difference.toLocaleString('tr-TR')}
+                            </li>
+                        `;
+                    });
+                    html += `</ul></div>`;
+                    statusDiv.innerHTML = html;
+                }
+            } catch (error) {
+                showStatus(`<strong>Hata:</strong> ${error.message}`, 'error');
+            } finally {
+                btnVerify.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+
