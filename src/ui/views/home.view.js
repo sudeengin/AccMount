@@ -68,6 +68,9 @@ let transactionEditBtnEl = null;
 let transactionDeleteBtnEl = null;
 let dashboardSelectEl = null;
 let dashboardViewDetailsBtnEl = null;
+let archiveAccountBtnEl = null;
+let unarchiveAccountBtnEl = null;
+let accountArchivedBadgeEl = null;
 let accountNotesPanelEl = null;
 let accountNotesListEl = null;
 let accountNotesCountEl = null;
@@ -312,8 +315,10 @@ function accountMatchesSearch(account, query) {
 }
 
 function filterAccounts() {
-    if (!state.searchQuery) return state.accounts;
-    return state.accounts.filter(account => accountMatchesSearch(account, state.searchQuery));
+    // Filter out archived accounts from main list
+    const activeAccounts = state.accounts.filter(account => account.isArchived !== true);
+    if (!state.searchQuery) return activeAccounts;
+    return activeAccounts.filter(account => accountMatchesSearch(account, state.searchQuery));
 }
 
 function renderEmptyMessage(container, message) {
@@ -444,12 +449,16 @@ function updateDetailHeader(account) {
         detailTypeEl.textContent = "";
         detailBalanceEl.textContent = "";
         detailBalanceEl.className = "text-3xl font-bold text-gray-500";
+        if (accountArchivedBadgeEl) accountArchivedBadgeEl.classList.add('hidden');
+        if (archiveAccountBtnEl) archiveAccountBtnEl.classList.add('hidden');
+        if (unarchiveAccountBtnEl) unarchiveAccountBtnEl.classList.add('hidden');
         return;
     }
 
     const accountType = getAccountType(account);
     const accountTypeLabel = getAccountTypeLabel(accountType);
     const isInternal = accountType === "internal";
+    const isArchived = account.isArchived === true;
     
     detailNameEl.textContent = account.unvan || "";
     
@@ -459,6 +468,26 @@ function updateDetailHeader(account) {
         ? `${typeText} • Banka/Kasa` 
         : typeText;
     detailTypeEl.textContent = typeWithBadge;
+
+    // Show/hide archived badge
+    if (accountArchivedBadgeEl) {
+        if (isArchived) {
+            accountArchivedBadgeEl.classList.remove('hidden');
+        } else {
+            accountArchivedBadgeEl.classList.add('hidden');
+        }
+    }
+
+    // Show/hide archive/unarchive buttons
+    if (archiveAccountBtnEl && unarchiveAccountBtnEl) {
+        if (isArchived) {
+            archiveAccountBtnEl.classList.add('hidden');
+            unarchiveAccountBtnEl.classList.remove('hidden');
+        } else {
+            archiveAccountBtnEl.classList.remove('hidden');
+            unarchiveAccountBtnEl.classList.add('hidden');
+        }
+    }
     
     // Calculate balance from transactions for verification
     const storedBalance = Number(account.bakiye || 0);
@@ -1672,6 +1701,34 @@ function handleTransactionDetailDeleteClick(event) {
     }
 }
 
+function handleArchiveAccountClick(event) {
+    if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+    }
+    try {
+        const account = findAccount(state.selectedAccountId);
+        if (account && typeof currentDeps.onAccountArchive === 'function') {
+            currentDeps.onAccountArchive({ id: account.id, name: account.unvan });
+        }
+    } catch (error) {
+        logHomeError(error);
+    }
+}
+
+function handleUnarchiveAccountClick(event) {
+    if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+    }
+    try {
+        const account = findAccount(state.selectedAccountId);
+        if (account && typeof currentDeps.onAccountUnarchive === 'function') {
+            currentDeps.onAccountUnarchive({ id: account.id, name: account.unvan });
+        }
+    } catch (error) {
+        logHomeError(error);
+    }
+}
+
 function handleDashboardSelectChange(event) {
     try {
         if (typeof currentDeps.onDashboardBankChange === 'function') {
@@ -1901,6 +1958,12 @@ function attachEventListeners() {
         accountNotesListEl.addEventListener('click', handleAccountNotesListClick);
         accountNotesListEl.addEventListener('input', handleAccountNotesListInput);
     }
+    if (archiveAccountBtnEl) {
+        archiveAccountBtnEl.addEventListener('click', handleArchiveAccountClick);
+    }
+    if (unarchiveAccountBtnEl) {
+        unarchiveAccountBtnEl.addEventListener('click', handleUnarchiveAccountClick);
+    }
 }
 
 function detachEventListeners() {
@@ -1968,6 +2031,12 @@ function detachEventListeners() {
         accountNotesListEl.removeEventListener('click', handleAccountNotesListClick);
         accountNotesListEl.removeEventListener('input', handleAccountNotesListInput);
     }
+    if (archiveAccountBtnEl) {
+        archiveAccountBtnEl.removeEventListener('click', handleArchiveAccountClick);
+    }
+    if (unarchiveAccountBtnEl) {
+        unarchiveAccountBtnEl.removeEventListener('click', handleUnarchiveAccountClick);
+    }
 }
 
 function mount(container, deps = {}) {
@@ -1986,6 +2055,9 @@ function mount(container, deps = {}) {
     detailNameEl = container.querySelector('#detailCariUnvan');
     detailTypeEl = container.querySelector('#detailCariTipi');
     detailBalanceEl = container.querySelector('#detailCariBakiye');
+    accountArchivedBadgeEl = container.querySelector('#accountArchivedBadge');
+    archiveAccountBtnEl = container.querySelector('#archiveAccountBtn');
+    unarchiveAccountBtnEl = container.querySelector('#unarchiveAccountBtn');
     transactionListEl = container.querySelector('#islemList');
     transactionCountEl = container.querySelector('#detailIslemCount');
     logListEl = container.querySelector('#logList');
@@ -2076,6 +2148,9 @@ function unmount() {
     accountNotesTextareaEl = null;
     accountNotesSaveBtnEl = null;
     accountNotesStatusEl = null;
+    accountArchivedBadgeEl = null;
+    archiveAccountBtnEl = null;
+    unarchiveAccountBtnEl = null;
     state.accountNotes.items = [];
     state.accountNotes.loading = false;
     state.accountNotes.saving = false;

@@ -25,7 +25,8 @@ export default function createHomeNavigation({
         dashboard: buttons.dashboard || null,
         financialSummary: buttons.financialSummary || null,
         cariler: buttons.cariler || null,
-        notebook: buttons.notebook || null
+        notebook: buttons.notebook || null,
+        archivedAccounts: buttons.archivedAccounts || null
     };
 
     const viewRefs = {
@@ -34,10 +35,11 @@ export default function createHomeNavigation({
         main: views.main || null,
         detail: views.detail || null,
         transactionDetail: views.transactionDetail || null,
-        notebook: views.notebook || null
+        notebook: views.notebook || null,
+        archivedAccounts: views.archivedAccounts || null
     };
 
-    const { onDashboard, onFinancialSummary, onNotebook } = callbacks || {};
+    const { onDashboard, onFinancialSummary, onNotebook, onArchivedAccounts } = callbacks || {};
 
     function setActiveNav(key) {
         Object.entries(navButtons).forEach(([navKey, button]) => {
@@ -96,6 +98,15 @@ export default function createHomeNavigation({
         }
     }
 
+    function showArchivedAccountsView() {
+        setActiveNav("archivedAccounts");
+        hideAllViews();
+        showView(viewRefs.archivedAccounts);
+        if (typeof onArchivedAccounts === "function") {
+            onArchivedAccounts();
+        }
+    }
+
     return {
         setActiveNav,
         showDashboard,
@@ -103,6 +114,7 @@ export default function createHomeNavigation({
         showCarilerView,
         showDetailView,
         showTransactionDetail,
-        showCompanyNotebook
+        showCompanyNotebook,
+        showArchivedAccountsView
     };
 }
