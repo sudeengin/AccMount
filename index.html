@@ -126,7 +126,7 @@
             </div>
 
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 <!-- Total Income Card -->
                 <div class="summary-card-income">
                     <div class="flex items-center justify-between mb-4">
@@ -173,6 +173,30 @@
                         </svg>
                     </div>
                     <p id="summaryBalance" class="text-xl sm:text-2xl md:text-3xl font-bold amount-neutral overflow-hidden text-ellipsis whitespace-nowrap" title="₺0,00">₺0,00</p>
+                </div>
+
+                <!-- Active Payable Debt Card (only visible in cashflow mode) -->
+                <div id="summaryPayableDebt" class="summary-card-expense hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <p id="summaryPayableDebtLabel" class="text-sm font-semibold uppercase tracking-wide text-expense">Aktif Ödenecek Borç</p>
+                        <svg class="w-8 h-8 text-expense flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <p id="summaryPayableDebtValue" class="text-xl sm:text-2xl md:text-3xl font-bold amount-expense overflow-hidden text-ellipsis whitespace-nowrap" title="₺0,00">₺0,00</p>
+                </div>
+            </div>
+
+            <!-- Payable Debt Details Section (only visible in cashflow mode) -->
+            <div id="payableDebtDetails" class="card-base hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-white">Aktif Ödenecek Borç Detayları</h3>
+                    <svg class="w-6 h-6 text-expense" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <div id="payableDebtDetailsContent" class="space-y-4">
+                    <p class="text-sm text-neutral-text">Yükleniyor...</p>
                 </div>
             </div>
 
@@ -1186,12 +1210,16 @@
                         onFinancialSummary: () => mountFinancialSummary(),
                         onNotebook: () => mountNotebookViews(),
                         onArchivedAccounts: () => {
-                            if (typeof archivedAccountsView.mount === 'function' && !archivedAccountsView.isMounted()) {
+                            const archivedAccountsViewEl = document.getElementById('archivedAccountsView');
+                            if (typeof archivedAccountsView.mount === 'function') {
+                                if (archivedAccountsView.isMounted()) {
+                                    archivedAccountsView.unmount();
+                                }
                                 archivedAccountsView.mount(archivedAccountsViewEl, {
                                     onAccountSelect: (accountId) => {
-                                        const account = allArchivedCariler.find(c => c.id === accountId);
-                                        if (account) {
-                                            showCariDetay(account);
+                                        // showCariDetay expects an account ID string
+                                        if (accountId) {
+                                            showCariDetay(accountId);
                                         }
                                     },
                                     onBack: () => {
@@ -1929,6 +1957,30 @@
             const nav = ensureNavigation();
             if (nav) {
                 nav.showArchivedAccountsView();
+                // Ensure the archived accounts view is mounted and has current data
+                const archivedAccountsViewEl = document.getElementById('archivedAccountsView');
+                if (archivedAccountsViewEl && typeof archivedAccountsView !== 'undefined') {
+                    if (archivedAccountsView.isMounted && archivedAccountsView.isMounted()) {
+                        // View is already mounted, just update the accounts
+                        if (typeof archivedAccountsView.setArchivedAccounts === 'function') {
+                            archivedAccountsView.setArchivedAccounts(allArchivedCariler);
+                        }
+                    } else if (typeof archivedAccountsView.mount === 'function') {
+                        // Mount the view if not already mounted
+                        archivedAccountsView.mount(archivedAccountsViewEl, {
+                            onAccountSelect: (accountId) => {
+                                if (accountId) {
+                                    showCariDetay(accountId);
+                                }
+                            },
+                            onBack: () => {
+                                if (nav) {
+                                    nav.showCarilerView();
+                                }
+                            }
+                        });
+                    }
+                }
             }
         }
 
@@ -1986,13 +2038,20 @@
             delete islemDetailView.dataset.islemId;
             delete islemDetailView.dataset.cariId;
             currentIslemDetail = null;
+            const wasArchived = detailView.dataset.isArchived === 'true';
             delete detailView.dataset.cariId;
+            delete detailView.dataset.isArchived;
             invoiceGalleryLoadToken += 1;
             currentInvoiceFiles = [];
             renderInvoiceGallery();
             invoiceExistingCount = 0;
             updateInvoiceUploadUI();
-            showCarilerView();
+            // Return to archived accounts view if viewing an archived account, otherwise main view
+            if (wasArchived) {
+                showArchivedAccountsView();
+            } else {
+                showCarilerView();
+            }
         }
 
         function handleTransactionBack() {
@@ -4907,12 +4966,20 @@
         });
         
         function showCariDetay(cariId) {
-            const cari = allCariler.find(c => c.id === cariId);
+            // Check both active and archived accounts
+            let cari = allCariler.find(c => c.id === cariId);
+            let isArchived = false;
+            if (!cari) {
+                cari = allArchivedCariler.find(c => c.id === cariId);
+                isArchived = true;
+            }
             if (!cari) return;
 
             const previousCariId = detailView.dataset.cariId;
             const isSameCari = previousCariId === cariId;
             detailView.dataset.cariId = cariId;
+            // Store whether this account is archived for proper back navigation
+            detailView.dataset.isArchived = isArchived ? 'true' : 'false';
             if (useHomeView && !isSameCari && typeof homeView.resetTransactionFilters === 'function') {
                 homeView.resetTransactionFilters({ silent: true });
             }

@@ -174,8 +174,13 @@ function handleAccountListClick(event) {
     const item = event.target.closest(".archived-cari-item");
     if (item) {
         const accountId = item.dataset.id;
-        if (typeof currentDeps.onAccountSelect === "function") {
-            currentDeps.onAccountSelect(accountId);
+        if (accountId && typeof currentDeps.onAccountSelect === "function") {
+            try {
+                currentDeps.onAccountSelect(accountId);
+            } catch (error) {
+                logError(error);
+                console.error('[archived-accounts] Error selecting account:', error);
+            }
         }
     }
 }
@@ -264,4 +269,7 @@ export default {
     getDeps: () => ({ ...currentDeps }),
     setArchivedAccounts
 };
+
+
+
 

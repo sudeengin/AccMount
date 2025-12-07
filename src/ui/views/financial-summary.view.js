@@ -31,6 +31,7 @@ import {
     getTransactionTypeColorClass
 } from '../../utils/transaction-direction.js';
 import { exportFinancialReportToXLSX } from '../../utils/xlsx-export.js';
+import { calculateAccountBalance } from '../../utils/account-reset.js';
 
 let currentRoot = null;
 let currentDeps = {};
@@ -49,7 +50,8 @@ const state = {
         showOnlyAffectsBalance: true // Filter to show only balance-affecting transactions by default
     },
     summary: null,
-    reportMode: 'income' // 'income' or 'cashflow'
+    reportMode: 'income', // 'income' or 'cashflow'
+    payableDebtDetails: [] // Array of accounts with negative balances
 };
 
 // DOM Elements
@@ -76,6 +78,11 @@ let topIncomeSourcesEl = null;
 let transactionCountEl = null;
 let reportModeToggleEl = null;
 let reportAffectsBalanceFilterEl = null;
+let summaryPayableDebtEl = null;
+let summaryPayableDebtLabelEl = null;
+let summaryPayableDebtValueEl = null;
+let payableDebtDetailsEl = null;
+let payableDebtDetailsContentEl = null;
 
 function logReportError(error) {
     console.warn('[report:error]', error);
@@ -166,6 +173,119 @@ function getTransactionDate(transaction) {
  */
 function formatCurrency(value) {
     return formatCurrencyUtil(value);
+}
+
+/**
+ * Calculate payable debts from all accounts
+ * @param {Array} accounts - All accounts
+ * @param {Array} transactions - All transactions
+ * @returns {Object} { totalDebt: number, details: Array }
+ */
+function calculatePayableDebts(accounts, transactions) {
+    if (!Array.isArray(accounts) || !Array.isArray(transactions)) {
+        return { totalDebt: 0, details: [] };
+    }
+
+    const payableAccounts = [];
+
+    accounts.forEach(account => {
+        if (!account || !account.id) return;
+
+        const balance = calculateAccountBalance(account.id, transactions);
+        
+        // Only include accounts with negative balance (we owe them)
+        if (balance < 0) {
+            payableAccounts.push({
+                accountId: account.id,
+                accountName: account.unvan || 'Bilinmeyen',
+                debtAmount: Math.abs(balance)
+            });
+        }
+    });
+
+    // Sort by debt amount (descending)
+    payableAccounts.sort((a, b) => b.debtAmount - a.debtAmount);
+
+    // Calculate total debt
+    const totalDebt = payableAccounts.reduce((sum, acc) => sum + acc.debtAmount, 0);
+
+    return {
+        totalDebt,
+        details: payableAccounts
+    };
+}
+
+/**
+ * Render payable debt card (only visible in cashflow mode)
+ */
+function renderPayableDebtCard() {
+    const isCashflowMode = state.reportMode === 'cashflow';
+    
+    // Show/hide the card based on mode
+    if (summaryPayableDebtEl) {
+        if (isCashflowMode) {
+            summaryPayableDebtEl.classList.remove('hidden');
+        } else {
+            summaryPayableDebtEl.classList.add('hidden');
+        }
+    }
+
+    if (!isCashflowMode || !summaryPayableDebtValueEl) return;
+
+    const payableDebtData = calculatePayableDebts(state.accounts, state.transactions);
+    const debtText = formatCurrency(payableDebtData.totalDebt);
+    
+    summaryPayableDebtValueEl.textContent = debtText;
+    summaryPayableDebtValueEl.setAttribute('title', debtText);
+}
+
+/**
+ * Render payable debt details section (only visible in cashflow mode)
+ */
+function renderPayableDebtDetails() {
+    const isCashflowMode = state.reportMode === 'cashflow';
+    
+    // Show/hide the details section based on mode
+    if (payableDebtDetailsEl) {
+        if (isCashflowMode) {
+            payableDebtDetailsEl.classList.remove('hidden');
+        } else {
+            payableDebtDetailsEl.classList.add('hidden');
+        }
+    }
+
+    if (!isCashflowMode || !payableDebtDetailsContentEl) return;
+
+    const payableDebtData = calculatePayableDebts(state.accounts, state.transactions);
+    state.payableDebtDetails = payableDebtData.details;
+
+    if (payableDebtData.details.length === 0) {
+        payableDebtDetailsContentEl.innerHTML = '<p class="text-sm text-neutral-text">Ödeme bekleyen borç bulunmamaktadır.</p>';
+        return;
+    }
+
+    // Render the list of accounts with debts
+    payableDebtDetailsContentEl.innerHTML = '';
+    
+    const maxDebt = payableDebtData.details[0]?.debtAmount || 1;
+
+    payableDebtData.details.forEach((item, index) => {
+        const percentage = (item.debtAmount / maxDebt) * 100;
+        
+        const row = document.createElement('div');
+        row.className = 'space-y-1';
+        row.innerHTML = `
+            <div class="flex justify-between text-sm">
+                <span class="text-neutral-text">${index + 1}. ${item.accountName}</span>
+                <span class="font-semibold amount-expense">${formatCurrency(item.debtAmount)}</span>
+            </div>
+            <div class="w-full bg-card-border rounded-full h-2 overflow-hidden">
+                <div class="bg-expense h-full rounded-full transition-all duration-700 ease-out" 
+                     style="width: ${percentage}%"></div>
+            </div>
+        `;
+        payableDebtDetailsContentEl.appendChild(row);
+    });
 }
 
 /**
@@ -350,6 +470,7 @@ function updateSummary() {
     
     renderSummaryCards();
     renderInsights();
+    renderPayableDebtDetails();
 }
 
 /**
@@ -430,6 +551,9 @@ function renderSummaryCards() {
     if (transactionCountEl) {
         transactionCountEl.textContent = `${state.summary.totalCount} işlem`;
     }
+    
+    // Render payable debt card (only visible in cashflow mode)
+    renderPayableDebtCard();
 }
 
 /**
@@ -908,6 +1032,11 @@ function mount(container, deps = {}) {
     topIncomeSourcesEl = container.querySelector('#topIncomeSources');
     transactionCountEl = container.querySelector('#transactionCount');
     reportAffectsBalanceFilterEl = container.querySelector('#reportAffectsBalanceFilter');
+    summaryPayableDebtEl = container.querySelector('#summaryPayableDebt');
+    summaryPayableDebtLabelEl = container.querySelector('#summaryPayableDebtLabel');
+    summaryPayableDebtValueEl = container.querySelector('#summaryPayableDebtValue');
+    payableDebtDetailsEl = container.querySelector('#payableDebtDetails');
+    payableDebtDetailsContentEl = container.querySelector('#payableDebtDetailsContent');
     
     // Attach event listeners
     if (reportModeToggleEl) {
@@ -1003,6 +1132,8 @@ function setAccounts(accounts) {
     if (mounted) {
         populateFilters();
         renderInsights();
+        renderPayableDebtDetails();
+        renderPayableDebtCard();
     }
 }
 
